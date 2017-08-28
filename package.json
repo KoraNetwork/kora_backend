@@ -36,6 +36,9 @@
     "type": "git",
     "url": "git://github.com/user/kora.git"
   },
+  "engines": {
+      "node": "6.11.1"
+  },
   "author": "user",
   "license": ""
 }

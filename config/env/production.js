@@ -33,6 +33,16 @@ module.exports = {
 
   // log: {
   //   level: "silent"
-  // }
+  // },
+
+  /***************************************************************************
+   * Azure environment variables                 *
+   ***************************************************************************/
+
+  // Use process.env.port to handle web requests to the default HTTP port
+  port: process.env.port,
+  // Increase hooks timout to 30 seconds
+  // This avoids the Sails.js error documented at https://github.com/balderdashy/sails/issues/2691
+  hookTimeout: 30000,
 
 };
