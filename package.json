@@ -23,6 +23,7 @@
     "sails": "~0.12.13",
     "sails-disk": "~0.10.9",
     "sails-mongo": "^0.12.2",
+    "twilio": "^3.6.4",
     "uport-lite": "^1.0.2",
     "waterline": "^0.11.11",
     "web3": "^0.20.1"
@@ -37,7 +38,7 @@
     "url": "git://github.com/user/kora.git"
   },
   "engines": {
-      "node": "6.11.1"
+    "node": "6.11.1"
   },
   "author": "user",
   "license": ""
