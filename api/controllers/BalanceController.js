@@ -8,7 +8,10 @@
 var Web3 = require('web3');
 var web3 = new Web3();
 
-web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+// web3.setProvider(new web3.providers.HttpProvider('http://localhost:8545'));
+
+var Web3Eth = require('web3-eth');
+var eth = new Web3Eth('http://localhost:8545');
 
 module.exports = {
   /**
@@ -39,17 +42,23 @@ module.exports = {
     // console.log(balance.toString(10)); // '1000000000000'
     // console.log(balance.toNumber()); // 1000000000000
 
-    var coinbase = web3.eth.coinbase;
-    console.log(coinbase);
+    eth.getCoinbase()
+      .then(eth.getBalance)
+      // .then(web3.utils.fromWei)
+      .then(balance => res.json({ balance }))
+      .catch(err => res.negotiate(err));
 
-    var balance = web3.eth.getBalance(coinbase);
-    console.log(balance.toString(10));
-
-    var acctBal = web3.fromWei(balance, "ether");
-
-    return res.json({
-      coinbase,
-      balance: acctBal,
-    });
+    // var coinbase = eth.getCoinbase;
+    // console.log(coinbase);
+    //
+    // var balance = eth.getBalance(coinbase);
+    // console.log(balance.toString(10));
+    //
+    // var acctBal = web3.utils.fromWei(balance, "ether");
+    //
+    // return res.json({
+    //   coinbase,
+    //   balance: acctBal,
+    // });
   }
 };
