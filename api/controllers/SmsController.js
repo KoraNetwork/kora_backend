@@ -10,6 +10,7 @@
 
  var twilio = require('twilio');
  var client = new twilio(accountSid, authToken);
+ var MessagingResponse = twilio.twiml.MessagingResponse;
 
 
 module.exports = {
@@ -37,5 +38,17 @@ module.exports = {
 		.catch((err) => {
 			return res.negotiate(err);
 		});
+  },
+
+  /**
+   * `SmsController.reply()`
+   */
+  reply: function (req, res) {
+    var twiml = new MessagingResponse();
+
+    twiml.message('Kora MVP are coming! Head for the hills!');
+
+    res.writeHead(200, {'Content-Type': 'text/xml'});
+    res.end(twiml.toString());
   }
 };
