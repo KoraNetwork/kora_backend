@@ -21,11 +21,20 @@ module.exports = {
    */
   create: function (req, res) {
     let acc = accounts.create(Web3.utils.randomHex(32));
-    let keystore = accounts.encrypt(acc.privateKey, 'qwer1234');
+    let { address, privateKey } = acc;
+    let keystore = accounts.encrypt(privateKey, 'qwer1234');
 
-    sails.log.info('New ethereum account created:\n', keystore);
-    sails.log.info('Private key test: ', acc.privateKey === accounts.decrypt(keystore, 'qwer1234').privateKey);
+    sails.log.info('New ethereum account created: ', address);
 
-    return res.json(keystore);
+    try {
+      var decAcc = accounts.decrypt(keystore, 'qwer1234');
+    } catch (e) {
+      res.status(401);
+      return res.send('Wrong password');
+    }
+
+    sails.log.info('Private key test: ', privateKey === decAcc.privateKey);
+
+    return res.json({ address, keystore });
   }
 };
