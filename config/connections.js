@@ -60,20 +60,20 @@ module.exports.connections = {
     adapter: 'sails-mongo',
     host: 'localhost',
     port: 27017,
-  //   user: 'username', //optional
-  //   password: 'password', //optional
-    database: 'kora' //optional
+    // user: 'username', // optional
+    // password: 'password', // optional
+    database: 'kora' // optional
   },
 
   azureDocDbMongo: {
     adapter: 'sails-mongo',
     host: 'koramvp.documents.azure.com',
     port: 10255,
-    user: 'koramvp', //optional
-    password: 'tXNRpcPh8qBSNChiIkSGWJtestYXqxfQSdxTLcjq9JeOlIDA1Sqb25w4pFKGdNY7n44XlhnQHqgkQeHNzLhqoQ==', //optional
-    database: 'koramvp', //optional
+    user: 'koramvp', // optional
+    password: 'tXNRpcPh8qBSNChiIkSGWJtestYXqxfQSdxTLcjq9JeOlIDA1Sqb25w4pFKGdNY7n44XlhnQHqgkQeHNzLhqoQ==', // optional
+    database: 'koramvp', // optional
     ssl: true
-  },
+  }
 
   /***************************************************************************
   *                                                                          *
@@ -91,7 +91,6 @@ module.exports.connections = {
   //   password: 'YOUR_POSTGRES_PASSWORD', // optional
   //   database: 'YOUR_POSTGRES_DB' //optional
   // }
-
 
   /***************************************************************************
   *                                                                          *
