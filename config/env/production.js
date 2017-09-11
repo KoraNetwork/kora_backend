@@ -45,4 +45,12 @@ module.exports = {
   //   level: "silent"
   // },
 
+  /***************************************************************************
+   * Enable morgan logger sails-hook-requestlogger                           *
+   ***************************************************************************/
+
+  requestlogger: {
+    inProduction: true
+  }
+
 };
