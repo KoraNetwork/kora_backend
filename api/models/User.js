@@ -24,7 +24,7 @@ module.exports = {
         // Password for development purposes
         password = 'qwer1234';
       } else {
-        cb(new Error('Password must be set'));
+        return cb(new Error('Password must be set'));
       }
     }
 
