@@ -38,8 +38,8 @@ module.exports = {
       gasPrice: '300000000000'
     });
 
-    identityMamager.methods.createIdentity('0x00a329c0648769A73afAc7F9381E08FB43dBEA72', '0x00a329c0648769A73afAc7F9381E08FB43dBEA72')
-      .send({from: '0x00a329c0648769A73afAc7F9381E08FB43dBEA72'})
+    identityMamager.methods.createIdentity('0x471FFf4A05Bbd9C5cab781464d6a4e0f1582779A', '0x471FFf4A05Bbd9C5cab781464d6a4e0f1582779A')
+      .send({from: '0x471FFf4A05Bbd9C5cab781464d6a4e0f1582779A'})
       .on('transactionHash', function (hash) {
         sails.log.info('transactionHash', hash);
       })
@@ -54,11 +54,11 @@ module.exports = {
       .on('error', function (err) {
         return done(err);
       })
-      .then(function (receipt) {
-        sails.log.info('receipt', receipt);
-
-        return done(null, receipt);
-      })
+      // .then(function (receipt) {
+      //   sails.log.info('receipt', receipt);
+      //
+      //   return done(null, receipt);
+      // })
       .catch(err => done(err));
 
     // return done(null, identityMamager.options);
