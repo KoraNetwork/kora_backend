@@ -5,12 +5,12 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/*global sails */
+/* global sails */
 
 var Web3 = require('web3');
 
 var Accounts = require('web3-eth-accounts');
-var accounts = new Accounts('http://localhost:8545');
+var accounts = new Accounts(sails.config.ethereum.provider);
 
 // eth.setProvider(new eth.providers.HttpProvider('http://localhost:8545'))
 
