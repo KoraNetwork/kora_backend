@@ -43,9 +43,7 @@ module.exports = {
    */
   reply: function (req, res) {
     var twiml = new MessagingResponse();
-
-    twiml.message('Kora MVP are coming! Head for the hills!');
-
+    twiml.message(ParserService.parse(TrialService.getMessage(req.query.Body)));
     res.writeHead(200, {'Content-Type': 'text/xml'});
     res.end(twiml.toString());
   }
