@@ -56,7 +56,13 @@ module.exports = {
       const keystore = JSON.parse(json);
       console.log('New ethereum account encrypted:\n', keystore);
 
-      return res.json({wallet, keystore: keystore});
+      Wallet.fromEncryptedWallet(json, 'qwer1234')
+        .then(decWallet => {
+          console.log('New ethereum account decrypted:\n', decWallet);
+
+          return res.json({wallet, keystore, decWallet});
+        })
+        .catch(res.negotiate);
     });
   }
 };
