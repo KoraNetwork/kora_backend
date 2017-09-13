@@ -50,19 +50,31 @@ module.exports = {
     const encryptPromise = wallet.encrypt('qwer1234');
 
     // sails.log.info('New ethereum account created:\n', wallet);
-    console.log('New ethereum account created:\n', wallet);
+    console.log('New ethereum wallet created:\n', wallet);
 
     encryptPromise.then(json => {
       const keystore = JSON.parse(json);
-      console.log('New ethereum account encrypted:\n', keystore);
+      console.log('New ethereum wallet encrypted:\n', keystore);
 
       Wallet.fromEncryptedWallet(json, 'qwer1234')
         .then(decWallet => {
-          console.log('New ethereum account decrypted:\n', decWallet);
+          console.log('New ethereum wallet decrypted:\n', decWallet);
 
           return res.json({wallet, keystore, decWallet});
         })
         .catch(res.negotiate);
     });
+  },
+
+  /**
+   * `EthereumController.createWallet()`
+   */
+  createBrainWallet: function (req, res) {
+    Wallet.fromBrainWallet('+380123456789', 'qwer1234').then(wallet => {
+      console.log('New ethereum brain wallet created:\n', wallet);
+
+      return res.json(wallet);
+    })
+    .catch(res.negotiate);
   }
 };
