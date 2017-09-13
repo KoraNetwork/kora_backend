@@ -1,7 +1,7 @@
 /**
  * EthereumController
  *
- * @description :: Server-side logic for managing ethereums
+ * @description :: Server-side logic for ethereum testing
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
@@ -13,6 +13,9 @@ var Accounts = require('web3-eth-accounts');
 var accounts = new Accounts(sails.config.ethereum.provider);
 
 // eth.setProvider(new eth.providers.HttpProvider('http://localhost:8545'))
+
+const ethers = require('ethers');
+const { Wallet, utils } = ethers;
 
 module.exports = {
 
@@ -35,6 +38,25 @@ module.exports = {
 
     sails.log.info('Private key test: ', privateKey === decAcc.privateKey);
 
-    return res.json({ address, keystore });
+    return res.json({ acc, keystore });
+    // return res.json({ address, keystore });
+  },
+
+  /**
+   * `EthereumController.createWallet()`
+   */
+  createWallet: function (req, res) {
+    const wallet = Wallet.createRandom(utils.randomBytes(32)); // extraEntropy
+    const encryptPromise = wallet.encrypt('qwer1234');
+
+    // sails.log.info('New ethereum account created:\n', wallet);
+    console.log('New ethereum account created:\n', wallet);
+
+    encryptPromise.then(json => {
+      const keystore = JSON.parse(json);
+      console.log('New ethereum account encrypted:\n', keystore);
+
+      return res.json({wallet, keystore: keystore});
+    });
   }
 };
