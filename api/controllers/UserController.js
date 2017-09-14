@@ -5,18 +5,31 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails EthereumService */
+/* global sails User EthereumService */
+
+const provider = sails.config.ethereum.provider;
+const Accounts = require('web3-eth-accounts');
+const accounts = new Accounts(provider);
 
 module.exports = {
   testIdentity: function (req, res) {
-    EthereumService.createIdentity({}, function (err, opts) {
+    User.findOne({ phone: '102' }).exec((err, user) => {
       if (err) {
         return res.negotiate(err);
       }
 
-      sails.log.info('Test identityMamager options:\n', opts);
+      const password = 'qwer1234';
+      const account = accounts.decrypt(user.keystore, password);
 
-      return res.json(opts);
+      EthereumService.createIdentity({ account }, function (err, result) {
+        if (err) {
+          return res.negotiate(err);
+        }
+
+        sails.log.info('Test createIdentity result:\n', result);
+
+        return res.json(result);
+      });
     });
   }
 };
