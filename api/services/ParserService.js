@@ -14,7 +14,7 @@ module.exports = {
         break;
       }
       default: {
-        if(isNumber(message)){
+        if(ParserService.isNumber(message)){
           result = "Please enter amount"
         }
         else{
