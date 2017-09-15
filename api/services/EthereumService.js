@@ -17,10 +17,29 @@ const accounts = new Accounts(provider);
 const uportIdentity = require('uport-identity');
 const Contract = require('web3-eth-contract');
 Contract.setProvider(provider);
-const identityManagerAddress = '0x692a70d2e424a56d2c6c27aa97d1a86395877b3a';
+// const identityManagerAddress = '0x692a70d2e424a56d2c6c27aa97d1a86395877b3a' // Local
+// const identityManagerAddress = '0xABBcD5B340C80B5f1C0545C04C987b87310296aE'; // Rinkeby
+const identityManagerAddress = uportIdentity.IdentityManager.networks[4].address; // Rinkeby
 const identityManager = new Contract(uportIdentity.IdentityManager.abi, identityManagerAddress);
 
-const recoveryAddress = '0x00a329c0648769A73afAc7F9381E08FB43dBEA72'; // Local node admin
+const recoveryAddress = '0x38a84BF14Ce5B37aF9c328C5e74Ff9797dF1204F'; // Kora 103
+// const recoveryAddress = '0x00a329c0648769A73afAc7F9381E08FB43dBEA72' // Local node admin
+
+identityManager.events.IdentityCreated(function (err, event) {
+  if (err) {
+    return sails.log.error(err);
+  }
+
+  sails.log.info('Event IdentityCreated:\n', event);
+})
+  .on('data', function (event) {
+    sails.log.info('Event IdentityCreated data:\n', event); // same results as the optional callback above
+  })
+  .on('changed', function (event) {
+    // remove event from local database
+    sails.log.info('Event IdentityCreated changed:\n', event);
+  })
+  .on('error', err => sails.log.error('Event IdentityCreated error:\n', err));
 
 module.exports = {
   /**
@@ -42,39 +61,32 @@ module.exports = {
     const createIdentity = identityManager.methods.createIdentity(account.address, recoveryAddress);
     const encodedCreateIdentity = createIdentity.encodeABI();
 
+    identityManager.once('IdentityCreated', (err, event) => {
+      if (err) {
+        sails.log.error(err);
+        return done(err);
+      }
+
+      sails.log.info('IdentityCreated once event:\n', event);
+      return done(null, event);
+    });
+
     createIdentity.estimateGas()
-    .then(estimatedGas => accounts.signTransaction({
-      to: identityManagerAddress,
-      data: encodedCreateIdentity,
-      gas: estimatedGas
-    }, account.privateKey))
-    .then(({ rawTransaction }) => eth.sendSignedTransaction(rawTransaction))
-    .then(receipt => done(null, receipt))
-    .catch(done);
+      .then(estimatedGas => {
+        let tx = {
+          to: identityManagerAddress,
+          data: encodedCreateIdentity,
+          gas: estimatedGas
+        };
 
-      // .send({from: '0x471FFf4A05Bbd9C5cab781464d6a4e0f1582779A'})
-      // .on('transactionHash', function (hash) {
-      //   sails.log.info('transactionHash', hash);
-      // })
-      // .on('confirmation', function (confirmationNumber, receipt) {
-      //   sails.log.info('confirmation', confirmationNumber, receipt);
-      // })
-      // .on('receipt', function (receipt) {
-      //   sails.log.info('receipt', receipt);
-      //
-      //   return done(null, receipt);
-      // })
-      // .on('error', function (err) {
-      //   return done(err);
-      // })
-      // // .then(function (receipt) {
-      // //   sails.log.info('receipt', receipt)
-      // //
-      // //   return done(null, receipt)
-      // // })
-      // .catch(done);
-
-  // return done(null, identityManager.options)
-  // return done(null, uportIdentity.IdentityManager.abi)
+        sails.log.info('Sign createIdentity transaction:\n', tx);
+        return accounts.signTransaction(tx, account.privateKey);
+      })
+      .then(signedTx => {
+        sails.log.info('Send signed createIdentity transaction:\n', signedTx);
+        return eth.sendSignedTransaction(signedTx.rawTransaction);
+      })
+      .then(receipt => sails.log.info('Transaction createIdentity receipt:\n', receipt))
+      .catch(err => sails.log.error(err));
   }
 };

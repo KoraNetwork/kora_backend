@@ -7,10 +7,14 @@
 
 /* global sails */
 
+const provider = sails.config.ethereum.provider;
 var Web3 = require('web3');
 
+const Eth = require('web3-eth');
+const eth = new Eth(provider);
+
 var Accounts = require('web3-eth-accounts');
-var accounts = new Accounts(sails.config.ethereum.provider);
+var accounts = new Accounts(provider);
 
 // eth.setProvider(new eth.providers.HttpProvider('http://localhost:8545'))
 
@@ -18,6 +22,15 @@ const ethers = require('ethers');
 const { Wallet, utils } = ethers;
 
 module.exports = {
+
+  /**
+   * 'EthereumController.getBalance()'
+   */
+  getBalance: function (req, res) {
+    eth.getBalance('0x471FFf4A05Bbd9C5cab781464d6a4e0f1582779A')
+      .then(balance => res.send(balance))
+      .catch(err => res.negotiate(err));
+  },
 
   /**
    * `EthereumController.create()`
