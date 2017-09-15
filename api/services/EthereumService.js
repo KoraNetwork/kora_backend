@@ -25,21 +25,21 @@ const identityManager = new Contract(uportIdentity.IdentityManager.abi, identity
 const recoveryAddress = '0x38a84BF14Ce5B37aF9c328C5e74Ff9797dF1204F'; // Kora 103
 // const recoveryAddress = '0x00a329c0648769A73afAc7F9381E08FB43dBEA72' // Local node admin
 
-identityManager.events.IdentityCreated(function (err, event) {
-  if (err) {
-    return sails.log.error(err);
-  }
-
-  sails.log.info('Event IdentityCreated:\n', event);
-})
-  .on('data', function (event) {
-    sails.log.info('Event IdentityCreated data:\n', event); // same results as the optional callback above
-  })
-  .on('changed', function (event) {
-    // remove event from local database
-    sails.log.info('Event IdentityCreated changed:\n', event);
-  })
-  .on('error', err => sails.log.error('Event IdentityCreated error:\n', err));
+// identityManager.events.IdentityCreated(function (err, event) {
+//   if (err) {
+//     return sails.log.error(err);
+//   }
+//
+//   sails.log.info('Event IdentityCreated:\n', event);
+// })
+//   .on('data', function (event) {
+//     sails.log.info('Event IdentityCreated data:\n', event); // same results as the optional callback above
+//   })
+//   .on('changed', function (event) {
+//     // remove event from local database
+//     sails.log.info('Event IdentityCreated changed:\n', event);
+//   })
+//   .on('error', err => sails.log.error('Event IdentityCreated error:\n', err));
 
 module.exports = {
   /**
