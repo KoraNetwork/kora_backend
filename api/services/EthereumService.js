@@ -5,7 +5,7 @@
 
 /* global sails */
 
-const {provider, networkId} = sails.config.ethereum;
+const {provider, networkId, senderPrivateKey, recoveryKeyAddress} = sails.config.ethereum;
 const Web3 = require('web3');
 
 const Eth = require('web3-eth');
@@ -25,9 +25,6 @@ const identityManager = new Contract(IdentityManager.abi, identityManagerAddress
 
 const txRelayAddress = TxRelay.networks[networkId].address; // Testnet
 const txRelay = new Contract(TxRelay.abi, txRelayAddress);
-
-const recoveryAddress = '0x38a84BF14Ce5B37aF9c328C5e74Ff9797dF1204F'; // Kora 103
-// const recoveryAddress = '0x00a329c0648769A73afAc7F9381E08FB43dBEA72' // Local node admin
 
 // identityManager.events.IdentityCreated(function (err, event) {
 //   if (err) {
@@ -62,7 +59,7 @@ module.exports = {
   },
 
   createIdentity: function ({ account }, done) {
-    const createIdentity = identityManager.methods.createIdentity(account.address, recoveryAddress);
+    const createIdentity = identityManager.methods.createIdentity(account.address, recoveryKeyAddress);
     const encodedCreateIdentity = createIdentity.encodeABI();
 
     identityManager.once('IdentityCreated', (err, event) => {
@@ -84,18 +81,21 @@ module.exports = {
         };
 
         sails.log.info('Sign createIdentity transaction:\n', tx);
-        return accounts.signTransaction(tx, account.privateKey);
+        return accounts.signTransaction(tx, senderPrivateKey);
       })
       .then(signedTx => {
         sails.log.info('Send signed createIdentity transaction:\n', signedTx);
         return eth.sendSignedTransaction(signedTx.rawTransaction);
       })
       .then(receipt => sails.log.info('Transaction createIdentity receipt:\n', receipt))
-      .catch(err => sails.log.error(err));
+      .catch(err => {
+        sails.log.error(err);
+        return done(err);
+      });
   },
 
   createIdentityTxRelay: function ({ account }, done) {
-    const createIdentity = identityManager.methods.createIdentity(account.address, recoveryAddress);
+    const createIdentity = identityManager.methods.createIdentity(account.address, recoveryKeyAddress);
     const encodedCreateIdentity = createIdentity.encodeABI();
 
     identityManager.once('IdentityCreated', (err, event) => {

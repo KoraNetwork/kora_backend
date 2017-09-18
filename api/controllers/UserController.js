@@ -34,6 +34,20 @@ module.exports = {
     });
   },
 
+  createIdentity: function (req, res) {
+    const {account} = EthereumService.createAccount({password});
+
+    EthereumService.createIdentity({account}, function (err, result) {
+      if (err) {
+        return res.negotiate(err);
+      }
+
+      // sails.log.info('Test createIdentity result:\n', result);
+
+      return res.json(result);
+    });
+  },
+
   createIdentityTxRelay: function (req, res) {
     const {account} = EthereumService.createAccount({password});
 
