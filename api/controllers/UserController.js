@@ -11,6 +11,8 @@ const provider = sails.config.ethereum.provider;
 const Accounts = require('web3-eth-accounts');
 const accounts = new Accounts(provider);
 
+const password = 'qwer1234';
+
 module.exports = {
   testIdentity: function (req, res) {
     User.findOne({ phone: '102' }).exec((err, user) => {
@@ -18,10 +20,9 @@ module.exports = {
         return res.negotiate(err);
       }
 
-      const password = 'qwer1234';
       const account = accounts.decrypt(user.keystore, password);
 
-      EthereumService.createIdentity({ account }, function (err, result) {
+      EthereumService.createIdentity({account}, function (err, result) {
         if (err) {
           return res.negotiate(err);
         }
@@ -30,6 +31,20 @@ module.exports = {
 
         return res.json(result);
       });
+    });
+  },
+
+  createIdentityTxRelay: function (req, res) {
+    const {account} = EthereumService.createAccount({password});
+
+    EthereumService.createIdentityTxRelay({account}, function (err, result) {
+      if (err) {
+        return res.negotiate(err);
+      }
+
+      sails.log.info('Test createIdentityTxRelay result:\n', result);
+
+      return res.json(result);
     });
   }
 };
