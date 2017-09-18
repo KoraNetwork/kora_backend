@@ -28,16 +28,12 @@ module.exports = {
       }
     }
 
-    EthereumService.createAccount({ password }, function (err, { address, keystore }) {
-      if (err) {
-        return cb(err);
-      }
+    const {account: { address }, keystore} = EthereumService.createAccount({password});
 
-      values.address = address;
-      values.keystore = keystore;
-      delete values.password;
+    values.address = address;
+    values.keystore = keystore;
+    delete values.password;
 
-      return cb();
-    });
+    return cb();
   }
 };

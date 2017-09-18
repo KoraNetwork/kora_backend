@@ -44,17 +44,17 @@ const recoveryAddress = '0x38a84BF14Ce5B37aF9c328C5e74Ff9797dF1204F'; // Kora 10
 module.exports = {
   /**
    * Generates an account object with private key and public key
-   * @param  {[type]}   password Password for a private key encryption to the web3 keystore v3 standard
-   * @param  {Function} done     Callback with result
+   * @param  {[type]} password Password for a private key encryption to the web3 keystore v3 standard
+   * @return {[type]}          Account and keystore
    */
-  createAccount: function ({ password }, done) {
-    const acc = accounts.create(Web3.utils.randomHex(32));
-    const { address, privateKey } = acc;
+  createAccount: function ({ password }) {
+    const account = accounts.create(Web3.utils.randomHex(32));
+    const { address, privateKey } = account;
     const keystore = accounts.encrypt(privateKey, password);
 
     sails.log.info('Created new ethereum account with address', address);
 
-    return done(null, {address, keystore});
+    return { account, keystore };
   },
 
   createIdentity: function ({ account }, done) {
