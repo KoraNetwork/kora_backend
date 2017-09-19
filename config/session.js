@@ -23,7 +23,6 @@ module.exports.session = {
   ***************************************************************************/
   secret: '761bbc0deac6a140fdfd03f2b4b3f72a',
 
-
   /***************************************************************************
   *                                                                          *
   * Set the session cookie expire time The maxAge is set by milliseconds,    *
@@ -31,9 +30,9 @@ module.exports.session = {
   *                                                                          *
   ***************************************************************************/
 
-  // cookie: {
-  //   maxAge: 24 * 60 * 60 * 1000
-  // },
+  cookie: {
+    maxAge: 24 * 60 * 60 * 1000
+  },
 
   /***************************************************************************
   *                                                                          *
@@ -62,7 +61,6 @@ module.exports.session = {
   // pass: <redis auth password>,
   // prefix: 'sess:',
 
-
   /***************************************************************************
   *                                                                          *
   * Uncomment the following lines to set up a MongoDB session store that can *
@@ -75,7 +73,7 @@ module.exports.session = {
   ***************************************************************************/
 
   adapter: 'mongo',
-  url: 'mongodb://localhost:27017/kora', // user, password and port optional
+  url: 'mongodb://localhost:27017/kora',
   // url: 'mongodb://user:password@localhost:27017/dbname', // user, password and port optional
 
   /***************************************************************************
@@ -90,12 +88,12 @@ module.exports.session = {
   *                                                                          *
   ***************************************************************************/
 
-  // collection: 'sessions',
-  // stringify: true,
-  // mongoOptions: {
+  collection: 'sessions',
+  stringify: true,
+  mongoOptions: {
   //   server: {
   //     ssl: true
   //   }
-  // }
+  }
 
 };
