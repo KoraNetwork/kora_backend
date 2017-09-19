@@ -5,13 +5,15 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
- var accountSid = 'AC93c494dcc34b88d2e6e1b6b2411bc0a1'; // Your Account SID from www.twilio.com/console
- var authToken = '8d7c804369655c43a73b842d8808bec4';   // Your Auth Token from www.twilio.com/console
+/* global sails ParserService TrialService MiscService */
 
- var twilio = require('twilio');
- var client = new twilio(accountSid, authToken);
- var MessagingResponse = twilio.twiml.MessagingResponse;
+const {accountSid, authToken, fromNumber} = sails.config.twilio;
 
+const Twilio = require('twilio');
+const client = new Twilio(accountSid, authToken);
+const MessagingResponse = Twilio.twiml.MessagingResponse;
+
+const validation = sails.config.validation;
 
 module.exports = {
 
@@ -19,23 +21,23 @@ module.exports = {
    * `SmsController.test()`
    */
   test: function (req, res) {
-		client.messages.create({
-		    body: 'Hello from Kora MVP',
-		    to: '+380956641698',  // Text this number
-		    from: '+14159361767' // From a valid Twilio number
-		})
-		.then((message) => {
-			sails.log('SMS message was send: ', message.sid);
+    client.messages.create({
+      body: 'Hello from Kora MVP',
+      to: '+380956641698', // Text this number
+      from: fromNumber // From a valid Twilio number
+    })
+      .then((message) => {
+        sails.log('SMS message was send: ', message.sid);
 
-			return res.json({
-				message: 'SMS message was send succesfully',
-				// data: message,
-				sid: message.sid,
-			})
-		})
-		.catch((err) => {
-			return res.negotiate(err);
-		});
+        return res.json({
+          message: 'SMS message was send succesfully',
+          // data: message,
+          sid: message.sid
+        });
+      })
+      .catch((err) => {
+        return res.negotiate(err);
+      });
   },
 
   /**
@@ -46,5 +48,34 @@ module.exports = {
     twiml.message(ParserService.parse(TrialService.getMessage(req.body.Body), req.body.From));
     res.writeHead(200, {'Content-Type': 'text/xml'});
     res.end(twiml.toString());
+  },
+
+  /**
+   * `SmsController.sendVerificationCode()`
+   */
+  sendVerificationCode: function (req, res) {
+    let phoneNumber = req.param('phoneNumber');
+
+    if (!validation.phoneNumber.test(phoneNumber)) {
+      return res.badRequest('Phone number incorrect');
+    }
+
+    let verificationCode = MiscService.randomInteger6();
+
+    client.messages.create({
+      body: verificationCode,
+      to: phoneNumber,
+      from: fromNumber
+    })
+      .then((message) => {
+        const text = 'SMS message with verification code was send';
+
+        req.session.verificationCode = verificationCode;
+
+        sails.log.info(`${text}. Massage sid: ${message.sid}`);
+
+        return res.ok(text);
+      })
+      .catch(err => res.negotiate(err));
   }
 };
