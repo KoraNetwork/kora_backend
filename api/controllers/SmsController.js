@@ -60,7 +60,7 @@ module.exports = {
       return res.badRequest('Phone number incorrect');
     }
 
-    let verificationCode = MiscService.randomInteger6();
+    let verificationCode = MiscService.randomInteger6().toString();
 
     client.messages.create({
       body: verificationCode,
@@ -77,5 +77,24 @@ module.exports = {
         return res.ok(text);
       })
       .catch(err => res.negotiate(err));
+  },
+
+  /**
+   * `SmsController.confirmVerificationCode()`
+   */
+  confirmVerificationCode: function (req, res) {
+    let verificationCode = req.param('verificationCode');
+
+    if (!req.session.verificationCode) {
+      return res.badRequest('Verification code was not send to you');
+    }
+
+    if (verificationCode !== req.session.verificationCode) {
+      return res.badRequest('Verification code incorrect');
+    }
+
+    delete req.session.verificationCode;
+
+    return res.ok('Verification code confirmed');
   }
 };
