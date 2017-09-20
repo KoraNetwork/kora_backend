@@ -23,11 +23,11 @@ module.exports = {
   randomInteger,
 
   /**
-   * Generates a random 6-digit integer
-   * @return {Number} 6-digit integer
+   * Generates a random 4-digit integer
+   * @return {Number} 4-digit integer
    */
-  randomInteger6: function () {
-    return randomInteger({min: 100000, max: 999999});
+  randomInteger4: function () {
+    return randomInteger({min: 1000, max: 9999});
   },
 
   /**

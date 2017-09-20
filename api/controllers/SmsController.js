@@ -57,13 +57,16 @@ module.exports = {
     let phoneNumber = req.param('phoneNumber');
 
     if (!validation.phoneNumber.test(phoneNumber)) {
-      return res.badRequest('Phone number incorrect');
+      return res.send({
+        sended: false,
+        message: 'Phone number incorrect'
+      });
     }
 
-    let verificationCode = MiscService.randomInteger6().toString();
+    let verificationCode = MiscService.randomInteger4().toString();
 
     client.messages.create({
-      body: verificationCode,
+      body: `Your code for Kora MVP - ${verificationCode}`,
       to: phoneNumber,
       from: fromNumber
     })
@@ -72,9 +75,12 @@ module.exports = {
 
         req.session.verificationCode = verificationCode;
 
-        sails.log.info(`${text}. Massage sid: ${message.sid}`);
+        sails.log.info(`${text} to ${phoneNumber}. Massage sid: ${message.sid}`);
 
-        return res.ok(text);
+        return res.send({
+          sended: true,
+          message: text
+        });
       })
       .catch(err => res.negotiate(err));
   },
@@ -86,15 +92,24 @@ module.exports = {
     let verificationCode = req.param('verificationCode');
 
     if (!req.session.verificationCode) {
-      return res.badRequest('Verification code was not send to you');
+      return res.send({
+        confirmed: false,
+        message: 'Verification code was not send to you'
+      });
     }
 
     if (verificationCode !== req.session.verificationCode) {
-      return res.badRequest('Verification code incorrect');
+      return res.send({
+        confirmed: false,
+        message: 'Verification code incorrect'
+      });
     }
 
     delete req.session.verificationCode;
 
-    return res.ok('Verification code confirmed');
+    return res.send({
+      confirmed: true,
+      message: 'Verification code confirmed'
+    });
   }
 };
