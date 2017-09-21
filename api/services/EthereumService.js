@@ -3,9 +3,9 @@
  * @description :: Set of functions for work with Ethereum blockchain
  */
 
-/* global sails */
+/* global sails _ */
 
-const {provider, networkId, senderPrivateKey, recoveryKeyAddress} = sails.config.ethereum;
+const {provider, networkId, koraWallet, koraRecoveryKey} = sails.config.ethereum;
 const Web3 = require('web3');
 
 const Eth = require('web3-eth');
@@ -26,22 +26,6 @@ const identityManager = new Contract(IdentityManager.abi, identityManagerAddress
 const txRelayAddress = TxRelay.networks[networkId].address; // Testnet
 const txRelay = new Contract(TxRelay.abi, txRelayAddress);
 
-// identityManager.events.IdentityCreated(function (err, event) {
-//   if (err) {
-//     return sails.log.error(err);
-//   }
-//
-//   sails.log.info('Event IdentityCreated:\n', event);
-// })
-//   .on('data', function (event) {
-//     sails.log.info('Event IdentityCreated data:\n', event); // same results as the optional callback above
-//   })
-//   .on('changed', function (event) {
-//     // remove event from local database
-//     sails.log.info('Event IdentityCreated changed:\n', event);
-//   })
-//   .on('error', err => sails.log.error('Event IdentityCreated error:\n', err));
-
 module.exports = {
   /**
    * Generates an account object with private key and public key
@@ -59,18 +43,9 @@ module.exports = {
   },
 
   createIdentity: function ({ account }, done) {
-    const createIdentity = identityManager.methods.createIdentity(account.address, recoveryKeyAddress);
+    const {address} = account;
+    const createIdentity = identityManager.methods.createIdentity(account.address, koraRecoveryKey.address);
     const encodedCreateIdentity = createIdentity.encodeABI();
-
-    identityManager.once('IdentityCreated', (err, event) => {
-      if (err) {
-        sails.log.error(err);
-        return done(err);
-      }
-
-      sails.log.info('IdentityCreated once event:\n', event);
-      return done(null, event);
-    });
 
     createIdentity.estimateGas()
       .then(estimatedGas => {
@@ -81,13 +56,39 @@ module.exports = {
         };
 
         sails.log.info('Sign createIdentity transaction:\n', tx);
-        return accounts.signTransaction(tx, senderPrivateKey);
+        return accounts.signTransaction(tx, koraWallet.privateKey);
       })
       .then(signedTx => {
         sails.log.info('Send signed createIdentity transaction:\n', signedTx);
         return eth.sendSignedTransaction(signedTx.rawTransaction);
       })
-      .then(receipt => sails.log.info('Transaction createIdentity receipt:\n', receipt))
+      .then(receipt => {
+        sails.log.info('Transaction createIdentity receipt:\n', receipt);
+
+        return identityManager.getPastEvents('IdentityCreated', {
+          filter: {
+            creator: koraWallet.address,
+            owner: address,
+            recoveryKey: koraRecoveryKey.address
+          },
+          fromBlock: receipt.blockNumber
+        });
+      })
+      .then(events => {
+        sails.log.info('IdentityCreated events:\n', events);
+
+        let event = _.find(events, {returnValues: {
+          creator: koraWallet.address,
+          owner: address,
+          recoveryKey: koraRecoveryKey.address
+        }});
+
+        if (!event) {
+          return Promise.reject(new Error(`Method getPastEvents didn't return desired IdentityCreated event`));
+        }
+
+        return done(null, event.returnValues);
+      })
       .catch(err => {
         sails.log.error(err);
         return done(err);
@@ -95,7 +96,7 @@ module.exports = {
   },
 
   createIdentityTxRelay: function ({ account }, done) {
-    const createIdentity = identityManager.methods.createIdentity(account.address, recoveryKeyAddress);
+    const createIdentity = identityManager.methods.createIdentity(account.address, koraRecoveryKey.address);
     const encodedCreateIdentity = createIdentity.encodeABI();
 
     identityManager.once('IdentityCreated', (err, event) => {

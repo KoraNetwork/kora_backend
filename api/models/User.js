@@ -39,16 +39,9 @@ module.exports = {
 
     delete values.password;
 
-    EthereumService.createIdentity({account}, (err, result) => {
+    EthereumService.createIdentity({account}, (err, { identity, creator, owner, recoveryKey }) => {
       if (err) {
         return cb(err);
-      }
-
-      const {returnValues: { identity, creator, owner, recoveryKey }} = result;
-      const {address} = account;
-
-      if (address !== owner) {
-        return cb(new Error('Created account is not owner of identity'));
       }
 
       Object.assign(values, {identity, creator, owner, recoveryKey, keystore});

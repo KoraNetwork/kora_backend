@@ -34,6 +34,9 @@ module.exports = {
     });
   },
 
+  /**
+   * Creates identity
+   */
   createIdentity: function (req, res) {
     const {account} = EthereumService.createAccount({password});
 
@@ -42,9 +45,7 @@ module.exports = {
         return res.negotiate(err);
       }
 
-      // sails.log.info('Test createIdentity result:\n', result);
-
-      return res.json(result);
+      return res.json({account, result});
     });
   },
 
