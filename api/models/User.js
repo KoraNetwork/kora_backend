@@ -9,9 +9,16 @@
 
 module.exports = {
   attributes: {
+    // TODO: Add validation for phone and maybe password
     phone: { type: 'string', unique: true, required: true },
 
-    address: { type: 'string' },
+    identity: { type: 'sthing' },
+
+    creator: { type: 'sthing' },
+
+    owner: { type: 'sthing' },
+
+    recoveryKey: { type: 'sthing' },
 
     keystore: { type: 'json' }
   },
@@ -28,12 +35,25 @@ module.exports = {
       }
     }
 
-    const {account: { address }, keystore} = EthereumService.createAccount({password});
+    const {account, keystore} = EthereumService.createAccount({password});
 
-    values.address = address;
-    values.keystore = keystore;
     delete values.password;
 
-    return cb();
+    EthereumService.createIdentity({account}, (err, result) => {
+      if (err) {
+        return cb(err);
+      }
+
+      const {returnValues: { identity, creator, owner, recoveryKey }} = result;
+      const {address} = account;
+
+      if (address !== owner) {
+        return cb(new Error('Created account is not owner of identity'));
+      }
+
+      Object.assign(values, {identity, creator, owner, recoveryKey, keystore});
+
+      return cb();
+    });
   }
 };
