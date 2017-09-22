@@ -30,5 +30,9 @@ module.exports.ethereum = {
         address: '0xE57768e12C50C7D4134bB7a1Ca2917689719183C'
       }
     }
-  }
+  },
+
+  koraTokenExponent: 18,
+
+  koraTokenSymbol: 'KTN'
 };

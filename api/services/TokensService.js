@@ -5,7 +5,7 @@
 
 /* global sails _ */
 
-const {provider, networkId, koraWallet, HumanStandardToken, gas, gasPrice} = sails.config.ethereum;
+const {provider, networkId, koraWallet, HumanStandardToken, gas, gasPrice, koraTokenExponent} = sails.config.ethereum;
 // const Web3 = require('web3');
 
 const Eth = require('web3-eth');
@@ -36,6 +36,12 @@ const humanStandardTokenAddress = HumanStandardToken.networks[networkId].address
 const humanStandardToken = new Contract(humanStandardTokenAbi, humanStandardTokenAddress);
 
 module.exports = {
+  balanceOf: function ({address}, done) {
+    humanStandardToken.methods.balanceOf(address).call()
+      .then(result => done(null, parseInt(result, 10) / Math.pow(10, koraTokenExponent)))
+      .catch(err => done(err));
+  },
+
   /**
    * Transfers Kora Tokens form Kora Wallet to some address
    * @param  {String}   to    Some address
@@ -43,14 +49,14 @@ module.exports = {
    * @param  {Function} done  Result of transfer
    */
   transferFromKora: function ({ to, value }, done) {
-    const valueToken = value * Math.pow(10, 18);
-    const transfer = humanStandardToken.methods.transfer(to, valueToken);
+    const tokensValue = value * Math.pow(10, koraTokenExponent);
+    const transfer = humanStandardToken.methods.transfer(to, tokensValue);
     const encodedTransfer = transfer.encodeABI();
 
     let filter = {
       _from: koraWallet.address,
       _to: to,
-      _value: valueToken.toString()
+      _value: tokensValue.toString()
     };
 
     let tx = {
@@ -92,18 +98,18 @@ module.exports = {
   },
 
   transfer: function ({account, identity, to, value}, done) {
-    const valueToken = value * Math.pow(10, 18);
-    const transfer = humanStandardToken.methods.transfer(to, valueToken);
+    const tokensValue = value * Math.pow(10, koraTokenExponent);
+    const transfer = humanStandardToken.methods.transfer(to, tokensValue);
     const encodedTransfer = transfer.encodeABI();
 
     const forwardTo = identityManager.methods.forwardTo(identity, humanStandardTokenAddress, 0, encodedTransfer);
     const encodedForwardTo = forwardTo.encodeABI();
 
-    let filter = {
-      _from: account.address,
-      _to: to,
-      _value: valueToken.toString()
-    };
+    // let filter = {
+    //   _from: account.address,
+    //   _to: to,
+    //   _value: tokensValue.toString()
+    // };
 
     let tx = {
       to: identityManagerAddress,

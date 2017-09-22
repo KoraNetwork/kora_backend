@@ -7,9 +7,48 @@
 
 /* global sails TokensService User EthereumService */
 
-// const validation = sails.config.validation;
+// const {validation} = sails.config.validation;
 
 module.exports = {
+
+  /**
+   * `TokensController.balanceOf()`
+   */
+  balanceOf: function (req, res) {
+    const phone = req.param('phone');
+
+    if (!phone) {
+      return res.send({
+        balance: null,
+        message: 'Phone was not set'
+      });
+    }
+
+    User.findOne({phone}).exec((err, {identity}) => {
+      if (err) {
+        return res.negotiate(err);
+      }
+
+      if (!identity) {
+        return res.send({
+          balance: null,
+          message: 'No user with such phone number in Kora database'
+        });
+      }
+
+      TokensService.balanceOf({address: identity}, (err, result) => {
+        if (err) {
+          return res.negotiate(err);
+        }
+
+        return res.send({
+          balance: result,
+          symbol: sails.config.ethereum.koraTokenSymbol,
+          message: 'Get balance was success'
+        });
+      });
+    });
+  },
 
   /**
    * `TokensController.transferFromKora()`
