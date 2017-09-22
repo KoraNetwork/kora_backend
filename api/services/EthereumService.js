@@ -42,6 +42,11 @@ module.exports = {
     return {account, keystore};
   },
 
+  // TODO: Add try catch
+  decryptAccount: function ({ keystore, password }) {
+    return accounts.decrypt(keystore, password);
+  },
+
   createIdentity: function ({ account }, done) {
     const createIdentity = identityManager.methods.createIdentity(account.address, koraRecoveryKey.address);
     const encodedCreateIdentity = createIdentity.encodeABI();
