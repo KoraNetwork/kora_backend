@@ -20,6 +20,7 @@ Contract.setProvider(provider);
 const uportIdentity = require('uport-identity');
 const {
   // TxRelay,
+  // Proxy,
   IdentityManager
 } = uportIdentity;
 
@@ -127,6 +128,15 @@ module.exports = {
       .then(receipt => {
         sails.log.info('Transaction forwardTo receipt:\n', receipt);
 
+      //   const proxy = new Contract(Proxy.abi, identity);
+      //
+      //   return proxy.getPastEvents('Forwarded', {
+      //     filter: { destination: humanStandardTokenAddress }
+      //   });
+      // })
+      // .then(events => {
+      //   sails.log.info('Forwarded events:\n', events);
+      //
       //   return humanStandardToken.getPastEvents('Transfer', {
       //     filter
       //     // fromBlock: receipt.blockNumber
@@ -142,6 +152,8 @@ module.exports = {
       //   // }
       //   //
       //   // return done(null, event.returnValues);
+      //   // return done(null, events);
+
         return done(null, receipt);
       })
       .catch(err => {

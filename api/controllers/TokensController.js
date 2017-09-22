@@ -166,7 +166,7 @@ module.exports = {
           return res.send({
             transferred: true,
             message: 'Transfer from Kora was successful',
-            result
+            txReceipt: result
           });
         });
       });
