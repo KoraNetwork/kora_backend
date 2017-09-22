@@ -5,7 +5,7 @@
 
 /* global sails _ */
 
-const {provider, networkId, koraWallet, koraRecoveryKey} = sails.config.ethereum;
+const {provider, networkId, koraWallet, koraRecoveryKey, gas, gasPrice} = sails.config.ethereum;
 const Web3 = require('web3');
 
 const Eth = require('web3-eth');
@@ -43,21 +43,24 @@ module.exports = {
   },
 
   createIdentity: function ({ account }, done) {
-    const {address} = account;
     const createIdentity = identityManager.methods.createIdentity(account.address, koraRecoveryKey.address);
     const encodedCreateIdentity = createIdentity.encodeABI();
 
-    createIdentity.estimateGas()
-      .then(estimatedGas => {
-        let tx = {
-          to: identityManagerAddress,
-          data: encodedCreateIdentity,
-          gas: estimatedGas
-        };
+    let filter = {
+      creator: koraWallet.address,
+      owner: account.address,
+      recoveryKey: koraRecoveryKey.address
+    };
 
-        sails.log.info('Sign createIdentity transaction:\n', tx);
-        return accounts.signTransaction(tx, koraWallet.privateKey);
-      })
+    let tx = {
+      to: identityManagerAddress,
+      data: encodedCreateIdentity,
+      gas,
+      gasPrice
+    };
+
+    sails.log.info('Sign createIdentity transaction:\n', tx);
+    accounts.signTransaction(tx, koraWallet.privateKey)
       .then(signedTx => {
         sails.log.info('Send signed createIdentity transaction:\n', signedTx);
         return eth.sendSignedTransaction(signedTx.rawTransaction);
@@ -66,22 +69,14 @@ module.exports = {
         sails.log.info('Transaction createIdentity receipt:\n', receipt);
 
         return identityManager.getPastEvents('IdentityCreated', {
-          filter: {
-            creator: koraWallet.address,
-            owner: address,
-            recoveryKey: koraRecoveryKey.address
-          },
+          filter,
           fromBlock: receipt.blockNumber
         });
       })
       .then(events => {
         sails.log.info('IdentityCreated events:\n', events);
 
-        let event = _.find(events, {returnValues: {
-          creator: koraWallet.address,
-          owner: address,
-          recoveryKey: koraRecoveryKey.address
-        }});
+        let event = _.find(events, {returnValues: filter});
 
         if (!event) {
           return Promise.reject(new Error(`Method getPastEvents didn't return desired IdentityCreated event`));
