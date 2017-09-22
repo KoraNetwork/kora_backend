@@ -15,6 +15,20 @@ module.exports.ethereum = {
   /**
    * Network id
    */
-  networkId: 4 // Rinkeby testnet
-  // networkId: 42 // Kovan testnet
+  networkId: 4, // Rinkeby testnet
+  // networkId: 42, // Kovan testnet
+
+  gas: 4300000,
+  gasPrice: 21000000000,
+
+  /**
+   * humanStandardToken
+   */
+  HumanStandardToken: {
+    networks: {
+      4: {
+        address: '0xE57768e12C50C7D4134bB7a1Ca2917689719183C'
+      }
+    }
+  }
 };
