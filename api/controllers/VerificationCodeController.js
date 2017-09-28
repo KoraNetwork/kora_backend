@@ -24,7 +24,7 @@ module.exports = {
 
     if (!validation.phoneNumber.test(phoneNumber)) {
       return res.send({
-        sended: false,
+        sent: false,
         message: 'Phone number incorrect'
       });
     }
@@ -47,7 +47,7 @@ module.exports = {
           sails.log.info(`${text} to ${phoneNumber}. Massage sid: ${message.sid}`);
 
           return resolve({
-            sended: true,
+            sent: true,
             message: text
           });
         };
