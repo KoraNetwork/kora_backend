@@ -4,6 +4,6 @@
 
 module.exports.validation = {
 
-  phoneNumber: /^\+\d{10,12}$/
+  phoneNumber: /^\d{10,12}$/
 
 };
