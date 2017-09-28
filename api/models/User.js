@@ -12,13 +12,13 @@ module.exports = {
     // TODO: Add validation for phone and maybe password
     phone: { type: 'string', unique: true, required: true },
 
-    identity: { type: 'sthing' },
+    identity: { type: 'string' },
 
-    creator: { type: 'sthing' },
+    creator: { type: 'string' },
 
-    owner: { type: 'sthing' },
+    owner: { type: 'string' },
 
-    recoveryKey: { type: 'sthing' },
+    recoveryKey: { type: 'string' },
 
     keystore: { type: 'json' }
   },
