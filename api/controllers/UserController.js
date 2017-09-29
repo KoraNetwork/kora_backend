@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails User EthereumService */
+/* global sails User EthereumService JWTokenService */
 
 const provider = sails.config.ethereum.provider;
 const Accounts = require('web3-eth-accounts');
@@ -14,6 +14,28 @@ const accounts = new Accounts(provider);
 const password = 'qwer1234';
 
 module.exports = {
+  create: function (req, res) {
+    let allParams = req.allParams();
+
+    if (allParams.password !== allParams.confirmPassword) {
+      return res.json(401, {err: 'Password doesn\'t match, What a shame!'});
+    }
+
+    delete allParams.confirmPassword;
+
+    User.create(allParams).exec(function (err, user) {
+      if (err) {
+        return res.json(err.status, {err: err});
+      }
+
+      // If user created successfuly we return user and token as response
+      if (user) {
+       // NOTE: payload is { id: user.id}
+        res.json(200, {user: user, token: JWTokenService.issue({id: user.id})});
+      }
+    });
+  },
+
   testIdentity: function (req, res) {
     User.findOne({ phone: '102' }).exec((err, user) => {
       if (err) {
