@@ -50,11 +50,11 @@ module.exports.policies = {
 
   '*': ['isAuthorized'], // Everything resctricted here
 
-  VericationCodeController: {
+  VerificationCodeController: {
     '*': true
   },
 
-  UsersController: {
+  UserController: {
     create: true // We dont need authorization here, allowing public access
   },
 
