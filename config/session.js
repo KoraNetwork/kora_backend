@@ -21,7 +21,7 @@ module.exports.session = {
   * of your users, forcing them to log in again.                             *
   *                                                                          *
   ***************************************************************************/
-  secret: '761bbc0deac6a140fdfd03f2b4b3f72a',
+  secret: '761bbc0deac6a140fdfd03f2b4b3f72a'
 
   /***************************************************************************
   *                                                                          *
@@ -30,9 +30,9 @@ module.exports.session = {
   *                                                                          *
   ***************************************************************************/
 
-  cookie: {
-    maxAge: 24 * 60 * 60 * 1000
-  },
+  // cookie: {
+  //   maxAge: 24 * 60 * 60 * 1000
+  // },
 
   /***************************************************************************
   *                                                                          *
@@ -72,9 +72,9 @@ module.exports.session = {
   *                                                                          *
   ***************************************************************************/
 
-  adapter: 'mongo',
-  url: 'mongodb://localhost:27017/kora',
-  // url: 'mongodb://user:password@localhost:27017/dbname', // user, password and port optional
+  // adapter: 'mongo',
+  // url: 'mongodb://localhost:27017/kora',
+  // // url: 'mongodb://user:password@localhost:27017/dbname', // user, password and port optional
 
   /***************************************************************************
   *                                                                          *
@@ -88,12 +88,12 @@ module.exports.session = {
   *                                                                          *
   ***************************************************************************/
 
-  collection: 'sessions',
-  stringify: true,
-  mongoOptions: {
+  // collection: 'sessions',
+  // stringify: true,
+  // mongoOptions: {
   //   server: {
   //     ssl: true
   //   }
-  }
+  // }
 
 };
