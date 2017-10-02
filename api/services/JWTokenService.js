@@ -5,8 +5,10 @@
  * @help        :: See https://github.com/auth0/node-jsonwebtoken & http://sailsjs.org/#!/documentation/concepts/Services
  */
 
+/* global sails */
+
 const jwt = require('jsonwebtoken');
-const tokenSecret = 'secretissecet';
+const tokenSecret = sails.config.session.secret;
 
 // Generates a token from supplied payload
 module.exports.issue = function (payload) {
@@ -14,7 +16,7 @@ module.exports.issue = function (payload) {
     payload,
     tokenSecret, // Token Secret that we sign it with
     {
-      expiresIn: '24h' // Token Expire time
+      expiresIn: '1y' // Token Expire time
     }
   );
 };

@@ -17,6 +17,10 @@ module.exports = {
 
     delete allParams.confirmPassword;
 
+    if (!allParams.role) {
+      allParams.role = User.roles.smartPhone;
+    }
+
     User.create(allParams).exec(function (err, user) {
       if (err) {
         return res.json(err.status, {err: err});
@@ -25,7 +29,10 @@ module.exports = {
       // If user created successfuly we return user and token as response
       if (user) {
        // NOTE: payload is { id: user.id}
-        res.json(200, {user: user, token: JWTokenService.issue({id: user.id})});
+        res.json(200, {
+          user: user,
+          sessionToken: JWTokenService.issue({id: user.id})
+        });
       }
     });
   },
@@ -57,7 +64,7 @@ module.exports = {
         } else {
           res.json({
             user: user,
-            token: JWTokenService.issue({id: user.id})
+            sessionToken: JWTokenService.issue({id: user.id})
           });
         }
       });

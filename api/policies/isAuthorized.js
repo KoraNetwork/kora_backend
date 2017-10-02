@@ -10,30 +10,19 @@
 module.exports = function (req, res, next) {
   var token;
 
-  if (req.headers && req.headers.authorization) {
-    token = req.headers.authorization;
-    // var parts = req.headers.authorization.split(' ');
-    // if (parts.length == 2) { // eslint-disable-line eqeqeq
-    //   let scheme = parts[0];
-    //   let credentials = parts[1];
-    //
-    //   if (/^Bearer$/i.test(scheme)) {
-    //     token = credentials;
-    //   }
-    // } else {
-    //   return res.json(401, {err: 'Format is Authorization: Bearer [token]'});
-    // }
-  } else if (req.param('token')) {
-    token = req.param('token');
+  if (req.headers && req.headers['session-token']) {
+    token = req.headers['session-token'];
+  } else if (req.param('sessionToken')) {
+    token = req.param('sessionToken');
     // We delete the token from param to not mess with blueprints
-    delete req.query.token;
+    delete req.query.sessionToken;
   } else {
-    return res.json(401, {err: 'No Authorization header was found'});
+    return res.json(401, {err: 'No Session-Token header was found'});
   }
 
   JWTokenService.verify(token, function (err, token) {
     if (err) {
-      return res.json(401, {err: 'Invalid Token!'});
+      return res.json(401, {err: 'Invalid Session-Token!'});
     }
 
     req.token = token; // This is the decrypted token or the payload you provided
