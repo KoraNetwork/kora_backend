@@ -10,6 +10,8 @@
 // We don't want to store password with out encryption
 const bcrypt = require('bcrypt');
 
+const WLError = require('waterline/lib/waterline/error/WLError');
+
 const roles = {
   // agent: 'agent',
   // provider: 'provider',
@@ -76,7 +78,7 @@ module.exports = {
         // Password for development purposes
         password = 'qwer1234';
       } else {
-        return cb(new Error('Password must be set'));
+        return cb(new WLError({status: 400, reason: 'Password must be set'}));
       }
     }
 

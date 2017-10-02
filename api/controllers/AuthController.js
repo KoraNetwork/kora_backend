@@ -11,11 +11,11 @@ module.exports = {
   register: function (req, res) {
     let allParams = req.allParams();
 
-    if (allParams.password !== allParams.confirmPassword) {
-      return res.json(401, {err: 'Password doesn\'t match, What a shame!'});
-    }
-
-    delete allParams.confirmPassword;
+    // if (allParams.password !== allParams.confirmPassword) {
+    //   return res.json(401, {err: 'Password doesn\'t match, What a shame!'});
+    // }
+    //
+    // delete allParams.confirmPassword;
 
     if (!allParams.role) {
       allParams.role = User.roles.smartPhone;
