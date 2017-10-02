@@ -29,6 +29,14 @@ module.exports.models = {
   *                                                                          *
   ***************************************************************************/
   // migrate: 'alter'
-  migrate: 'safe'
+  migrate: 'safe',
+
+  /**
+   * A flag to toggle schemaless or schema mode in databases that support
+   * schemaless data structures. If turned off, this will allow you to store
+   * arbitrary data in a record. If turned on, only attributes defined
+   * in the model's attributes object will be stored.
+   */
+  schema: true
 
 };
