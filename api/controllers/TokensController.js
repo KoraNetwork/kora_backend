@@ -5,9 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails TokensService User EthereumService */
-
-// const {validation} = sails.config.validation;
+/* global sails TokensService User EthereumService ValidationService */
 
 module.exports = {
 
@@ -64,12 +62,12 @@ module.exports = {
       });
     }
 
-    // if (!validation.phoneNumber.test(phone)) {
-    //   return res.send({
-    //     transferred: false,
-    //     message: 'Phone number incorrect'
-    //   });
-    // }
+    if (!ValidationService.phoneNumber(phone)) {
+      return res.send({
+        transferred: false,
+        message: 'Phone number incorrect'
+      });
+    }
 
     User.findOne({phone}).exec((err, user) => {
       if (err) {
@@ -125,12 +123,12 @@ module.exports = {
       });
     }
 
-    // if (!validation.phoneNumber.test(phone)) {
-    //   return res.send({
-    //     transferred: false,
-    //     message: 'Phone number incorrect'
-    //   });
-    // }
+    if (!ValidationService.phoneNumber(phone)) {
+      return res.send({
+        transferred: false,
+        message: 'Phone number incorrect'
+      });
+    }
 
     User.findOne({phone}).exec((err, user) => {
       if (err) {

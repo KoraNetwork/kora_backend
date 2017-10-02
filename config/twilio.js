@@ -1,5 +1,5 @@
 /**
- * Validation rules
+ * Twilio settings
  */
 
 module.exports.twilio = {

@@ -5,14 +5,12 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails MiscService VerificationCode */
+/* global sails MiscService VerificationCode ValidationService  */
 
 const {accountSid, authToken, fromNumber} = sails.config.twilio;
 
 const Twilio = require('twilio');
 const client = new Twilio(accountSid, authToken);
-
-const validation = sails.config.validation;
 
 module.exports = {
 
@@ -22,7 +20,7 @@ module.exports = {
   send: function (req, res) {
     let phoneNumber = req.param('phoneNumber');
 
-    if (!validation.phoneNumber.test(phoneNumber)) {
+    if (!ValidationService.phoneNumber(phoneNumber)) {
       return res.send({
         sent: false,
         message: 'Phone number incorrect'

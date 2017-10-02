@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global sails EthereumService */
+/* global sails EthereumService ValidationService */
 
 // We don't want to store password with out encryption
 const bcrypt = require('bcrypt');
@@ -24,7 +24,7 @@ module.exports = {
 
   attributes: {
     // TODO: Add validation for phone and maybe password
-    phone: { type: 'string', unique: true, required: true },
+    phone: { type: 'string', unique: true, required: true, phoneNumber: true },
 
     userName: { type: 'string', unique: true, required: true, alphanumericdashed: true },
 
@@ -66,6 +66,10 @@ module.exports = {
       delete obj.encryptedPassword;
       return obj;
     }
+  },
+
+  types: {
+    phoneNumber: value => ValidationService.phoneNumber(value)
   },
 
   beforeCreate: function (values, cb) {
