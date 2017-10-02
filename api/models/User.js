@@ -24,6 +24,20 @@ module.exports = {
     // TODO: Add validation for phone and maybe password
     phone: { type: 'string', unique: true, required: true },
 
+    userName: { type: 'string', unique: true, required: true, alphanumericdashed: true },
+
+    legalName: { type: 'string' },
+
+    email: { type: 'string', unique: true, email: true },
+
+    dateOfBirth: { type: 'string', datetime: true },
+
+    currency: { type: 'string' },
+
+    postalCode: { type: 'string' },
+
+    address: { type: 'string' },
+
     identity: { type: 'string' },
 
     creator: { type: 'string' },
