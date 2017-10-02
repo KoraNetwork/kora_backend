@@ -26,11 +26,13 @@ module.exports = {
     // TODO: Add validation for phone and maybe password
     phone: { type: 'string', unique: true, required: true, phoneNumber: true },
 
-    userName: { type: 'string', unique: true, required: true, alphanumericdashed: true },
+    username: { type: 'string', required: true, alphanumericdashed: true },
+
+    usernameUnique: { type: 'string', unique: true },
+
+    email: { type: 'string', unique: true, required: true, email: true },
 
     legalName: { type: 'string' },
-
-    email: { type: 'string', unique: true, email: true },
 
     dateOfBirth: { type: 'string', datetime: true },
 
@@ -40,13 +42,13 @@ module.exports = {
 
     address: { type: 'string' },
 
-    identity: { type: 'string' },
+    identity: { type: 'string', address: true, required: true },
 
-    creator: { type: 'string' },
+    creator: { type: 'string', address: true },
 
-    owner: { type: 'string' },
+    owner: { type: 'string', address: true },
 
-    recoveryKey: { type: 'string' },
+    recoveryKey: { type: 'string', address: true },
 
     keystore: { type: 'json' },
 
@@ -64,12 +66,14 @@ module.exports = {
     toJSON: function () {
       var obj = this.toObject();
       delete obj.encryptedPassword;
+      delete obj.usernameUnique;
       return obj;
     }
   },
 
   types: {
-    phoneNumber: value => ValidationService.phoneNumber(value)
+    phoneNumber: value => ValidationService.phoneNumber(value),
+    address: value => ValidationService.address(value)
   },
 
   beforeCreate: function (values, cb) {
@@ -85,6 +89,9 @@ module.exports = {
         return cb(new WLError({status: 400, reason: 'Password must be set'}));
       }
     }
+
+    values.email = values.email.toLowerCase();
+    values.usernameUnique = values.username.toLowerCase();
 
     if (values.role === roles.featurePhone) {
       const {account, keystore} = EthereumService.createAccount({password});
