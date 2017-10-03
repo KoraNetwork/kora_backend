@@ -30,7 +30,7 @@ module.exports = {
 
     usernameUnique: { type: 'string', unique: true },
 
-    email: { type: 'string', unique: true, required: true, email: true },
+    email: { type: 'string', unique: true, email: true },
 
     legalName: { type: 'string' },
 
@@ -90,8 +90,11 @@ module.exports = {
       }
     }
 
-    values.email = values.email.toLowerCase();
     values.usernameUnique = values.username.toLowerCase();
+
+    if (values.email) {
+      values.email = values.email.toLowerCase();
+    }
 
     if (values.role === roles.featurePhone) {
       const {account, keystore} = EthereumService.createAccount({password});
