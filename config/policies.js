@@ -54,9 +54,10 @@ module.exports.policies = {
     '*': true
   },
 
-  // UserController: {
+  UserController: {
+    '*': true
   //   create: true // We dont need authorization here, allowing public access
-  // },
+  },
 
   AuthController: {
     '*': true // We dont need authorization here, allowing public access
