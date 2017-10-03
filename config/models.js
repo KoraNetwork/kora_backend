@@ -28,8 +28,7 @@ module.exports.models = {
   * See http://sailsjs.org/#!/documentation/concepts/ORM/model-settings.html  *
   *                                                                          *
   ***************************************************************************/
-  // migrate: 'alter'
-  migrate: 'safe',
+  migrate: 'alter',
 
   /**
    * A flag to toggle schemaless or schema mode in databases that support

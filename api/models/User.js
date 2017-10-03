@@ -24,13 +24,13 @@ module.exports = {
 
   attributes: {
     // TODO: Add validation for phone and maybe password
-    phone: { type: 'string', unique: true, required: true, phoneNumber: true },
+    phone: { type: 'string', required: true, phoneNumber: true },
 
     username: { type: 'string', required: true, alphanumericdashed: true },
 
-    usernameUnique: { type: 'string', unique: true },
+    usernameUnique: { type: 'string' },
 
-    email: { type: 'string', unique: true, email: true },
+    email: { type: 'string', email: true },
 
     legalName: { type: 'string' },
 
@@ -75,6 +75,22 @@ module.exports = {
     phoneNumber: value => ValidationService.phoneNumber(value),
     address: value => ValidationService.address(value)
   },
+
+  indexes: [
+    {
+      attributes: { phone: 1 },
+      options: { unique: true }
+    }, {
+      attributes: { usernameUnique: 1 },
+      options: { unique: true }
+    }, {
+      attributes: { email: 1 },
+      options: {
+        unique: true,
+        partialFilterExpression: {email: {$exists: true}}
+      }
+    }
+  ],
 
   beforeCreate: function (values, cb) {
     let password = values.password;

@@ -9,9 +9,16 @@ module.exports = {
 
   attributes: {
 
-    phoneNumber: { type: 'string', unique: true, required: true },
+    phoneNumber: { type: 'string', required: true },
 
     verificationCode: { type: 'string', required: true }
 
-  }
+  },
+
+  indexes: [
+    {
+      attributes: { phone: 1 },
+      options: { unique: true }
+    }
+  ]
 };
