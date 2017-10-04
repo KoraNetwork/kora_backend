@@ -7,33 +7,50 @@
 
 /* global User JWTokenService */
 
+const path = require('path');
+// const AVATARS_PATH = '/images/avatars'
+
 module.exports = {
   register: function (req, res) {
     let allParams = req.allParams();
 
     // if (allParams.password !== allParams.confirmPassword) {
-    //   return res.json(401, {err: 'Password doesn\'t match, What a shame!'});
+    //   return res.json(401, {err: 'Password doesn\'t match, What a shame!'})
     // }
     //
-    // delete allParams.confirmPassword;
+    // delete allParams.confirmPassword
 
     if (!allParams.role) {
       allParams.role = User.roles.smartPhone;
     }
 
-    User.create(allParams).exec(function (err, user) {
+    console.log('allParams', allParams);
+
+    req.file('avatar').upload({
+      dirname: '../../assets/images/avatars'
+    }, function (err, uploadedFiles) {
       if (err) {
         return res.json(err.status, {err: err});
       }
 
-      // If user created successfuly we return user and token as response
-      if (user) {
-       // NOTE: payload is { id: user.id}
-        res.json(200, {
-          user: user,
-          sessionToken: JWTokenService.issue({id: user.id})
-        });
+      if (uploadedFiles.length && uploadedFiles[0].fd) {
+        allParams.avatar = path.join('/images', 'avatars', path.basename(uploadedFiles[0].fd));
       }
+
+      User.create(allParams).exec(function (err, user) {
+        if (err) {
+          return res.json(err.status, {err: err});
+        }
+
+        // If user created successfuly we return user and token as response
+        if (user) {
+          // NOTE: payload is { id: user.id}
+          return res.json(200, {
+            user: user,
+            sessionToken: JWTokenService.issue({id: user.id})
+          });
+        }
+      });
     });
   },
 
