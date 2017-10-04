@@ -8,7 +8,6 @@
 /* global User JWTokenService */
 
 const path = require('path');
-// const AVATARS_PATH = '/images/avatars'
 
 module.exports = {
   register: function (req, res) {
@@ -23,8 +22,6 @@ module.exports = {
     if (!allParams.role) {
       allParams.role = User.roles.smartPhone;
     }
-
-    console.log('allParams', allParams);
 
     req.file('avatar').upload({
       dirname: '../../assets/images/avatars'
