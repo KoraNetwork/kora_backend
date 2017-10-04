@@ -52,6 +52,8 @@ module.exports = {
 
     keystore: { type: 'json' },
 
+    avatar: { type: 'string' },
+
     role: {
       type: 'string',
       in: [roles.featurePhone, roles.smartPhone],
