@@ -26,9 +26,9 @@ module.exports = {
     // TODO: Add validation for phone and maybe password
     phone: { type: 'string', required: true, phoneNumber: true },
 
-    username: { type: 'string', required: true, alphanumericdashed: true },
+    userName: { type: 'string', required: true, alphanumericdashed: true },
 
-    usernameUnique: { type: 'string' },
+    userNameUnique: { type: 'string' },
 
     email: { type: 'string', email: true },
 
@@ -52,8 +52,6 @@ module.exports = {
 
     keystore: { type: 'json' },
 
-    avatar: { type: 'string' },
-
     role: {
       type: 'string',
       in: [roles.featurePhone, roles.smartPhone],
@@ -68,7 +66,7 @@ module.exports = {
     toJSON: function () {
       var obj = this.toObject();
       delete obj.encryptedPassword;
-      delete obj.usernameUnique;
+      delete obj.userNameUnique;
       return obj;
     }
   },
@@ -83,7 +81,7 @@ module.exports = {
       attributes: { phone: 1 },
       options: { unique: true }
     }, {
-      attributes: { usernameUnique: 1 },
+      attributes: { userNameUnique: 1 },
       options: { unique: true }
     }, {
       attributes: { email: 1 },
@@ -108,7 +106,7 @@ module.exports = {
       }
     }
 
-    values.usernameUnique = values.username.toLowerCase();
+    values.userNameUnique = values.userName.toLowerCase();
 
     if (values.email) {
       values.email = values.email.toLowerCase();
