@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails MiscService VerificationCode ValidationService  */
+/* global sails MiscService VerificationCode ValidationService User */
 
 const {accountSid, authToken, fromNumber} = sails.config.twilio;
 
@@ -27,43 +27,56 @@ module.exports = {
       });
     }
 
-    let verificationCode = MiscService.randomInteger4().toString();
+    User.findOne({phone: phoneNumber}).exec((err, user) => {
+      if (err) {
+        return res.negotiate(err);
+      }
 
-    client.messages.create({
-      body: `Your code for Kora MVP - ${verificationCode}`,
-      to: `+${phoneNumber}`,
-      from: fromNumber
-    })
-      .then((message) => new Promise((resolve, reject) => {
-        const cb = (err) => {
-          if (err) {
-            return reject(err);
-          }
-
-          const text = 'SMS message with verification code was send';
-
-          sails.log.info(`${text} to ${phoneNumber}. Massage sid: ${message.sid}`);
-
-          return resolve({
-            sent: true,
-            message: text
-          });
-        };
-
-        VerificationCode.findOne({phoneNumber}).exec((err, record) => {
-          if (err) {
-            return reject(err);
-          }
-
-          if (record) {
-            VerificationCode.update({phoneNumber}, {verificationCode}).exec(cb);
-          } else {
-            VerificationCode.create({phoneNumber, verificationCode}).exec(cb);
-          }
+      if (user) {
+        return res.send({
+          sent: false,
+          message: 'User with this phone number already registered'
         });
-      }))
-      .then(result => res.send(result))
-      .catch(err => res.negotiate(err));
+      }
+
+      let verificationCode = MiscService.randomInteger4().toString();
+
+      client.messages.create({
+        body: `Your code for Kora MVP - ${verificationCode}`,
+        to: `+${phoneNumber}`,
+        from: fromNumber
+      })
+        .then((message) => new Promise((resolve, reject) => {
+          const cb = (err) => {
+            if (err) {
+              return reject(err);
+            }
+
+            const text = 'SMS message with verification code was send';
+
+            sails.log.info(`${text} to ${phoneNumber}. Massage sid: ${message.sid}`);
+
+            return resolve({
+              sent: true,
+              message: text
+            });
+          };
+
+          VerificationCode.findOne({phoneNumber}).exec((err, record) => {
+            if (err) {
+              return reject(err);
+            }
+
+            if (record) {
+              VerificationCode.update({phoneNumber}, {verificationCode}).exec(cb);
+            } else {
+              VerificationCode.create({phoneNumber, verificationCode}).exec(cb);
+            }
+          });
+        }))
+        .then(result => res.send(result))
+        .catch(err => res.negotiate(err));
+    });
   },
 
   /**
