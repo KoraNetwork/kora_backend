@@ -27,7 +27,7 @@ module.exports = {
       dirname: '../../assets/images/avatars'
     }, function (err, uploadedFiles) {
       if (err) {
-        return res.json(err.status, {err: err});
+        return res.json(422, err);
       }
 
       if (uploadedFiles.length && uploadedFiles[0].fd) {
@@ -36,7 +36,8 @@ module.exports = {
 
       User.create(allParams).exec(function (err, user) {
         if (err) {
-          return res.json(err.status, {err: err});
+          err.status = 422;
+          return res.json(422, err);
         }
 
         // If user created successfuly we return user and token as response
