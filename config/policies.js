@@ -73,5 +73,9 @@ module.exports.policies = {
 
   TestController: {
     '*': true
+  },
+
+  CountriesController: {
+    '*': true
   }
 };
