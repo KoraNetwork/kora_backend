@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Policies
  */
 
-/* global JWTokenService */
+/* global JWTokenService User */
 
 module.exports = function (req, res, next) {
   var token;
@@ -27,6 +27,24 @@ module.exports = function (req, res, next) {
 
     req.token = token; // This is the decrypted token or the payload you provided
 
-    return next();
+    let userId = token.id;
+
+    if (!userId) {
+      return next();
+    }
+
+    User.findOne({id: userId}).exec(function (err, user) {
+      if (err) {
+        return res.serverError(err);
+      }
+
+      if (!user) {
+        return res.serverError(new Error('Could not find user in session!'));
+      }
+
+      req.user = user;
+
+      return next();
+    });
   });
 };
