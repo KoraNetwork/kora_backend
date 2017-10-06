@@ -43,7 +43,12 @@ module.exports = {
    */
   reply: function (req, res) {
     var twiml = new MessagingResponse();
-    twiml.message(ParserService.parse(TrialService.getMessage(req.body.Body), req.body.From));
+    twiml.message(ParserService.parse({
+      message: TrialService.getMessage(req.body.Body),
+      phoneNumber: req.body.From,
+      session: req.session
+    }));
+
     res.writeHead(200, {'Content-Type': 'text/xml'});
     res.end(twiml.toString());
   }
