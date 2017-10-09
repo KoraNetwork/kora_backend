@@ -17,7 +17,7 @@ module.exports = {
 
   indexes: [
     {
-      attributes: { phone: 1 },
+      attributes: { phoneNumber: 1 },
       options: { unique: true }
     }
   ]

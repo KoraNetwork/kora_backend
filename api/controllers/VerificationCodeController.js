@@ -75,7 +75,13 @@ module.exports = {
           });
         }))
         .then(result => res.send(result))
-        .catch(err => res.negotiate(err));
+        .catch(err => {
+          // eslint-disable-next-line eqeqeq
+          if (err.status == 400) {
+            return res.send(422, err);
+          }
+          return res.serverError(err);
+        });
     });
   },
 
