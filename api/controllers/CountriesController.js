@@ -16,11 +16,11 @@ const countriesFilter = [
 
 const parsedCountries = worldCountries
   .filter(el => ~countriesFilter.indexOf(el.cca2))
-  .map(({name: {common: name}, currency: [currency], callingCode: [callingCode], cca3}) => ({
+  .map(({name: {common: name}, currency: [currency], callingCode: [callingCode], cca2}) => ({
     name,
     currency,
     phoneCode: `+${callingCode}`,
-    flag: `/countries/${cca3.toLowerCase()}.svg`
+    flag: `/flags/${cca2}.png`
   }));
 
 module.exports = {
