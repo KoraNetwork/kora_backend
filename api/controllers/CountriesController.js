@@ -20,7 +20,7 @@ const parsedCountries = worldCountries
     name,
     currency,
     phoneCode: `+${callingCode}`,
-    flag: `/flags/${cca2}.png`
+    flag: `/images/flags/${cca2}.png`
   }));
 
 module.exports = {
