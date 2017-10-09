@@ -157,5 +157,15 @@ module.exports = {
         cb(err);
       }
     });
+  },
+
+  findOneUnique: function (identifier, cb) {
+    this.findOne({$or: [
+      {phone: identifier},
+      {userNameUnique: identifier.toLowerCase()},
+      {email: identifier.toLowerCase()}
+    ]})
+      .then(user => cb(null, user))
+      .catch(err => cb(err));
   }
 };

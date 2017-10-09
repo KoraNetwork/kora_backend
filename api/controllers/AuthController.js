@@ -53,29 +53,29 @@ module.exports = {
   },
 
   login: function (req, res) {
-    var phone = req.param('phone');
+    var identifier = req.param('identifier');
     var password = req.param('password');
 
-    if (!phone || !password) {
-      return res.json(401, {err: 'phone and password required'});
+    if (!identifier || !password) {
+      return res.send(401, 'Identifier and password required');
     }
 
-    User.findOne({phone: phone}, function (err, user) {
+    User.findOneUnique(identifier, function (err, user) {
       if (err) {
-        return res.json(err.status, {err: err});
+        return res.send(500, err);
       }
 
       if (!user) {
-        return res.json(401, {err: 'invalid phone or password'});
+        return res.send(401, 'Invalid identifier or password');
       }
 
       User.comparePassword(password, user, function (err, valid) {
         if (err) {
-          return res.json(403, {err: 'forbidden'});
+          return res.send(403, 'Forbidden');
         }
 
         if (!valid) {
-          return res.json(401, {err: 'invalid phone or password'});
+          return res.send(401, 'Invalid identifier or password');
         } else {
           res.json({
             user: user,
