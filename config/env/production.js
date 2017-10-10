@@ -54,6 +54,16 @@ module.exports = {
   ***************************************************************************/
   keepResponseErrors: true,
 
+  /**
+   * Blueprint API configuration
+   */
+  blueprints: {
+    /**
+     * Shortcut routes disable
+     */
+    shortcuts: false
+  },
+
   /***************************************************************************
    * Enable morgan logger sails-hook-requestlogger                           *
    ***************************************************************************/
