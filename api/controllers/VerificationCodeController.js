@@ -21,22 +21,16 @@ module.exports = {
     let phoneNumber = req.param('phoneNumber');
 
     if (!ValidationService.phoneNumber(phoneNumber)) {
-      return res.send({
-        sent: false,
-        message: 'Phone number incorrect'
-      });
+      return res.send(422, 'Phone number incorrect');
     }
 
     User.findOne({phone: phoneNumber}).exec((err, user) => {
       if (err) {
-        return res.negotiate(err);
+        return res.serverError(err);
       }
 
       if (user) {
-        return res.send({
-          sent: false,
-          message: 'User with this phone number already registered'
-        });
+        return res.send(422, 'User with this phone number already registered');
       }
 
       let verificationCode = MiscService.randomInteger4().toString();
@@ -56,10 +50,7 @@ module.exports = {
 
             sails.log.info(`${text} to ${phoneNumber}. Massage sid: ${message.sid}`);
 
-            return resolve({
-              sent: true,
-              message: text
-            });
+            return resolve(text);
           };
 
           VerificationCode.findOne({phoneNumber}).exec((err, record) => {
@@ -80,6 +71,7 @@ module.exports = {
           if (err.status == 400) {
             return res.send(422, err);
           }
+
           return res.serverError(err);
         });
     });
@@ -94,21 +86,15 @@ module.exports = {
 
     VerificationCode.findOne({phoneNumber}).exec((err, record) => {
       if (err) {
-        return res.negotiate(err);
+        return res.serverError(err);
       }
 
       if (!record) {
-        return res.send({
-          confirmed: false,
-          message: 'Verification code was not send to you'
-        });
+        return res.send(422, 'Verification code was not send to you');
       }
 
       if (verificationCode !== record.verificationCode) {
-        return res.send({
-          confirmed: false,
-          message: 'Verification code incorrect'
-        });
+        return res.send(422, 'Verification code incorrect');
       }
 
       VerificationCode.destroy({phoneNumber}, err => {
@@ -117,10 +103,7 @@ module.exports = {
         }
       });
 
-      return res.send({
-        confirmed: true,
-        message: 'Verification code confirmed'
-      });
+      return res.send('Verification code confirmed');
     });
   }
 };
