@@ -28,7 +28,7 @@ module.exports = {
 
     userName: { type: 'string', required: true, alphanumericdashed: true },
 
-    userNameUnique: { type: 'string' },
+    userNameOrigin: { type: 'string' },
 
     email: { type: 'string', email: true },
 
@@ -67,9 +67,12 @@ module.exports = {
     // We don't wan't to send back encrypted password either
     toJSON: function () {
       var obj = this.toObject();
+
+      obj.userName = obj.userNameOrigin;
+      delete obj.userNameOrigin;
       delete obj.encryptedPassword;
-      delete obj.userNameUnique;
       delete obj.keystore;
+
       return obj;
     }
   },
@@ -84,7 +87,7 @@ module.exports = {
       attributes: { phone: 1 },
       options: { unique: true }
     }, {
-      attributes: { userNameUnique: 1 },
+      attributes: { userName: 1 },
       options: { unique: true }
     }, {
       attributes: { email: 1 },
@@ -109,7 +112,8 @@ module.exports = {
       }
     }
 
-    values.userNameUnique = values.userName.toLowerCase();
+    values.userNameOrigin = values.userName;
+    values.userName = values.userName.toLowerCase();
 
     if (values.email) {
       values.email = values.email.toLowerCase();
@@ -159,7 +163,7 @@ module.exports = {
   findOneUnique: function (identifier, cb) {
     this.findOne({$or: [
       {phone: identifier},
-      {userNameUnique: identifier.toLowerCase()},
+      {userName: identifier.toLowerCase()},
       {email: identifier.toLowerCase()}
     ]})
       .then(user => cb(null, user))
