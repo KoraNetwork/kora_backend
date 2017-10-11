@@ -71,13 +71,13 @@ module.exports = {
 
       User.comparePassword(password, user, function (err, valid) {
         if (err) {
-          return res.send(403, 'Forbidden');
+          return res.send(500, err);
         }
 
         if (!valid) {
           return res.send(401, 'Invalid identifier or password');
         } else {
-          res.json({
+          return res.json({
             user: user,
             sessionToken: JWTokenService.issue({id: user.id})
           });

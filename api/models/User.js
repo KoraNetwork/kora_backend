@@ -69,6 +69,7 @@ module.exports = {
       var obj = this.toObject();
       delete obj.encryptedPassword;
       delete obj.userNameUnique;
+      delete obj.keystore;
       return obj;
     }
   },
@@ -151,11 +152,7 @@ module.exports = {
         return cb(err);
       }
 
-      if (match) {
-        cb(null, true);
-      } else {
-        cb(err);
-      }
+      return cb(null, match);
     });
   },
 
