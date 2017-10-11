@@ -14,7 +14,7 @@ module.exports = {
     let allParams = req.allParams();
 
     // if (allParams.password !== allParams.confirmPassword) {
-    //   return res.json(401, {err: 'Password doesn\'t match, What a shame!'})
+    //   return res.json(422, {err: 'Password doesn\'t match, What a shame!'})
     // }
     //
     // delete allParams.confirmPassword
@@ -57,7 +57,7 @@ module.exports = {
     var password = req.param('password');
 
     if (!identifier || !password) {
-      return res.send(401, 'Identifier and password required');
+      return res.send(422, 'Identifier and password required');
     }
 
     User.findOneUnique(identifier, function (err, user) {
@@ -66,7 +66,7 @@ module.exports = {
       }
 
       if (!user) {
-        return res.send(401, 'Invalid identifier or password');
+        return res.send(422, 'Invalid identifier or password');
       }
 
       User.comparePassword(password, user, function (err, valid) {
@@ -75,7 +75,7 @@ module.exports = {
         }
 
         if (!valid) {
-          return res.send(401, 'Invalid identifier or password');
+          return res.send(422, 'Invalid identifier or password');
         } else {
           return res.json({
             user: user,
