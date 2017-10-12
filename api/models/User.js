@@ -79,6 +79,8 @@ module.exports = {
 
       if (obj.countryCode) {
         obj.flag = CountriesService.flagImg(obj.countryCode);
+        obj.currencyName = CountriesService.collection[obj.countryCode].currencyName;
+        obj.currencyNameFull = CountriesService.collection[obj.countryCode].currencyNameFull;
       }
 
       return obj;
