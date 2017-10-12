@@ -30,7 +30,7 @@ module.exports = {
       }
 
       if (user) {
-        return res.send(422, 'User with this phone number already registered');
+        return res.send(422, 'Phone number is already registered');
       }
 
       let verificationCode = MiscService.randomInteger4().toString();
@@ -94,7 +94,7 @@ module.exports = {
       }
 
       if (verificationCode !== record.verificationCode) {
-        return res.send(422, 'Verification code incorrect');
+        return res.send(422, 'Wrong confirmation code. Try to resend');
       }
 
       VerificationCode.destroy({phoneNumber}, err => {

@@ -7,8 +7,6 @@
 
 module.exports = {
 
-
-
   /**
    * `UssdController.callback()`
    */
@@ -19,4 +17,3 @@ module.exports = {
     return res.send(text);
   }
 };
-

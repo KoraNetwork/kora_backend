@@ -66,7 +66,7 @@ module.exports = {
       }
 
       if (!user) {
-        return res.send(422, 'Invalid identifier or password');
+        return res.send(422, 'Wrong identifier or password');
       }
 
       User.comparePassword(password, user, function (err, valid) {
@@ -75,7 +75,7 @@ module.exports = {
         }
 
         if (!valid) {
-          return res.send(422, 'Invalid identifier or password');
+          return res.send(422, 'Wrong identifier or password');
         } else {
           return res.json({
             user: user,
