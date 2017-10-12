@@ -21,7 +21,7 @@ module.exports = {
     let phoneNumber = req.param('phoneNumber');
 
     if (!ValidationService.phoneNumber(phoneNumber)) {
-      return res.send(422, 'Phone number incorrect');
+      return res.send(422, {message: 'Phone number incorrect'});
     }
 
     User.findOne({phone: phoneNumber}).exec((err, user) => {
@@ -30,7 +30,7 @@ module.exports = {
       }
 
       if (user) {
-        return res.send(422, 'Phone number is already registered');
+        return res.send(422, {message: 'Phone number is already registered'});
       }
 
       let verificationCode = MiscService.randomInteger4().toString();
@@ -50,7 +50,7 @@ module.exports = {
 
             sails.log.info(`${text} to ${phoneNumber}. Massage sid: ${message.sid}`);
 
-            return resolve(text);
+            return resolve({message: text});
           };
 
           VerificationCode.findOne({phoneNumber}).exec((err, record) => {
@@ -90,11 +90,11 @@ module.exports = {
       }
 
       if (!record) {
-        return res.send(422, 'Verification code was not send to you');
+        return res.send(422, {message: 'Verification code was not send to you'});
       }
 
       if (verificationCode !== record.verificationCode) {
-        return res.send(422, 'Wrong confirmation code. Try to resend');
+        return res.send(422, {message: 'Wrong confirmation code. Try to resend'});
       }
 
       VerificationCode.destroy({phoneNumber}, err => {

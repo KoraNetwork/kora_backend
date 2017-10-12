@@ -57,7 +57,7 @@ module.exports = {
     var password = req.param('password');
 
     if (!identifier || !password) {
-      return res.send(422, 'Identifier and password required');
+      return res.send(422, {message: 'Identifier and password required'});
     }
 
     User.findOneUnique(identifier, function (err, user) {
@@ -66,7 +66,7 @@ module.exports = {
       }
 
       if (!user) {
-        return res.send(422, 'Wrong identifier or password');
+        return res.send(422, {message: 'Wrong identifier or password'});
       }
 
       User.comparePassword(password, user, function (err, valid) {
@@ -75,7 +75,7 @@ module.exports = {
         }
 
         if (!valid) {
-          return res.send(422, 'Wrong identifier or password');
+          return res.send(422, {message: 'Wrong identifier or password'});
         } else {
           return res.json({
             user: user,
