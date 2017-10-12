@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global sails EthereumService ValidationService */
+/* global sails EthereumService ValidationService CountriesService */
 
 // We don't want to store password with out encryption
 const bcrypt = require('bcrypt');
@@ -36,7 +36,11 @@ module.exports = {
 
     dateOfBirth: { type: 'string' }, // datetime: true
 
-    currency: { type: 'string' },
+    currency: { type: 'string', in: CountriesService.list.map(el => el.currency) },
+
+    countryCode: { type: 'string', in: CountriesService.list.map(el => el.countryCode) },
+
+    ERC20Token: { type: 'string', address: true, in: CountriesService.list.map(el => el.ERC20Token) },
 
     postalCode: { type: 'string' },
 
@@ -72,6 +76,10 @@ module.exports = {
       delete obj.userNameOrigin;
       delete obj.encryptedPassword;
       delete obj.keystore;
+
+      if (obj.countryCode) {
+        obj.flag = CountriesService.flagImg(obj.countryCode);
+      }
 
       return obj;
     }
@@ -117,6 +125,11 @@ module.exports = {
 
     if (values.email) {
       values.email = values.email.toLowerCase();
+    }
+
+    if (values.countryCode) {
+      values.currency = CountriesService.collection[values.countryCode].currency;
+      values.ERC20Token = CountriesService.collection[values.countryCode].ERC20Token;
     }
 
     if (values.role === roles.featurePhone) {
