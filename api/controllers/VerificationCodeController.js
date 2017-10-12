@@ -103,7 +103,7 @@ module.exports = {
         }
       });
 
-      return res.send('Verification code confirmed');
+      return res.send({message: 'Verification code confirmed'});
     });
   }
 };
