@@ -55,8 +55,11 @@ module.exports.policies = {
   },
 
   UserController: {
-    '*': true
-  //   create: true // We dont need authorization here, allowing public access
+    update: ['isMyProfile'],
+    // destroy: ['isMyProfile'],
+    find: true,
+    findOne: true,
+    create: true
   },
 
   AuthController: {

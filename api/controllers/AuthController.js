@@ -14,7 +14,7 @@ module.exports = {
     let allParams = req.allParams();
 
     // if (allParams.password !== allParams.confirmPassword) {
-    //   return res.json(422, {err: 'Password doesn\'t match, What a shame!'})
+    //   return res.json(422, {message: 'Password doesn\'t match, What a shame!'})
     // }
     //
     // delete allParams.confirmPassword

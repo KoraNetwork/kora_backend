@@ -17,12 +17,12 @@ module.exports = function (req, res, next) {
     // We delete the token from param to not mess with blueprints
     delete req.query.sessionToken;
   } else {
-    return res.json(401, {err: 'No Session-Token header was found'});
+    return res.json(401, {message: 'No Session-Token header was found'});
   }
 
   JWTokenService.verify(token, function (err, token) {
     if (err) {
-      return res.json(401, {err: 'Invalid Session-Token!'});
+      return res.json(401, {message: 'Invalid Session-Token!'});
     }
 
     req.token = token; // This is the decrypted token or the payload you provided
