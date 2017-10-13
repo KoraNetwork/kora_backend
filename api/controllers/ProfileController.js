@@ -80,11 +80,11 @@ module.exports = {
                   sails.log.error(err);
                 }
 
-                return res.json({user});
+                return res.json(user);
               });
             }
 
-            return res.json({user});
+            return res.json(user);
           });
         });
       }
