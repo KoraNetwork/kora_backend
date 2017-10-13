@@ -165,6 +165,18 @@ module.exports = {
     }
   },
 
+  beforeUpdate: function (values, cb) {
+    if (values.encryptedPassword) {
+      delete values.encryptedPassword;
+    }
+
+    if (values.avatar) {
+      delete values.avatar;
+    }
+
+    return cb();
+  },
+
   comparePassword: function (password, user, cb) {
     bcrypt.compare(password, user.encryptedPassword, function (err, match) {
       if (err) {
