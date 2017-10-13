@@ -32,7 +32,7 @@ module.exports = {
           return res.serverError(err);
         }
 
-        return res.json(user);
+        return res.json(user.pop());
       });
     }
 
