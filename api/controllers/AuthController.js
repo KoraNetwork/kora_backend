@@ -27,7 +27,7 @@ module.exports = {
       dirname: '../../assets/images/avatars'
     }, function (err, uploadedFiles) {
       if (err) {
-        return res.json(422, err);
+        return res.json(500, err);
       }
 
       if (uploadedFiles.length && uploadedFiles[0].fd) {
