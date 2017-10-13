@@ -166,12 +166,9 @@ module.exports = {
   },
 
   beforeUpdate: function (values, cb) {
-    if (values.encryptedPassword) {
-      delete values.encryptedPassword;
-    }
-
-    if (values.avatar) {
-      delete values.avatar;
+    if (values.countryCode) {
+      values.currency = CountriesService.collection[values.countryCode].currency;
+      values.ERC20Token = CountriesService.collection[values.countryCode].ERC20Token;
     }
 
     return cb();

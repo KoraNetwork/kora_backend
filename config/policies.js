@@ -55,11 +55,12 @@ module.exports.policies = {
   },
 
   UserController: {
-    update: ['isMyProfile'],
-    // destroy: ['isMyProfile'],
+    '*': ['isMyProfile'],
+    create: true,
+    // Remove this after register will be done
+    destroy: true,
     find: true,
-    findOne: true,
-    create: true
+    findOne: true
   },
 
   AuthController: {

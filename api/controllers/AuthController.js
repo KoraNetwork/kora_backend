@@ -27,7 +27,7 @@ module.exports = {
       dirname: '../../assets/images/avatars'
     }, function (err, uploadedFiles) {
       if (err) {
-        return res.json(500, err);
+        return res.serverError(err);
       }
 
       if (uploadedFiles.length && uploadedFiles[0].fd) {
@@ -62,7 +62,7 @@ module.exports = {
 
     User.findOneUnique(identifier, function (err, user) {
       if (err) {
-        return res.send(500, err);
+        return res.serverError(err);
       }
 
       if (!user) {
@@ -71,7 +71,7 @@ module.exports = {
 
       User.comparePassword(password, user, function (err, valid) {
         if (err) {
-          return res.send(500, err);
+          return res.serverError(err);
         }
 
         if (!valid) {
