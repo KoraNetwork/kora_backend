@@ -20,20 +20,20 @@ module.exports = {
       sort = 'userName'
     } = req.allParams();
 
-    User.find({
-      where: {
-        or: [
-          {phone: {contains: search}},
-          {userName: {contains: search}},
-          {email: {contains: search}},
-          {legalName: {contains: search}}
-        ]
-      },
-      limit,
-      skip,
-      sort
-    })
-    .then(result => res.json(result))
+    let searchQuery = {
+      or: [
+        {phone: {contains: search}},
+        {userName: {contains: search}},
+        {email: {contains: search}},
+        {legalName: {contains: search}}
+      ]
+    };
+
+    Promise.all([
+      User.find({ where: searchQuery, limit, skip, sort }),
+      User.count(searchQuery)
+    ])
+    .then(([data, total]) => res.json({data, total}))
     .catch(err => res.serverError(err));
   }
 };
