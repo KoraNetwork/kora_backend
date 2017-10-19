@@ -5,20 +5,27 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-const types = {
-  // borrow: 'borrow',
-  send: 'send',
-  cash: 'cash'
+/* global _ ValidationService */
+
+const txTypes = {
+  borrow: 'borrow',
+  cash: 'cash',
+  request: 'request',
+  send: 'send'
 };
 
+const txTypesList = _.values(txTypes);
+
 module.exports = {
-  types,
+  txTypes,
+
+  txTypesList,
 
   attributes: {
     type: {
       type: 'string',
-      in: [types.send, types.cash],
-      defaultsTo: types.send
+      in: txTypesList,
+      defaultsTo: txTypes.send
     },
 
     from: { model: 'user' },
@@ -27,8 +34,12 @@ module.exports = {
 
     fromAmount: { type: 'number' },
 
-    toAmount: { type: 'number' }
+    toAmount: { type: 'number' },
 
-    // Maybe add some tx data
+    transactionHash: { type: 'string', address: true }
+  },
+
+  types: {
+    address: value => ValidationService.address(value)
   }
 };
