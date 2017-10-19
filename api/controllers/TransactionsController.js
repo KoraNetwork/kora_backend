@@ -8,7 +8,7 @@
 /* global Transactions */
 
 module.exports = {
-  index: function (req, res) {
+  find: function (req, res) {
     const userId = req.user.id;
     const {
       limit = 10,
@@ -32,6 +32,27 @@ module.exports = {
     ])
     .then(([data, total]) => res.json({data, total}))
     .catch(err => res.serverError(err));
+  },
+
+  create: function (req, res) {
+    let allParams = req.allParams();
+
+    allParams.from = req.user.id;
+    allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
+    allParams.toAmount = parseFloat(allParams.toAmount, 10);
+
+    Transactions.create(allParams)
+      .then(result => res.ok(result))
+      .catch(err => {
+        // eslint-disable-next-line eqeqeq
+        if (err.status == 400) {
+          err.status = 422;
+
+          return res.json(422, err);
+        }
+
+        return res.negotiate(err);
+      });
   },
 
   types: function (req, res) {

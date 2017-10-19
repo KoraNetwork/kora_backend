@@ -5,7 +5,9 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ ValidationService */
+/* global _ ValidationService User */
+
+const WLError = require('waterline/lib/waterline/error/WLError');
 
 const txTypes = {
   borrow: 'borrow',
@@ -25,21 +27,42 @@ module.exports = {
     type: {
       type: 'string',
       in: txTypesList,
-      defaultsTo: txTypes.send
+      required: true
     },
 
-    from: { model: 'user' },
+    from: { model: 'user', required: true },
 
-    to: { model: 'user' },
+    to: { model: 'user', required: true },
 
-    fromAmount: { type: 'number' },
+    fromAmount: { type: 'float', required: true },
 
-    toAmount: { type: 'number' },
+    toAmount: { type: 'float', required: true },
 
-    transactionHash: { type: 'string', address: true }
+    transactionHash: { type: 'string', hex: true, required: true }
   },
 
   types: {
-    address: value => ValidationService.address(value)
+    hex: value => ValidationService.hex(value)
+  },
+
+  beforeCreate: function (values, cb) {
+    const { from, to } = values;
+
+    Promise.all([
+      User.findOne({id: from}),
+      User.findOne({id: to})
+    ])
+      .then(([fromUser, toUser]) => {
+        if (!fromUser) {
+          return Promise.reject(new WLError({status: 404, reason: 'From user not exists'}));
+        }
+
+        if (!toUser) {
+          return Promise.reject(new WLError({status: 404, reason: 'To user not exists'}));
+        }
+
+        return cb();
+      })
+      .catch(err => cb(err));
   }
 };
