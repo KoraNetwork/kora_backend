@@ -45,6 +45,11 @@ module.exports = {
     hex: value => ValidationService.hex(value)
   },
 
+  indexes: [
+    { attributes: { from: 1, updatedAt: -1 } },
+    { attributes: { to: 1, updatedAt: -1 } }
+  ],
+
   beforeCreate: function (values, cb) {
     const { from, to } = values;
 
