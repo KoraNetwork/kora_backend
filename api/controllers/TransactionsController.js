@@ -10,11 +10,13 @@
 module.exports = {
   find: function (req, res) {
     const userId = req.user.id;
+    const sort = 'updatedAt DESC';
     const {
+      direction,
+      type,
       limit = 10,
       skip = 0
     } = req.allParams();
-    const sort = 'updatedAt DESC';
 
     let where = {
       or: [
@@ -22,6 +24,17 @@ module.exports = {
         { to: userId }
       ]
     };
+
+    if (type) {
+      where.type = type;
+    }
+
+    if (direction) {
+      // If direction accidentally will be Array
+      let directions = Array.isArray(direction) ? direction : [direction];
+
+      directions.forEach(el => (where[el] = userId));
+    }
 
     Promise.all([
       Transactions
