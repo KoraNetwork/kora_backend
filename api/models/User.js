@@ -105,6 +105,8 @@ module.exports = {
         unique: true,
         partialFilterExpression: {email: {$exists: true}}
       }
+    }, {
+      attributes: { legalName: 1 }
     }
   ],
 
