@@ -29,6 +29,10 @@ module.exports = {
       ]
     };
 
+    if (req.user) {
+      searchQuery.id = {'!': req.user.id};
+    }
+
     Promise.all([
       User.find({ where: searchQuery, limit, skip, sort }),
       User.count(searchQuery)
