@@ -38,11 +38,11 @@ module.exports = {
 
     toAmount: { type: 'float', required: true },
 
-    transactionHash: { type: 'string', hex: true, required: true }
+    transactionHash: { type: 'array', hexArray: true, required: true }
   },
 
   types: {
-    hex: value => ValidationService.hex(value)
+    hexArray: value => value.every(el => ValidationService.hex(el))
   },
 
   indexes: [
