@@ -67,12 +67,15 @@ module.exports = {
     allParams.toAmount = parseFloat(allParams.toAmount, 10);
 
     Transactions.create(allParams)
-      .then(result => res.ok(result))
+      .then(({id}) => Transactions.findOne({id}).populate('from').populate('to'))
+      .then(result => {
+        result.direction = Transactions.directions.from;
+        return res.ok(result);
+      })
       .catch(err => {
         // eslint-disable-next-line eqeqeq
         if (err.status == 400) {
           err.status = 422;
-
           return res.json(422, err);
         }
 
