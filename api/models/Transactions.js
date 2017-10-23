@@ -23,12 +23,16 @@ const directions = {
   to: 'to'
 };
 
+const directionsList = _.values(directions);
+
 module.exports = {
   txTypes,
 
   txTypesList,
 
   directions,
+
+  directionsList,
 
   attributes: {
     type: {

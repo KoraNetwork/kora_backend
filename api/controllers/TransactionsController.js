@@ -88,5 +88,12 @@ module.exports = {
       list: Transactions.txTypesList,
       collection: Transactions.txTypes
     });
+  },
+
+  filters: function (req, res) {
+    return res.json({
+      type: Transactions.txTypesList,
+      direction: Transactions.directionsList
+    });
   }
 };
