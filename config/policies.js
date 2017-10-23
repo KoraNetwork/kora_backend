@@ -57,8 +57,8 @@ module.exports.policies = {
   UserController: {
     '*': ['isMyProfile'],
     create: true,
+    destroy: false,
     // Remove this after register will be done
-    destroy: true,
     find: true,
     findOne: true
   },
@@ -81,5 +81,13 @@ module.exports.policies = {
 
   CountriesController: {
     '*': true
+  },
+
+  Recents: {
+    destroy: false
+  },
+
+  Transactions: {
+    destroy: false
   }
 };
