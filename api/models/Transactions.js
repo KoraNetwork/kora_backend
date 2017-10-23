@@ -45,7 +45,9 @@ module.exports = {
 
     toAmount: { type: 'float', required: true },
 
-    transactionHash: { type: 'array', hexArray: true, required: true }
+    transactionHash: { type: 'array', hexArray: true, required: true },
+
+    additionalNote: { type: 'string' }
   },
 
   types: {
