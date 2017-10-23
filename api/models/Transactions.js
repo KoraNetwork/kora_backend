@@ -18,10 +18,17 @@ const txTypes = {
 
 const txTypesList = _.values(txTypes);
 
+const directions = {
+  from: 'from',
+  to: 'to'
+};
+
 module.exports = {
   txTypes,
 
   txTypesList,
+
+  directions,
 
   attributes: {
     type: {

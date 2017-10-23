@@ -43,7 +43,19 @@ module.exports = {
         .populate('to'),
       Transactions.count(where)
     ])
-    .then(([data, total]) => res.json({data, total}))
+    .then(([data, total]) => {
+      data.forEach(el => {
+        if (el.from && el.from.id === userId) {
+          el.direction = Transactions.directions.from;
+        }
+
+        if (el.to && el.to.id === userId) {
+          el.direction = Transactions.directions.to;
+        }
+      });
+
+      return res.json({data, total});
+    })
     .catch(err => res.serverError(err));
   },
 
