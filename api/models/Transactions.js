@@ -7,35 +7,32 @@
 
 /* global _ ValidationService UserService */
 
-const txTypes = {
+const types = {
   borrow: 'borrow',
   cash: 'cash',
   request: 'request',
   send: 'send'
 };
-
-const txTypesList = _.values(txTypes);
+const typesList = _.values(types);
 
 const directions = {
   from: 'from',
   to: 'to'
 };
-
 const directionsList = _.values(directions);
 
 module.exports = {
-  txTypes,
-
-  txTypesList,
-
-  directions,
-
-  directionsList,
+  constants: {
+    types,
+    typesList,
+    directions,
+    directionsList
+  },
 
   attributes: {
     type: {
       type: 'string',
-      in: txTypesList,
+      in: typesList,
       required: true
     },
 

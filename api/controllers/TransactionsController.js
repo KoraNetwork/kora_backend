@@ -46,11 +46,11 @@ module.exports = {
     .then(([data, total]) => {
       data.forEach(el => {
         if (el.from && el.from.id === userId) {
-          el.direction = Transactions.directions.from;
+          el.direction = Transactions.constants.directions.from;
         }
 
         if (el.to && el.to.id === userId) {
-          el.direction = Transactions.directions.to;
+          el.direction = Transactions.constants.directions.to;
         }
       });
 
@@ -69,7 +69,7 @@ module.exports = {
     Transactions.create(allParams)
       .then(({id}) => Transactions.findOne({id}).populate('from').populate('to'))
       .then(result => {
-        result.direction = Transactions.directions.from;
+        result.direction = Transactions.constants.directions.from;
         return res.ok(result);
       })
       .catch(err => {
@@ -85,15 +85,15 @@ module.exports = {
 
   types: function (req, res) {
     return res.json({
-      list: Transactions.txTypesList,
-      collection: Transactions.txTypes
+      list: Transactions.constants.typesList,
+      collection: Transactions.constants.types
     });
   },
 
   filters: function (req, res) {
     return res.json({
-      type: Transactions.txTypesList,
-      direction: Transactions.directionsList
+      type: Transactions.constants.typesList,
+      direction: Transactions.constants.directionsList
     });
   }
 };
