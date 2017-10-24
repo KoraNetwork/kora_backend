@@ -43,7 +43,7 @@ module.exports = {
    */
   reply: function (req, res) {
     var twiml = new MessagingResponse();
-    User.findOne({ phone: req.param('number') }, (err, user) => {
+    User.findOne({ phone: req.body.From }, (err, user) => {
 
       if (user || req.session.action === 'register' ||
         TrialService.getMessage(req.body.Body) === 'register') {
