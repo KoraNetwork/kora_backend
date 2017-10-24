@@ -8,6 +8,57 @@
 /* global Requests */
 
 module.exports = {
+  find: function (req, res) {
+    const userId = req.user.id;
+    const sort = 'updatedAt DESC';
+    const {
+      direction,
+      state,
+      limit = 10,
+      skip = 0
+    } = req.allParams();
+
+    let where = {
+      or: [
+        { from: userId },
+        { to: userId }
+      ]
+    };
+
+    if (state) {
+      where.state = state;
+    }
+
+    if (direction) {
+      // If direction accidentally will be Array
+      let directions = Array.isArray(direction) ? direction : [direction];
+
+      directions.forEach(el => (where[el] = userId));
+    }
+
+    Promise.all([
+      Requests
+        .find({ where, limit, skip, sort })
+        .populate('from')
+        .populate('to'),
+      Requests.count(where)
+    ])
+    .then(([data, total]) => {
+      data.forEach(el => {
+        if (el.from && el.from.id === userId) {
+          el.direction = Requests.constants.directions.from;
+        }
+
+        if (el.to && el.to.id === userId) {
+          el.direction = Requests.constants.directions.to;
+        }
+      });
+
+      return res.json({data, total});
+    })
+    .catch(err => res.serverError(err));
+  },
+
   create: function (req, res) {
     let allParams = req.allParams();
 
