@@ -13,10 +13,18 @@ const states = {
 };
 const statesList = _.values(states);
 
+const directions = {
+  from: 'from',
+  to: 'to'
+};
+const directionsList = _.values(directions);
+
 module.exports = {
   constants: {
     states,
-    statesList
+    statesList,
+    directions,
+    directionsList
   },
 
   attributes: {
