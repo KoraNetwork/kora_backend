@@ -5,9 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ ValidationService User */
-
-const WLError = require('waterline/lib/waterline/error/WLError');
+/* global _ ValidationService UserService */
 
 const txTypes = {
   borrow: 'borrow',
@@ -66,21 +64,8 @@ module.exports = {
   beforeCreate: function (values, cb) {
     const { from, to } = values;
 
-    Promise.all([
-      User.findOne({id: from}),
-      User.findOne({id: to})
-    ])
-      .then(([fromUser, toUser]) => {
-        if (!fromUser) {
-          return Promise.reject(new WLError({status: 404, reason: 'From user not exists'}));
-        }
-
-        if (!toUser) {
-          return Promise.reject(new WLError({status: 404, reason: 'To user not exists'}));
-        }
-
-        return cb();
-      })
+    UserService.isFromToExists({from, to})
+      .then(() => cb())
       .catch(err => cb(err));
   }
 };
