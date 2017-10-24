@@ -83,11 +83,15 @@ module.exports.policies = {
     '*': true
   },
 
-  Recents: {
+  RecentsController: {
     destroy: false
   },
 
-  Transactions: {
+  TransactionsController: {
+    destroy: false
+  },
+
+  RequestsController: {
     destroy: false
   }
 };
