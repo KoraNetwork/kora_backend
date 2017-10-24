@@ -64,6 +64,16 @@ module.exports = {
 
     role: { type: 'string', in: rolesList, defaultsTo: roles.featurePhone },
 
+    securityQuestion: { type: 'integer' },
+
+    answerToSecurityQuestion: { type: 'string' },
+
+    role: {
+      type: 'string',
+      in: [roles.featurePhone, roles.smartPhone],
+      defaultsTo: roles.featurePhone
+    },
+
     encryptedPassword: { type: 'string' },
 
     // We don't wan't to send back encrypted password either

@@ -18,5 +18,28 @@ module.exports = {
     return res.send(404, {
       'error': 'Not found!'
     });
-  }
+  },
+
+  sms: function (req, res){
+    User.findOne({ phone: req.param('number') }, (err, user) => {
+
+      if (err) {
+        return res.negotiate(err);
+      }
+
+      if (user || req.session.action === 'register' || req.param('sms') === 'register') {
+        return res.send({
+          message: ParserService.parse({
+            message: req.param('sms'),
+            phoneNumber: req.param('number'),
+            session: req.session
+          }),
+        });
+      } else {
+        return res.send({
+          message: 'Please sign up before.'
+        })
+      }
+    })
+  },
 };

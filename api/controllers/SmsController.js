@@ -43,11 +43,19 @@ module.exports = {
    */
   reply: function (req, res) {
     var twiml = new MessagingResponse();
-    twiml.message(ParserService.parse({
-      message: TrialService.getMessage(req.body.Body),
-      phoneNumber: req.body.From,
-      session: req.session
-    }));
+    User.findOne({ phone: req.param('number') }, (err, user) => {
+
+      if (user || req.session.action === 'register' ||
+        TrialService.getMessage(req.body.Body) === 'register') {
+        twiml.message(ParserService.parse({
+          message: TrialService.getMessage(req.body.Body),
+          phoneNumber: req.body.From,
+          session: req.session
+        }));
+      } else {
+        rtwiml.message('Please sign up before.');
+      }
+    })
 
     res.writeHead(200, {'Content-Type': 'text/xml'});
     res.end(twiml.toString());
