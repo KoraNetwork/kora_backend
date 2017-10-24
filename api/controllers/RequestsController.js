@@ -81,5 +81,12 @@ module.exports = {
 
         return res.negotiate(err);
       });
+  },
+
+  filters: function (req, res) {
+    return res.json({
+      state: Requests.constants.statesList,
+      direction: Requests.constants.directionsList
+    });
   }
 };
