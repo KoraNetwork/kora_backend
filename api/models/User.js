@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global sails EthereumService ValidationService CountriesService */
+/* global _ sails EthereumService ValidationService CountriesService */
 
 // We don't want to store password with out encryption
 const bcrypt = require('bcrypt');
@@ -18,9 +18,13 @@ const roles = {
   featurePhone: 'featurePhone',
   smartPhone: 'smartPhone'
 };
+const rolesList = _.values(roles);
 
 module.exports = {
-  roles,
+  constants: {
+    roles,
+    rolesList
+  },
 
   attributes: {
     // TODO: Add validation for phone and maybe password
@@ -58,15 +62,9 @@ module.exports = {
 
     avatar: { type: 'string' },
 
-    role: {
-      type: 'string',
-      in: [roles.featurePhone, roles.smartPhone],
-      defaultsTo: roles.featurePhone
-    },
+    role: { type: 'string', in: rolesList, defaultsTo: roles.featurePhone },
 
-    encryptedPassword: {
-      type: 'string'
-    },
+    encryptedPassword: { type: 'string' },
 
     // We don't wan't to send back encrypted password either
     toJSON: function () {

@@ -20,7 +20,7 @@ module.exports = {
     // delete allParams.confirmPassword
 
     if (!allParams.role) {
-      allParams.role = User.roles.smartPhone;
+      allParams.role = User.constants.roles.smartPhone;
     }
 
     req.file('avatar').upload({
