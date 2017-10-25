@@ -68,12 +68,6 @@ module.exports = {
 
     answerToSecurityQuestion: { type: 'string' },
 
-    role: {
-      type: 'string',
-      in: [roles.featurePhone, roles.smartPhone],
-      defaultsTo: roles.featurePhone
-    },
-
     encryptedPassword: { type: 'string' },
 
     // We don't wan't to send back encrypted password either
@@ -118,6 +112,24 @@ module.exports = {
     }
   ],
 
+  beforeValidate: function (values, cb) {
+    if (values.userName) {
+      values.userNameOrigin = values.userName;
+      values.userName = values.userName.toLowerCase();
+    }
+
+    if (values.email) {
+      values.email = values.email.toLowerCase();
+    }
+
+    if (values.countryCode) {
+      values.currency = CountriesService.collection[values.countryCode].currency;
+      values.ERC20Token = CountriesService.collection[values.countryCode].ERC20Token;
+    }
+
+    return cb();
+  },
+
   beforeCreate: function (values, cb) {
     let password = values.password;
 
@@ -130,18 +142,6 @@ module.exports = {
       } else {
         return cb(new WLError({status: 422, reason: 'Password must be set'}));
       }
-    }
-
-    values.userNameOrigin = values.userName;
-    values.userName = values.userName.toLowerCase();
-
-    if (values.email) {
-      values.email = values.email.toLowerCase();
-    }
-
-    if (values.countryCode) {
-      values.currency = CountriesService.collection[values.countryCode].currency;
-      values.ERC20Token = CountriesService.collection[values.countryCode].ERC20Token;
     }
 
     if (values.role === roles.featurePhone) {
@@ -173,15 +173,6 @@ module.exports = {
         });
       });
     }
-  },
-
-  beforeUpdate: function (values, cb) {
-    if (values.countryCode) {
-      values.currency = CountriesService.collection[values.countryCode].currency;
-      values.ERC20Token = CountriesService.collection[values.countryCode].ERC20Token;
-    }
-
-    return cb();
   },
 
   comparePassword: function (password, user, cb) {
