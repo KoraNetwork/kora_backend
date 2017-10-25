@@ -83,6 +83,39 @@ module.exports = {
       });
   },
 
+  update: function (req, res) {
+    let allParams = req.allParams();
+    const {rejected} = Requests.constants.states;
+
+    Requests.findOne({id: allParams.id})
+      .then(record => {
+        if (record.to !== req.user.id) {
+          return res.send(422, {
+            message: `Current user must be in 'to' attribute of request`
+          });
+        }
+
+        if (record.state === rejected) {
+          return res.send(422, {
+            message: 'Current request for money already rejected'
+          });
+        }
+
+        record.state = rejected;
+
+        return new Promise((resolve, reject) => record.save(err => {
+          if (err) {
+            return reject(err);
+          }
+
+          return resolve(record);
+        }));
+      })
+      .then(({id}) => Requests.findOne({id}).populate('from').populate('to'))
+      .then(result => res.send(result))
+      .catch(err => res.serverError(err));
+  },
+
   filters: function (req, res) {
     return res.json({
       state: Requests.constants.statesList,
