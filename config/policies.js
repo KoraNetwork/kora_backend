@@ -90,9 +90,5 @@ module.exports.policies = {
 
   TransactionsController: {
     destroy: false
-  },
-
-  RequestsController: {
-    destroy: false
   }
 };
