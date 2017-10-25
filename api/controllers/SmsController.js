@@ -57,13 +57,14 @@ module.exports = {
           } else {
             twiml.message(result);
           }
+          res.writeHead(200, {'Content-Type': 'text/xml'});
+          res.end(twiml.toString());
         });
       } else {
         twiml.message('Please sign up before.');
+        res.writeHead(200, {'Content-Type': 'text/xml'});
+        res.end(twiml.toString());
       }
     })
-
-    res.writeHead(200, {'Content-Type': 'text/xml'});
-    res.end(twiml.toString());
   }
 };
