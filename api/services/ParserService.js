@@ -32,7 +32,7 @@ var messages = {
 }
 
 module.exports = {
-  parse: function ({message, phoneNumber, session}) {
+  parse: function ({message, phoneNumber, session}, cb) {
     switch (message) {
       case 'menu': {
         result = messages.menu;
@@ -150,7 +150,7 @@ module.exports = {
                   init(session, 'menu');
                 } else if (message === session.password) {
                   result = 'You have now set up your account. If youwant to keep authenticating your account pleasereply with "authentication" or you are your set.';
-                  User.create({
+                  return User.create({
                     phone: session.phone,
                     userName: session.userName,
                     dateOfBirth: session.date,
@@ -158,7 +158,13 @@ module.exports = {
                     securityQuestion: session.securityQuestion,
                     answerToSecurityQuestion: session.answer
                   }).exec(function (err, user) {
-                    init(session, 'menu');
+                    if (err) {
+                      console.error(err);
+                      cb(err)
+                    } else {
+                      init(session, 'menu');
+                      cb(null, result);
+                    }
                   })
                 } else {
                   result = 'PIN do not match. Please try again.'
@@ -203,7 +209,7 @@ module.exports = {
         // }
       }
     }
-    return result;
+    return cb(null, result);
   },
 
   init,

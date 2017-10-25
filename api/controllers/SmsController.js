@@ -47,13 +47,19 @@ module.exports = {
 
       if (user || req.session.action === 'register' ||
         TrialService.getMessage(req.body.Body) === 'register') {
-        twiml.message(ParserService.parse({
+        ParserService.parse({
           message: TrialService.getMessage(req.body.Body),
           phoneNumber: req.body.From,
           session: req.session
-        }));
+        }, (err, result) => {
+          if (err) {
+            twiml.message('Error!');
+          } else {
+            twiml.message(result);
+          }
+        });
       } else {
-        rtwiml.message('Please sign up before.');
+        twiml.message('Please sign up before.');
       }
     })
 

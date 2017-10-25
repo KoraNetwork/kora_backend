@@ -28,13 +28,15 @@ module.exports = {
       }
 
       if (user || req.session.action === 'register' || req.param('sms') === 'register') {
-        return res.send({
-          message: ParserService.parse({
-            message: req.param('sms'),
-            phoneNumber: req.param('number'),
-            session: req.session
-          }),
-        });
+        ParserService.parse({
+          message: req.param('sms'),
+          phoneNumber: req.param('number'),
+          session: req.session
+        }, (err, message) => {
+          return res.send({
+            message: err || result
+          });
+        })
       } else {
         return res.send({
           message: 'Please sign up before.'
