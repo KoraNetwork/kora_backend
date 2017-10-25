@@ -64,7 +64,8 @@ module.exports.policies = {
   },
 
   AuthController: {
-    '*': true // We dont need authorization here, allowing public access
+    '*': true, // We dont need authorization here, allowing public access
+    logout: ['isAuthorized']
   },
 
   SmsController: {

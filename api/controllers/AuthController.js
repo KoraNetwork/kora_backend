@@ -84,5 +84,9 @@ module.exports = {
         }
       });
     });
+  },
+
+  logout: function (req, res) {
+    return res.ok({message: 'Fake logout success :)'});
   }
 };
