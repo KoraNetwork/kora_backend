@@ -56,7 +56,7 @@ module.exports = {
 
       return res.json({data, total});
     })
-    .catch(err => res.serverError(err));
+    .catch(err => res.negotiate(err));
   },
 
   create: function (req, res) {
@@ -72,15 +72,7 @@ module.exports = {
         result.direction = Transactions.constants.directions.from;
         return res.ok(result);
       })
-      .catch(err => {
-        // eslint-disable-next-line eqeqeq
-        if (err.status == 400) {
-          err.status = 422;
-          return res.json(422, err);
-        }
-
-        return res.negotiate(err);
-      });
+      .catch(err => res.negotiate(err));
   },
 
   types: function (req, res) {

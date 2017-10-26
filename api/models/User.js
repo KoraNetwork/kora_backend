@@ -140,7 +140,7 @@ module.exports = {
         // Password for development purposes
         password = 'qwer1234';
       } else {
-        return cb(new WLError({status: 422, reason: 'Password must be set'}));
+        return cb(new WLError({status: 400, reason: 'Password must be set'}));
       }
     }
 

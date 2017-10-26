@@ -21,16 +21,16 @@ module.exports = {
     let phoneNumber = req.param('phoneNumber');
 
     if (!ValidationService.phoneNumber(phoneNumber)) {
-      return res.send(422, {message: 'Phone number incorrect'});
+      return res.badRequest({message: 'Phone number incorrect'});
     }
 
     User.findOne({phone: phoneNumber}).exec((err, user) => {
       if (err) {
-        return res.serverError(err);
+        return res.negotiate(err);
       }
 
       if (user) {
-        return res.send(422, {message: 'Phone number is already registered'});
+        return res.badRequest({message: 'Phone number is already registered'});
       }
 
       let verificationCode = MiscService.randomInteger4().toString();
@@ -66,14 +66,7 @@ module.exports = {
           });
         }))
         .then(result => res.send(result))
-        .catch(err => {
-          // eslint-disable-next-line eqeqeq
-          if (err.status == 400) {
-            return res.send(422, err);
-          }
-
-          return res.serverError(err);
-        });
+        .catch(err => res.negotiate(err));
     });
   },
 
@@ -86,15 +79,15 @@ module.exports = {
 
     VerificationCode.findOne({phoneNumber}).exec((err, record) => {
       if (err) {
-        return res.serverError(err);
+        return res.negotiate(err);
       }
 
       if (!record) {
-        return res.send(422, {message: 'Verification code was not send to you'});
+        return res.badRequest({message: 'Verification code was not send to you'});
       }
 
       if (verificationCode !== record.verificationCode) {
-        return res.send(422, {message: 'Wrong confirmation code. Try to resend'});
+        return res.badRequest({message: 'Wrong confirmation code. Try to resend'});
       }
 
       VerificationCode.destroy({phoneNumber}, err => {

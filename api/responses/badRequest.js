@@ -1,5 +1,5 @@
 /**
- * 400 (Bad Request) Handler
+ * 400 (Bad Request) Handler. Changed to 422 for Android
  *
  * Usage:
  * return res.badRequest();
@@ -23,13 +23,14 @@ module.exports = function badRequest(data, options) {
   var sails = req._sails;
 
   // Set status code
-  res.status(400);
+  // Changed to 422 for Android
+  res.status(422);
 
   // Log error to console
   if (data !== undefined) {
-    sails.log.verbose('Sending 400 ("Bad Request") response: \n',data);
+    sails.log.verbose('Sending 400/422 ("Bad Request") response: \n',data);
   }
-  else sails.log.verbose('Sending 400 ("Bad Request") response');
+  else sails.log.verbose('Sending 400/422 ("Bad Request") response');
 
   // Only include errors in response if application environment
   // is not set to 'production'.  In production, we shouldn't
@@ -73,4 +74,3 @@ module.exports = function badRequest(data, options) {
   });
 
 };
-

@@ -58,7 +58,7 @@ module.exports = {
 
       return res.json({data, total});
     })
-    .catch(err => res.serverError(err));
+    .catch(err => res.negotiate(err));
   },
 
   create: function (req, res) {
@@ -74,15 +74,7 @@ module.exports = {
         result.direction = Requests.constants.directions.from;
         return res.ok(result);
       })
-      .catch(err => {
-        // eslint-disable-next-line eqeqeq
-        if (err.status == 400) {
-          err.status = 422;
-          return res.json(422, err);
-        }
-
-        return res.negotiate(err);
-      });
+      .catch(err => res.negotiate(err));
   },
 
   update: function (req, res) {
@@ -103,15 +95,7 @@ module.exports = {
       })
       .then(({id}) => Requests.findOne({id}).populate('from').populate('to'))
       .then(result => res.send(result))
-      .catch(err => {
-        // eslint-disable-next-line eqeqeq
-        if (err.status == 400) {
-          err.status = 422;
-          return res.json(422, err);
-        }
-
-        return res.negotiate(err);
-      });
+      .catch(err => res.negotiate(err));
   },
 
   destroy: function (req, res) {
@@ -154,15 +138,7 @@ module.exports = {
         transaction
       }))
       .then(result => res.send(result))
-      .catch(err => {
-        // eslint-disable-next-line eqeqeq
-        if (err.status == 400) {
-          err.status = 422;
-          return res.json(422, err);
-        }
-
-        return res.negotiate(err);
-      });
+      .catch(err => res.negotiate(err));
   },
 
   filters: function (req, res) {
@@ -187,14 +163,14 @@ function findRequest ({id, user}) {
 
       if (request.to !== user.id) {
         return Promise.reject(new WLError({
-          status: 422,
+          status: 400,
           message: `Current user must be in 'to' attribute of request`
         }));
       }
 
       if (request.state === rejected) {
         return Promise.reject(new WLError({
-          status: 422,
+          status: 400,
           message: 'Current request for money already rejected'
         }));
       }

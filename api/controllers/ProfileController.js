@@ -29,7 +29,7 @@ module.exports = {
 
       return User.update({id: req.user.id}).set(values).exec((err, user) => {
         if (err) {
-          return res.serverError(err);
+          return res.negotiate(err);
         }
 
         return res.json(user.pop());
@@ -46,24 +46,24 @@ module.exports = {
     const id = req.user.id;
 
     if (!id) {
-      return res.json(422, {message: 'User id param must be set'});
+      return res.badRequest({message: 'User id param must be set'});
     }
 
     req.file('avatar').upload({
       dirname: '../../assets/images/avatars'
     }, (err, uploadedFiles) => {
       if (err) {
-        return res.serverError(err);
+        return res.negotiate(err);
       }
 
       if (uploadedFiles.length && uploadedFiles[0].fd) {
         User.findOne({id}).exec((err, user) => {
           if (err) {
-            return res.serverError(err);
+            return res.negotiate(err);
           }
 
           if (!user) {
-            return res.json(422, {message: 'User is not exists'});
+            return res.badRequest({message: 'User is not exists'});
           }
 
           let oldAvatar = user.avatar;
@@ -71,7 +71,7 @@ module.exports = {
           user.avatar = path.join('/images', 'avatars', path.basename(uploadedFiles[0].fd));
           user.save(err => {
             if (err) {
-              return res.serverError(err);
+              return res.negotiate(err);
             }
 
             if (oldAvatar) {

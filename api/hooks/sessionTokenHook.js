@@ -38,7 +38,7 @@ module.exports = function sessionTokenHook (sails) {
 
               User.findOne({id: decoded.id}).exec(function (err, user) {
                 if (err) {
-                  return res.serverError(err);
+                  return res.negotiate(err);
                 }
 
                 if (!user) {

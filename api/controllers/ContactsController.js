@@ -38,6 +38,6 @@ module.exports = {
       User.count(searchQuery)
     ])
     .then(([data, total]) => res.json({data, total}))
-    .catch(err => res.serverError(err));
+    .catch(err => res.negotiate(err));
   }
 };

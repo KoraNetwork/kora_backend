@@ -14,7 +14,7 @@ module.exports = {
     let allParams = req.allParams();
 
     // if (allParams.password !== allParams.confirmPassword) {
-    //   return res.json(422, {message: 'Password doesn\'t match, What a shame!'})
+    //   return res.badRequest({message: 'Password doesn\'t match, What a shame!'})
     // }
     //
     // delete allParams.confirmPassword
@@ -27,7 +27,7 @@ module.exports = {
       dirname: '../../assets/images/avatars'
     }, function (err, uploadedFiles) {
       if (err) {
-        return res.serverError(err);
+        return res.negotiate(err);
       }
 
       if (uploadedFiles.length && uploadedFiles[0].fd) {
@@ -36,8 +36,7 @@ module.exports = {
 
       User.create(allParams).exec(function (err, user) {
         if (err) {
-          err.status = 422;
-          return res.json(422, err);
+          return res.negotiate(err);
         }
 
         // If user created successfuly we return user and token as response
@@ -57,25 +56,25 @@ module.exports = {
     var password = req.param('password');
 
     if (!identifier || !password) {
-      return res.send(422, {message: 'Identifier and password required'});
+      return res.badRequest({message: 'Identifier and password required'});
     }
 
     User.findOneUnique(identifier, function (err, user) {
       if (err) {
-        return res.serverError(err);
+        return res.negotiate(err);
       }
 
       if (!user) {
-        return res.send(422, {message: 'Wrong identifier or password'});
+        return res.badRequest({message: 'Wrong identifier or password'});
       }
 
       User.comparePassword(password, user, function (err, valid) {
         if (err) {
-          return res.serverError(err);
+          return res.negotiate(err);
         }
 
         if (!valid) {
-          return res.send(422, {message: 'Wrong identifier or password'});
+          return res.badRequest({message: 'Wrong identifier or password'});
         } else {
           return res.json({
             user: user,

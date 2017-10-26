@@ -14,26 +14,26 @@ module.exports = {
     Recents.findOne({user: req.user.id})
       .populate('recents')
       .then(result => res.json(result ? sortRecents(result) : []))
-      .catch(err => res.serverError(err));
+      .catch(err => res.negotiate(err));
   },
 
   add: function (req, res) {
     const id = req.param('id');
 
     if (!id) {
-      return res.json(422, {message: 'Id of recent user must be set'});
+      return res.badRequest({message: 'Id of recent user must be set'});
     }
 
     Recents.findOrCreate({user: req.user.id}, {user: req.user.id})
       .populate('recents')
       .exec((err, record) => {
         if (err) {
-          return res.serverError(err);
+          return res.negotiate(err);
         }
 
         User.findOne({id}).exec((err, recent) => {
           if (err) {
-            return res.serverError(err);
+            return res.negotiate(err);
           }
 
           if (!recent) {
@@ -51,7 +51,7 @@ module.exports = {
 
           return addToRecents({record, recent}, (err, result) => {
             if (err) {
-              return res.serverError(err);
+              return res.negotiate(err);
             }
 
             return res.json(sortRecents(result));
