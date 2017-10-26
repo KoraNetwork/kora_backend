@@ -37,7 +37,7 @@ module.exports.routes = {
     locals: {
       title: 'Kora MVP'
     }
-  }
+  },
 
   /***************************************************************************
   *                                                                          *
@@ -49,4 +49,5 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
+  'POST /requests/:id': {controller: 'Requests', action: 'destroy'}
 };
