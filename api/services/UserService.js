@@ -30,5 +30,28 @@ module.exports = {
     }
 
     return promise;
+  },
+
+  isUsersExists: function ({users, name}, cb) {
+    const promise = !(users && users.length) ? Promise.resolve()
+      : Promise.all(users)
+        .then(records => {
+          let indexes = records.filter((record, index) => !record ? index : false);
+
+          if (indexes.length) {
+            return Promise.reject(new WLError({
+              status: 404,
+              reason: `${name} with indexes ${indexes.join(', ')} not exists`
+            }));
+          }
+
+          return Promise.resolve();
+        });
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
   }
 };
