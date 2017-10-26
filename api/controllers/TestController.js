@@ -27,11 +27,14 @@ module.exports = {
         return res.negotiate(err);
       }
 
-      if (user || req.session.action === 'register' || req.param('sms') === 'register') {
+      if (user || req.param('sms') === 'register' ||
+        (req.session.action === 'register' &&
+        ['menu', '1', '2', '3', '4'].indexOf(req.param('sms')) === -1)) {
         ParserService.parse({
           message: req.param('sms'),
           phoneNumber: req.param('number'),
-          session: req.session
+          session: req.session,
+          user: user
         }, (err, message) => {
           return res.send({
             message: err || result

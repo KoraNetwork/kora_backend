@@ -43,14 +43,19 @@ module.exports = {
    */
   reply: function (req, res) {
     var twiml = new MessagingResponse();
+    var message = TrialService.getMessage(req.body.Body);
+    
     User.findOne({ phone: req.body.From }, (err, user) => {
-
       if (user || req.session.action === 'register' ||
-        TrialService.getMessage(req.body.Body) === 'register') {
+        message === 'register' ||
+        (req.session.action === 'register' &&
+        ['menu', '1', '2', '3', '4'].indexOf(message) === -1)) {
+
         ParserService.parse({
-          message: TrialService.getMessage(req.body.Body),
+          message: message,
           phoneNumber: req.body.From,
-          session: req.session
+          session: req.session,
+          user: user
         }, (err, result) => {
           if (err) {
             twiml.message('Error!');

@@ -1,5 +1,7 @@
 // api/services/ParserService.js
 
+var dateFormat = require('dateformat');
+
 var securityQuestions = [
   'Mymother\'smaiden name',
   'My first pet\'sname',
@@ -32,7 +34,7 @@ var messages = {
 }
 
 module.exports = {
-  parse: function ({message, phoneNumber, session}, cb) {
+  parse: function ({message, phoneNumber, session, user}, cb) {
     switch (message) {
       case 'menu': {
         result = messages.menu;
@@ -47,6 +49,7 @@ module.exports = {
       }
 
       case '1': {
+        result = `Please confirm you want to check balance on ${ dateFormat(new Date(), 'dd/mm/yyyy') } by enteringyour PIN.`;
         init(session, 'checkBalance');
         break;
       }
@@ -176,7 +179,24 @@ module.exports = {
           }
 
           case 'checkBalance': {
-
+            switch (session.step) {
+              case 0: {
+                return User.comparePassword(password, user, (err, valid) => {
+                  if (err) {
+                    checkAttemptCount(this, session);
+                    cb(err);
+                  } else {
+                    if (valid) {
+                      TokensService.balanceOf({address: user.identity}, (err, result) => {
+                        cb(err, !err ? `${ dateFormat(new Date(), 'dd/mm/yyyy') } eNaira: ${ result }.` : null);
+                      });
+                    } else {
+                      cb(null, 'Wrong PIN. Please try again.')
+                    }
+                  }
+                })
+              }
+            }
             break;
           }
 
