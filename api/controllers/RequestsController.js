@@ -124,37 +124,30 @@ module.exports = {
     allParams.toAmount = parseFloat(allParams.toAmount, 10);
 
     if (!isNaN(allParams.fromAmount)) {
-      values.fromAmount = allParams.fromAmount;
+      values.toAmount = allParams.fromAmount;
     }
 
     if (!isNaN(allParams.toAmount)) {
-      values.toAmount = allParams.toAmount;
+      values.fromAmount = allParams.toAmount;
     }
 
     findRequest({id: allParams.id, user: req.user})
       .then(request => {
         const {from, to, fromAmount, toAmount, additionalNote} = request;
 
-        return new Promise((resolve, reject) => {
-          Transactions.create(Object.assign({
-            type: Transactions.constants.types.request,
-            from: to,
-            to: from,
-            fromAmount,
-            toAmount,
-            additionalNote
-          }, values))
-          .then(transaction => resolve({transaction, request}))
-          .catch(reject);
-        });
+        return Transactions.create(Object.assign({
+          type: Transactions.constants.types.request,
+          from: to,
+          to: from,
+          fromAmount: toAmount,
+          toAmount: fromAmount,
+          additionalNote
+        }, values))
+          .then(transaction => ({transaction, request}));
       })
-      .then(({transaction, request}) => {
-        return new Promise((resolve, reject) => {
-          Requests.destroy({id: request.id})
-            .then(() => resolve(transaction))
-            .catch(reject);
-        });
-      })
+      .then(({transaction, request}) => Requests.destroy({id: request.id})
+            .then(() => transaction)
+      )
       .then(({id}) => Transactions.findOne({id}).populate('from').populate('to'))
       .then(transaction => ({
         message: 'Request for money was confirmed and deleted. Transaction was created',
