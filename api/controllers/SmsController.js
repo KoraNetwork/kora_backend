@@ -44,10 +44,9 @@ module.exports = {
   reply: function (req, res) {
     var twiml = new MessagingResponse();
     var message = TrialService.getMessage(req.body.Body);
-    
+
     User.findOne({ phone: req.body.From }, (err, user) => {
-      if (user || req.session.action === 'register' ||
-        message === 'register' ||
+      if (user || message === 'register' ||
         (req.session.action === 'register' &&
         ['menu', '1', '2', '3', '4'].indexOf(message) === -1)) {
 

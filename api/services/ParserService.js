@@ -181,7 +181,7 @@ module.exports = {
           case 'checkBalance': {
             switch (session.step) {
               case 0: {
-                return User.comparePassword(password, user, (err, valid) => {
+                return User.comparePassword(message, user, (err, valid) => {
                   if (err) {
                     checkAttemptCount(this, session);
                     cb(err);
