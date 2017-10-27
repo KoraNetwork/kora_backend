@@ -24,6 +24,10 @@ module.exports = {
       return res.badRequest({message: 'Id of recent user must be set'});
     }
 
+    if (id === req.user.id) {
+      return res.badRequest({message: 'Id of recent user could not be current user id'});
+    }
+
     Recents.findOrCreate({user: req.user.id}, {user: req.user.id})
       .populate('recents')
       .exec((err, record) => {
