@@ -61,7 +61,10 @@ module.exports = {
   beforeCreate: function (values, cb) {
     const { from, to } = values;
 
-    UserValidationService.isFromToExists({from, to})
+    Promise.all([
+      UserValidationService.isFromToNotEqual({from, to}),
+      UserValidationService.isFromToExists({from, to})
+    ])
       .then(() => cb())
       .catch(err => cb(err));
   }

@@ -55,7 +55,10 @@ module.exports = {
 
     values.state = states.inProgress;
 
-    UserValidationService.isFromToExists({from, to})
+    Promise.all([
+      UserValidationService.isFromToNotEqual({from, to}),
+      UserValidationService.isFromToExists({from, to})
+    ])
       .then(() => cb())
       .catch(err => cb(err));
   }
