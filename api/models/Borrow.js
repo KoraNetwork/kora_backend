@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ UserService */
+/* global _ UserValidationService */
 
 const WLError = require('waterline/lib/waterline/error/WLError');
 
@@ -79,11 +79,11 @@ module.exports = {
     }
 
     Promise.all([
-      UserService.isFromToNotEqual({from, to}),
-      UserService.isUserNotInUsers({user: from, users: guarantors, userName: 'From', usersName: 'guarantors'}),
-      UserService.isUserNotInUsers({user: to, users: guarantors, userName: 'To', usersName: 'guarantors'}),
-      UserService.isFromToExists({from, to}),
-      UserService.isUsersExists({users: guarantors, name: 'Guarantors'})
+      UserValidationService.isFromToNotEqual({from, to}),
+      UserValidationService.isUserNotInUsers({user: from, users: guarantors, userName: 'From', usersName: 'guarantors'}),
+      UserValidationService.isUserNotInUsers({user: to, users: guarantors, userName: 'To', usersName: 'guarantors'}),
+      UserValidationService.isFromToExists({from, to}),
+      UserValidationService.isUsersExists({users: guarantors, name: 'Guarantors'})
     ])
       .then(() => cb())
       .catch(err => cb(err));

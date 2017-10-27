@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ UserService */
+/* global _ UserValidationService */
 
 const states = {
   inProgress: 'inProgress',
@@ -55,7 +55,7 @@ module.exports = {
 
     values.state = states.inProgress;
 
-    UserService.isFromToExists({from, to})
+    UserValidationService.isFromToExists({from, to})
       .then(() => cb())
       .catch(err => cb(err));
   }

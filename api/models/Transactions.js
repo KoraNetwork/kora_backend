@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ ValidationService UserService */
+/* global _ ValidationService UserValidationService */
 
 const types = {
   borrow: 'borrow',
@@ -61,7 +61,7 @@ module.exports = {
   beforeCreate: function (values, cb) {
     const { from, to } = values;
 
-    UserService.isFromToExists({from, to})
+    UserValidationService.isFromToExists({from, to})
       .then(() => cb())
       .catch(err => cb(err));
   }

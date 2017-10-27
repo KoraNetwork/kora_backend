@@ -1,5 +1,5 @@
 /**
- * UserService
+ * UserValidationService
  * @description :: Set of methods for User
  */
 
