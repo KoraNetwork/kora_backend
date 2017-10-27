@@ -7,6 +7,8 @@
 
 /* global _ UserService */
 
+const WLError = require('waterline/lib/waterline/error/WLError');
+
 const states = {
   requested: 'requested',
   inProgress: 'inProgress',
@@ -40,19 +42,23 @@ module.exports = {
 
     to: { model: 'user', required: true },
 
-    guarantors: { collection: 'user' },
+    guarantors: { collection: 'user', required: true, guarantorsLength: true },
 
     fromAmount: { type: 'float', required: true },
 
     toAmount: { type: 'float', required: true },
 
-    rate: { type: 'float', required: true },
+    rate: { type: 'float', required: true, min: 0 },
 
-    startDate: { type: 'date', required: true },
+    startDate: { type: 'date', required: true, after: new Date() },
 
-    maturityDate: { type: 'date', required: true },
+    maturityDate: { type: 'date', required: true, after: new Date() },
 
     additionalNote: { type: 'string' }
+  },
+
+  types: {
+    guarantorsLength: value => value && value.length && value.length <= 3
   },
 
   indexes: [
@@ -61,10 +67,21 @@ module.exports = {
     { attributes: { guarantors: 1, updatedAt: -1 } }
   ],
 
-  beforeCreate: function (values, cb) {
-    const { from, to, guarantors } = values;
+  beforeValidate: function (values, cb) {
+    const { from, to, guarantors, startDate, maturityDate } = values;
+    console.log(values);
+
+    if (Date.parse(startDate) >= Date.parse(maturityDate)) {
+      return cb(new WLError({
+        status: 400,
+        reason: 'startDate could not be greater or equal then maturityDate'
+      }));
+    }
 
     Promise.all([
+      UserService.isFromToNotEqual({from, to}),
+      UserService.isUserNotInUsers({user: from, users: guarantors, userName: 'From', usersName: 'guarantors'}),
+      UserService.isUserNotInUsers({user: to, users: guarantors, userName: 'To', usersName: 'guarantors'}),
       UserService.isFromToExists({from, to}),
       UserService.isUsersExists({users: guarantors, name: 'Guarantors'})
     ])

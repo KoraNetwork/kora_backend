@@ -8,6 +8,40 @@
 const WLError = require('waterline/lib/waterline/error/WLError');
 
 module.exports = {
+  isFromToNotEqual: function ({from, to}, cb) {
+    let promise = Promise.resolve();
+
+    if (from && to && from === to) {
+      promise = Promise.reject(new WLError({
+        status: 400,
+        reason: 'From and to users could not be equal'
+      }));
+    }
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
+  isUserNotInUsers: function ({user, users, userName = 'This', usersName = 'users'}, cb) {
+    let promise = Promise.resolve();
+
+    if (user && users && users.some(u => u === user)) {
+      promise = Promise.reject(new WLError({
+        status: 400,
+        reason: `${userName} user could not be in ${usersName} collection`
+      }));
+    }
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
   isFromToExists: function ({from, to}, cb) {
     const promise = Promise.all([
       User.findOne({id: from}),
@@ -32,7 +66,7 @@ module.exports = {
     return promise;
   },
 
-  isUsersExists: function ({users, name}, cb) {
+  isUsersExists: function ({users, name = 'Users'}, cb) {
     const promise = !(users && users.length) ? Promise.resolve()
       : Promise.all(users)
         .then(records => {
