@@ -37,19 +37,40 @@ const humanStandardTokenAddress = HumanStandardToken.networks[networkId].address
 const humanStandardToken = new Contract(humanStandardTokenAbi, humanStandardTokenAddress);
 
 module.exports = {
-  balanceOf: function ({address}, done) {
+  balanceOf: function ({address}, cb) {
     humanStandardToken.methods.balanceOf(address).call()
-      .then(result => done(null, parseInt(result, 10) / Math.pow(10, koraTokenExponent)))
-      .catch(err => done(err));
+      .then(result => cb(null, parseInt(result, 10) / Math.pow(10, koraTokenExponent)))
+      .catch(err => cb(err));
+  },
+
+  /**
+   * Transfers Kora Tokens using signed raw transaction hex
+   * @param  {Hex}      rawTransaction  Raw transaction hex
+   * @param  {Function} cb              Result of transfer
+   */
+  transferSignedRawTx: function ({rawTransaction}, cb) {
+    sails.log.info('Send signed transferSignedRawTx transaction:\n', rawTransaction);
+    let promise = eth.sendSignedTransaction(rawTransaction)
+      .on('error', err => sails.log.error('Transaction transferSignedRawTx error:\n', err))
+      .then(receipt => {
+        sails.log.info('Transaction transferSignedRawTx receipt:\n', receipt);
+        return receipt;
+      });
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
   },
 
   /**
    * Transfers Kora Tokens form Kora Wallet to some address
    * @param  {String}   to    Some address
    * @param  {Number}   value Number of Kora Tokens
-   * @param  {Function} done  Result of transfer
+   * @param  {Function} cb  Result of transfer
    */
-  transferFromKora: function ({ to, value }, done) {
+  transferFromKora: function ({ to, value }, cb) {
     const tokensValue = value * Math.pow(10, koraTokenExponent);
     const transfer = humanStandardToken.methods.transfer(to, tokensValue);
     const encodedTransfer = transfer.encodeABI();
@@ -90,15 +111,15 @@ module.exports = {
           return Promise.reject(new Error(`Method getPastEvents didn't return desired Transfer event`));
         }
 
-        return done(null, event.returnValues);
+        return cb(null, event.returnValues);
       })
       .catch(err => {
         sails.log.error(err);
-        return done(err);
+        return cb(err);
       });
   },
 
-  transfer: function ({account, identity, to, value}, done) {
+  transfer: function ({account, identity, to, value}, cb) {
     const tokensValue = value * Math.pow(10, koraTokenExponent);
     const transfer = humanStandardToken.methods.transfer(to, tokensValue);
     const encodedTransfer = transfer.encodeABI();
@@ -110,7 +131,7 @@ module.exports = {
     //   _from: account.address,
     //   _to: to,
     //   _value: tokensValue.toString()
-    // };
+    // }
 
     let tx = {
       to: identityManagerAddress,
@@ -151,14 +172,14 @@ module.exports = {
       //   //   return Promise.reject(new Error(`Method getPastEvents didn't return desired Transfer event`));
       //   // }
       //   //
-      //   // return done(null, event.returnValues);
-      //   // return done(null, events);
+      //   // return cb(null, event.returnValues);
+      //   // return cb(null, events);
 
-        return done(null, receipt);
+        return cb(null, receipt);
       })
       .catch(err => {
         sails.log.error(err);
-        return done(err);
+        return cb(err);
       });
   }
 };

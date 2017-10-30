@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ ValidationService UserValidationService */
+/* global _ sails ValidationService UserValidationService TokensService */
 
 const types = {
   borrow: 'borrow',
@@ -14,6 +14,13 @@ const types = {
   send: 'send'
 };
 const typesList = _.values(types);
+
+const states = {
+  pending: 'pending',
+  success: 'success',
+  error: 'error'
+};
+const statesList = _.values(states);
 
 const directions = {
   from: 'from',
@@ -30,11 +37,9 @@ module.exports = {
   },
 
   attributes: {
-    type: {
-      type: 'string',
-      in: typesList,
-      required: true
-    },
+    type: { type: 'string', in: typesList, required: true },
+
+    state: { type: 'string', in: statesList, defaultsTo: states.pending },
 
     from: { model: 'user', required: true },
 
@@ -44,7 +49,9 @@ module.exports = {
 
     toAmount: { type: 'float', required: true },
 
-    transactionHash: { type: 'array', hexArray: true, required: true },
+    rawTransactions: { type: 'array', hexArray: true },
+
+    transactionHashes: { type: 'array', hexArray: true },
 
     additionalNote: { type: 'string' }
   },
@@ -58,7 +65,7 @@ module.exports = {
     { attributes: { to: 1, updatedAt: -1 } }
   ],
 
-  beforeCreate: function (values, cb) {
+  beforeValidate: function (values, cb) {
     const { from, to } = values;
 
     Promise.all([
@@ -67,5 +74,43 @@ module.exports = {
     ])
       .then(() => cb())
       .catch(err => cb(err));
+  },
+
+  afterCreate: function (record, cb) {
+    const { rawTransactions } = record;
+
+    if (!(rawTransactions && rawTransactions.length)) {
+      return cb();
+    }
+
+    record.transactionHashes = [];
+
+    Promise.all(
+      rawTransactions.map(rawTransaction => TokensService.transferSignedRawTx({rawTransaction}))
+    )
+      .then(receipts => {
+        receipts.forEach(r => record.transactionHashes.push(r.transactionHash));
+        record.state = states.success;
+        record.save(err => {
+          if (err) {
+            return sails.log.error('Transaction success state save error:\n', err);
+          }
+          // TODO: Add push here
+          sails.log.info('Transaction success state saved:\n', record);
+        });
+      })
+      .catch(err => {
+        sails.log.error('Signed raw transaction send error:\n', err);
+        record.state = states.error;
+        record.save(err => {
+          if (err) {
+            return sails.log.error('Transaction error state save error:\n', err);
+          }
+          // TODO: Add push here
+          sails.log.info('Transaction error state saved:\n', record);
+        });
+      });
+
+    return cb();
   }
 };

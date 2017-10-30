@@ -80,6 +80,10 @@ module.exports.policies = {
     '*': true
   },
 
+  EthereumController: {
+    getBalance: true
+  },
+
   CountriesController: {
     '*': true
   },
