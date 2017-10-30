@@ -98,5 +98,12 @@ module.exports = {
         return res.ok(result);
       })
       .catch(err => res.negotiate(err));
+  },
+
+  filters: function (req, res) {
+    return res.json({
+      state: Borrow.constants.statesList,
+      direction: Borrow.constants.directionsList
+    });
   }
 };
