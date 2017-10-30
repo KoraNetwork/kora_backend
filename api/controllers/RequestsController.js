@@ -47,11 +47,11 @@ module.exports = {
     ])
     .then(([data, total]) => {
       data.forEach(el => {
-        if (el.from && el.from.id === userId) {
+        if (el.from && el.from.id && el.from.id === userId) {
           el.direction = Requests.constants.directions.from;
         }
 
-        if (el.to && el.to.id === userId) {
+        if (el.to && el.to.id && el.to.id === userId) {
           el.direction = Requests.constants.directions.to;
         }
       });

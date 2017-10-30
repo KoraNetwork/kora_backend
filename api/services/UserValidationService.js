@@ -25,6 +25,28 @@ module.exports = {
     return promise;
   },
 
+  isIdsNotEqual: function ({ids, names}, cb) {
+    let promise = Promise.resolve();
+
+    for (let i = 0; i < ids.length - 1; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        if (ids[i] === ids[j]) {
+          promise = Promise.reject(new WLError({
+            status: 400,
+            reason: `Users ${names[i]} and ${names[j]} could not be equal`
+          }));
+          break;
+        }
+      }
+    }
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
   isUserNotInUsers: function ({user, users, userName = 'This', usersName = 'users'}, cb) {
     let promise = Promise.resolve();
 
@@ -66,16 +88,22 @@ module.exports = {
     return promise;
   },
 
-  isUsersExists: function ({users, name = 'Users'}, cb) {
+  isUsersExists: function ({ users, names }, cb) {
     const promise = !(users && users.length) ? Promise.resolve()
-      : Promise.all(users)
+      : Promise.all(users.map(id => User.findOne({id})))
         .then(records => {
-          let indexes = records.filter((record, index) => !record ? index : false);
+          let notExistsNames = [];
 
-          if (indexes.length) {
+          records.forEach((r, i) => {
+            if (!r) {
+              notExistsNames.push(names[i]);
+            }
+          });
+
+          if (notExistsNames.length) {
             return Promise.reject(new WLError({
               status: 404,
-              reason: `${name} with indexes ${indexes.join(', ')} not exists`
+              reason: `User${notExistsNames.length !== 1 ? 's' : ''} ${notExistsNames.join(', ')} not exists`
             }));
           }
 
