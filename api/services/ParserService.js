@@ -56,6 +56,7 @@ module.exports = {
 
       case '2': {
         init(session, 'deposit');
+        result = 'tmp message';
         break;
       }
 
@@ -201,6 +202,10 @@ module.exports = {
             break;
           }
 
+          case 'requestMoney': {
+
+          }
+
           case 'sendMoney': {
             switch (session.step) {
               case 0: {
@@ -236,7 +241,12 @@ module.exports = {
                     cb(err);
                   } else {
                     if (valid) {
-                      cb(null, `Transaction receipt: Sent $${ session.amount } to ${ session.contact } on ${ dateFormat(new Date(), 'dd/mm/yyyy H:M') }.`);
+                      if(session.action === 'sendMoney') {
+                        result = `Transaction receipt: Sent $${ session.amount } `;
+                      } else {
+                        result = `Request notification hasbeen sent `
+                      }
+                      cb(null, result + `to ${ session.contact } on ${ dateFormat(new Date(), 'dd/mm/yyyy H:M') }.`);
                     } else {
                       cb(null, checkAttemptCount(session) || 'Wrong PIN. Please try again.');
                     }
@@ -247,23 +257,10 @@ module.exports = {
             break;
           }
 
-          case 'requestMoney': {
-
-            break;
-          }
-
           default: {
             result = 'Error!'
           }
         }
-
-        // if (isNumber(message)) {
-        //   result = 'Please enter amount (format: $xxx)';
-        // } else if (message[0] === '$' && parseInt(message.substr(1)).toString() === message.substr(1)) {
-        //   result = 'Please confirm you want to request ' + message + ' from 555-555-5555 by entering your PIN.';
-        // } else {
-        //   result = 'Kora MVP are coming! Head for the hills!';
-        // }
       }
     }
     return cb(null, result);
