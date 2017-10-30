@@ -37,7 +37,7 @@ module.exports = {
           user: user
         }, (err, message) => {
           return res.send({
-            message: err || result
+            message: err || message
           });
         })
       } else {

@@ -101,8 +101,7 @@ module.exports = {
                   nextStep(session);
                   result = 'User name is valid. Please set up a password for your account.';
                 } else {
-                  result = 'User name is invalid. Please sign up a user name (User name need to start with a letter)'
-                  checkAttemptCount(this, session);
+                  result = checkAttemptCount(session) || 'User name is invalid. Please sign up a user name (User name need to start with a letter)'
                 }
                 break;
               }
@@ -128,8 +127,7 @@ module.exports = {
                   nextStep(session);
                   result = `You have chosen "${ securityQuestions[n - 1] }" asyour security question. Please replywith the answer or reply "0" to rechoose the security questions.`;
                 } else {
-                  result = `Please select security question ([1..${ securityQuestions.length }])`;
-                  checkAttemptCount(this, session);
+                  result = checkAttemptCount(session) || `Please select security question ([1..${ securityQuestions.length }])`;
                 }
                 break;
               }
@@ -170,8 +168,7 @@ module.exports = {
                     }
                   })
                 } else {
-                  result = 'PIN do not match. Please try again.'
-                  checkAttemptCount(this, session);
+                  result = checkAttemptCount(session) || 'PIN do not match. Please try again.'
                 }
               }
             }
@@ -183,7 +180,6 @@ module.exports = {
               case 0: {
                 return User.comparePassword(message, user, (err, valid) => {
                   if (err) {
-                    checkAttemptCount(this, session);
                     cb(err);
                   } else {
                     if (valid) {
@@ -191,7 +187,7 @@ module.exports = {
                         cb(err, !err ? `${ dateFormat(new Date(), 'dd/mm/yyyy') } eNaira: ${ result }.` : null);
                       });
                     } else {
-                      cb(null, 'Wrong PIN. Please try again.')
+                      cb(null, checkAttemptCount(session) || 'Wrong PIN. Please try again.');
                     }
                   }
                 })
@@ -206,7 +202,48 @@ module.exports = {
           }
 
           case 'sendMoney': {
+            switch (session.step) {
+              case 0: {
+                return User.findOne({ phone: message }, (err, user) => {
+                  if (err) {
+                    cb(err);
+                  }
+                  if (user) {
+                    session.contact = message;
+                    nextStep(session);
+                    cb(null, 'Please enter amount.');
+                  } else {
+                    cb(null, checkAttemptCount(session) || 'Contact not found. Please try again.');
+                  }
+                });
+              }
 
+              case 1: {
+                amount = message.substr(1);
+                if (message[0] === '$' && parseInt(amount).toString() === amount) {
+                  session.amount = parseInt(amount);
+                  nextStep(session);
+                  result = `Please confirm you want to request $${ amount } from ${ phoneNumber } by enteringyour PIN.`;
+                } else {
+                  result = checkAttemptCount(session) || 'Wrong amount format. Please try again (example $100).';
+                }
+                break;
+              }
+
+              case 2: {
+                return User.comparePassword(message, user, (err, valid) => {
+                  if (err) {
+                    cb(err);
+                  } else {
+                    if (valid) {
+                      cb(null, `Transaction receipt: Sent $${ session.amount } to ${ session.contact } on ${ dateFormat(new Date(), 'dd/mm/yyyy H:M') }.`);
+                    } else {
+                      cb(null, checkAttemptCount(session) || 'Wrong PIN. Please try again.');
+                    }
+                  }
+                })
+              }
+            }
             break;
           }
 
@@ -274,10 +311,10 @@ function nextStep (session) {
   }
 }
 
-function checkAttemptCount (scope, session){
-  ++session.attempt;
-  if (session.attempt >= 2) {
-    scope.result = 'Ended the number of attempts, please try again.';
+function checkAttemptCount (session){
+  session.attempt += 1;
+  if (session.attempt >= 3) {
     init(session, 'menu');
+    return 'Ended the number of attempts, please try again.';
   }
 }
