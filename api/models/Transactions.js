@@ -53,7 +53,15 @@ module.exports = {
 
     transactionHashes: { type: 'array', hexArray: true },
 
-    additionalNote: { type: 'string' }
+    additionalNote: { type: 'string' },
+
+    toJSON: function () {
+      var obj = this.toObject();
+
+      delete obj.rawTransactions;
+
+      return obj;
+    }
   },
 
   types: {
@@ -78,6 +86,7 @@ module.exports = {
 
   afterCreate: function (record, cb) {
     const { rawTransactions } = record;
+    console.log('record', record);
 
     if (!(rawTransactions && rawTransactions.length)) {
       return cb();
@@ -91,23 +100,23 @@ module.exports = {
       .then(receipts => {
         receipts.forEach(r => record.transactionHashes.push(r.transactionHash));
         record.state = states.success;
-        record.save(err => {
-          if (err) {
-            return sails.log.error('Transaction success state save error:\n', err);
-          }
-          // TODO: Add push here
-          sails.log.info('Transaction success state saved:\n', record);
-        });
+        delete record.rawTransactions;
+        this.update({id: record.id}, record)
+          .then(updated => {
+            // TODO: Add push here
+            sails.log.info('Transaction success state saved:\n', updated[0]);
+          })
+          .catch(err => sails.log.error('Transaction success state save error:\n', err));
       })
       .catch(err => {
         sails.log.error('Signed raw transaction send error:\n', err);
         record.state = states.error;
-        record.save(err => {
+        this.update({id: record.id}, record).exec((err, updated) => {
           if (err) {
             return sails.log.error('Transaction error state save error:\n', err);
           }
           // TODO: Add push here
-          sails.log.info('Transaction error state saved:\n', record);
+          sails.log.info('Transaction error state saved:\n', updated[0]);
         });
       });
 

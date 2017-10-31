@@ -27,7 +27,7 @@ module.exports = {
   },
 
   attributes: {
-    // TODO: Add validation for phone and maybe password
+
     phone: { type: 'string', required: true, phoneNumber: true },
 
     userName: { type: 'string', required: true, alphanumericdashed: true },

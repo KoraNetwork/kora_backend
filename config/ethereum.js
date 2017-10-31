@@ -32,7 +32,7 @@ module.exports.ethereum = {
     }
   },
 
-  koraTokenExponent: 18,
+  koraTokenExponent: 2,
 
   koraTokenSymbol: 'KTN'
 };
