@@ -101,7 +101,7 @@ module.exports = {
   destroy: function (req, res) {
     let allParams = req.allParams();
     let values = {
-      transactionHash: allParams.transactionHash
+      rawTransactions: allParams.rawTransactions
     };
 
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
@@ -134,7 +134,7 @@ module.exports = {
       )
       .then(({id}) => Transactions.findOne({id}).populate('from').populate('to'))
       .then(transaction => ({
-        message: 'Request for money was confirmed and deleted. Transaction was created',
+        message: 'Request for money was confirmed and deleted. Transaction was created and sent',
         transaction
       }))
       .then(result => res.send(result))
