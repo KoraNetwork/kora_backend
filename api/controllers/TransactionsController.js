@@ -14,6 +14,7 @@ module.exports = {
     const {
       direction,
       type,
+      state,
       limit = 10,
       skip = 0
     } = req.allParams();
@@ -27,6 +28,10 @@ module.exports = {
 
     if (type) {
       where.type = type;
+    }
+
+    if (state) {
+      where.state = state;
     }
 
     if (direction) {
@@ -75,17 +80,11 @@ module.exports = {
       .catch(err => res.negotiate(err));
   },
 
-  types: function (req, res) {
-    return res.json({
-      list: Transactions.constants.typesList,
-      collection: Transactions.constants.types
-    });
-  },
-
   filters: function (req, res) {
     return res.json({
+      direction: Transactions.constants.directionsList,
       type: Transactions.constants.typesList,
-      direction: Transactions.constants.directionsList
+      state: Transactions.constants.statesList
     });
   }
 };
