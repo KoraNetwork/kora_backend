@@ -101,6 +101,7 @@ module.exports = {
         receipts.forEach(r => record.transactionHashes.push(r.transactionHash));
         record.state = states.success;
         delete record.rawTransactions;
+
         this.update({id: record.id}, record)
           .then(updated => {
             // TODO: Add push here
@@ -110,7 +111,12 @@ module.exports = {
       })
       .catch(err => {
         sails.log.error('Signed raw transaction send error:\n', err);
+
         record.state = states.error;
+        if (err.receipt) {
+          record.transactionHashes.push(err.receipt.transactionHash);
+        }
+
         this.update({id: record.id}, record).exec((err, updated) => {
           if (err) {
             return sails.log.error('Transaction error state save error:\n', err);

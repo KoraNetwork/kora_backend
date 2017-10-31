@@ -7,6 +7,7 @@
 
 const {provider, networkId, koraWallet, HumanStandardToken, gas, gasPrice, koraTokenExponent} = sails.config.ethereum;
 // const Web3 = require('web3');
+const Web3Utils = require('web3-utils');
 
 const Eth = require('web3-eth');
 const eth = new Eth(provider);
@@ -54,6 +55,14 @@ module.exports = {
       .on('error', err => sails.log.error('Transaction transferSignedRawTx error:\n', err))
       .then(receipt => {
         sails.log.info('Transaction transferSignedRawTx receipt:\n', receipt);
+
+        if (!Web3Utils.hexToNumber(receipt.status)) {
+          let err = new Error('Transaction status fail');
+          err.receipt = receipt;
+
+          return Promise.reject(err);
+        }
+
         return receipt;
       });
 
