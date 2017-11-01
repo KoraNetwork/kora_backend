@@ -13,7 +13,58 @@ module.exports = {
   index: function (req, res) {
     Recents.findOne({user: req.user.id})
       .populate('recents')
-      .then(result => res.json(result ? sortRecents(result) : []))
+      .then(record => res.json(record ? sortRecents(record) : []))
+      .catch(err => res.negotiate(err));
+  },
+
+  contacts: function (req, res) {
+    const userId = req.user.id;
+    let {
+      search = '',
+      not = [],
+      limit = 10,
+      skip = 0,
+      sort = 'userName'
+    } = req.allParams();
+
+    let where = {
+      or: [
+        {phone: {contains: search}},
+        {userName: {contains: search}},
+        {email: {contains: search}},
+        {legalName: {contains: search}}
+      ]
+    };
+
+    not = Array.isArray(not) ? not : [not];
+    where.phone = {not};
+
+    let recents;
+
+    Recents.findOne({user: userId})
+      .populate('recents', {where})
+      .then(record => {
+        recents = record ? sortRecents(record) : [];
+        where.phone = {
+          not: not.concat(recents.map(({phone}) => phone))
+        };
+
+        return Promise.all([
+          User.find({ where, limit, skip, sort }),
+          User.count(where)
+        ]);
+      })
+      .then(([contacts, total]) => {
+        let result = {recents, contacts, total};
+
+        // eslint-disable-next-line eqeqeq
+        if (skip != 0) {
+          delete result.recents;
+        }
+
+        return result;
+      })
+      .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
 

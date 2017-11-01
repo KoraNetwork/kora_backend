@@ -20,7 +20,7 @@ module.exports = {
       sort = 'userName'
     } = req.allParams();
 
-    let searchQuery = {
+    let where = {
       or: [
         {phone: {contains: search}},
         {userName: {contains: search}},
@@ -30,12 +30,12 @@ module.exports = {
     };
 
     if (req.user) {
-      searchQuery.id = {'!': req.user.id};
+      where.id = {'!': req.user.id};
     }
 
     Promise.all([
-      User.find({ where: searchQuery, limit, skip, sort }),
-      User.count(searchQuery)
+      User.find({ where, limit, skip, sort }),
+      User.count(where)
     ])
     .then(([data, total]) => res.json({data, total}))
     .catch(err => res.negotiate(err));
