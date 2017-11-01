@@ -52,7 +52,6 @@ module.exports = {
   transferSignedRawTx: function ({rawTransaction}, cb) {
     sails.log.info('Send signed transferSignedRawTx transaction:\n', rawTransaction);
     let promise = eth.sendSignedTransaction(rawTransaction)
-      .on('error', err => sails.log.error('Transaction transferSignedRawTx error:\n', err))
       .then(receipt => {
         sails.log.info('Transaction transferSignedRawTx receipt:\n', receipt);
 

@@ -7,6 +7,8 @@
 
 /* global _ sails ValidationService UserValidationService TokensService */
 
+const WLError = require('waterline/lib/waterline/error/WLError');
+
 const types = {
   borrow: 'borrow',
   cash: 'cash',
@@ -86,6 +88,17 @@ module.exports = {
       .catch(err => cb(err));
   },
 
+  beforeCreate: function (values, cb) {
+    if (!values.rawTransactions.length) {
+      return cb(new WLError({
+        status: 400,
+        reason: 'Parameter rawTransactions must have at least one element'
+      }));
+    }
+
+    return cb();
+  },
+
   afterCreate: function (record, cb) {
     const { rawTransactions } = record;
     console.log('record', record);
@@ -102,7 +115,7 @@ module.exports = {
       .then(receipts => {
         receipts.forEach(r => record.transactionHashes.push(r.transactionHash));
         record.state = states.success;
-        delete record.rawTransactions;
+        record.rawTransactions = [];
 
         this.update({id: record.id}, record)
           .then(updated => {
@@ -117,6 +130,7 @@ module.exports = {
         record.state = states.error;
         if (err.receipt) {
           record.transactionHashes.push(err.receipt.transactionHash);
+          record.rawTransactions = [];
         }
 
         this.update({id: record.id}, record).exec((err, updated) => {
