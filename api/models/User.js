@@ -7,7 +7,6 @@
 
 /* global _ sails EthereumService ValidationService CountriesService */
 
-// We don't want to store password with out encryption
 const bcrypt = require('bcrypt');
 
 const WLError = require('waterline/lib/waterline/error/WLError');
@@ -50,7 +49,7 @@ module.exports = {
 
     address: { type: 'string' },
 
-    identity: { type: 'string', address: true, required: true },
+    identity: { type: 'string', address: true },
 
     creator: { type: 'string', address: true },
 
@@ -70,7 +69,6 @@ module.exports = {
 
     encryptedPassword: { type: 'string' },
 
-    // We don't wan't to send back encrypted password either
     toJSON: function () {
       var obj = this.toObject();
 
