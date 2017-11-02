@@ -7,15 +7,10 @@
 
 module.exports = {
   attributes: {
-    user: { model: 'user' },
+    user: { model: 'user', required: true },
 
-    recents: { collection: 'user' },
-
-    addedAtDates: { type: 'json', defaultsTo: {} }
+    recent: { model: 'user', required: true }
   },
 
-  indexes: [{
-    attributes: { user: 1 },
-    options: { unique: true }
-  }]
+  indexes: [{ attributes: { user: 1, updatedAt: -1 } }]
 };

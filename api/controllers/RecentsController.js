@@ -10,10 +10,10 @@
 const RECENTS_NUM = 10;
 
 module.exports = {
-  index: function (req, res) {
-    Recents.findOne({user: req.user.id})
-      .populate('recents')
-      .then(record => res.json(record ? sortRecents(record) : []))
+  find: function (req, res) {
+    findRecents({userId: req.user.id})
+      .then(records => (records && records.length ? records.map(r => r.recent) : []))
+      .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
 
@@ -41,10 +41,11 @@ module.exports = {
 
     let recents;
 
-    Recents.findOne({user: userId})
-      .populate('recents', {where})
-      .then(record => {
-        recents = record ? sortRecents(record) : [];
+    findRecents({userId, where})
+      .then(records => {
+        recents = records && records.length ? records.map(r => r.recent) : [];
+
+        where.id = {not: userId};
         where.phone = {
           not: not.concat(recents.map(({phone}) => phone))
         };
@@ -69,88 +70,65 @@ module.exports = {
   },
 
   add: function (req, res) {
+    const userId = req.user.id;
     const id = req.param('id');
 
     if (!id) {
       return res.badRequest({message: 'Id of recent user must be set'});
     }
 
-    if (id === req.user.id) {
+    if (id === userId) {
       return res.badRequest({message: 'Id of recent user could not be current user id'});
     }
 
-    Recents.findOrCreate({user: req.user.id}, {user: req.user.id})
-      .populate('recents')
-      .exec((err, record) => {
-        if (err) {
-          return res.negotiate(err);
+    let newRecord = {user: userId, recent: id};
+
+    User.findOne({id})
+      .then(recent => {
+        if (!recent) {
+          let err = new Error('Could not find a user with such id');
+          err.status = 400;
+
+          return Promise.reject(err);
         }
 
-        User.findOne({id}).exec((err, recent) => {
-          if (err) {
-            return res.negotiate(err);
-          }
-
-          if (!recent) {
-            return res.notFound({message: 'Could not find a user with such id'});
-          }
-
-          let recents = record.recents;
-
-          if (recents.length === RECENTS_NUM && !recents.some(el => (el.id === recent.id))) {
-            let oldestId = findOldestId(record.addedAtDates);
-
-            delete record.addedAtDates[oldestId];
-            recents.remove(oldestId);
-          }
-
-          return addToRecents({record, recent}, (err, result) => {
+        return Recents.findOne(newRecord);
+      })
+      .then(record => {
+        if (record) {
+          return new Promise((resolve, reject) => record.save(err => {
             if (err) {
-              return res.negotiate(err);
+              return reject(err);
             }
 
-            return res.json(sortRecents(result));
-          });
-        });
-      });
+            return resolve();
+          }));
+        }
+
+        return Recents.create(newRecord);
+      })
+      .then(() => findRecents({userId}))
+      .then(records => {
+        if (records.length > RECENTS_NUM) {
+          let lastRecord = records.pop();
+
+          return Recents.destroy({id: lastRecord.id})
+            .then(() => records);
+        }
+
+        return records;
+      })
+      .then(records => records.map(r => r.recent))
+      .then(result => res.ok(result))
+      .catch(err => res.negotiate(err));
   }
 };
 
-function sortRecents (record) {
-  let addedAtDates = record.addedAtDates;
-
-  return record.recents.sort((a, b) => (
-    Date.parse(addedAtDates[a.id]) < Date.parse(addedAtDates[b.id])
-  ));
-}
-
-function findOldestId (addedAtDates) {
-  let recentIds = Object.keys(addedAtDates);
-
-  return recentIds.reduce((oldest, current) => {
-    if (Date.parse(addedAtDates[current]) < Date.parse(addedAtDates[oldest])) {
-      return current;
-    }
-    return oldest;
-  }, recentIds[0]);
-}
-
-function addToRecents ({record, recent}, cb) {
-  record.recents.add(recent.id);
-  record.addedAtDates[recent.id] = new Date();
-
-  record.save(err => {
-    if (err) {
-      return cb(err);
-    }
-
-    Recents.findOne({id: record.id}).populate('recents')
-      .exec((err, result) => {
-        if (err) {
-          return cb(err);
-        }
-
-        return cb(null, result);
-      });
-  });
+function findRecents ({userId, where = {}}) {
+  return Recents.find({
+    where: {user: userId},
+    sort: 'updatedAt DESC'
+  })
+    .populate('recent', where)
+    .then(records => records.filter(r => r.recent));
 }
