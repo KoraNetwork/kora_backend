@@ -37,17 +37,16 @@ module.exports = {
     };
 
     not = Array.isArray(not) ? not : [not];
-    where.phone = {not};
 
     let recents;
 
-    findRecents({userId, where})
+    findRecents({userId, where, not})
       .then(records => {
         recents = records && records.length ? records.map(r => r.recent) : [];
 
-        where.id = {not: userId};
-        where.phone = {
-          not: not.concat(recents.map(({phone}) => phone))
+        not.push(userId);
+        where.id = {
+          not: not.concat(recents.map(({id}) => id))
         };
 
         return Promise.all([
@@ -124,11 +123,11 @@ module.exports = {
   }
 };
 
-function findRecents ({userId, where = {}}) {
+function findRecents ({userId, where = {}, not = []}) {
   return Recents.find({
     where: {user: userId},
     sort: 'updatedAt DESC'
   })
     .populate('recent', where)
-    .then(records => records.filter(r => r.recent));
+    .then(records => records.filter(r => (r.recent && !~not.indexOf(r.recent.id))));
 }
