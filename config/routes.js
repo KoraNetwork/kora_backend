@@ -20,6 +20,8 @@
  * http://sailsjs.org/#!/documentation/concepts/Routes/RouteTargetSyntax.html
  */
 
+const {constants: {types: borrowTypes}} = require('../api/models/Borrow');
+
 module.exports.routes = {
 
   /***************************************************************************
@@ -49,5 +51,11 @@ module.exports.routes = {
   *                                                                          *
   ***************************************************************************/
 
-  'POST /requests/:id': {controller: 'Requests', action: 'destroy'}
+  'POST /requests/:id': {controller: 'Requests', action: 'destroy'},
+
+  'GET /borrow/requests': {controller: 'Borrow', action: 'find', type: borrowTypes.request},
+
+  'GET /borrow/loans': {controller: 'Borrow', action: 'find', type: borrowTypes.loan},
+
+  'GET /borrow/inProgress': {controller: 'Borrow', action: 'find', type: borrowTypes.inProgress}
 };

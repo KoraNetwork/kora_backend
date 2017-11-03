@@ -5,13 +5,21 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ UserValidationService */
+/* global UserValidationService */
+
+const _ = require('lodash');
 
 const WLError = require('waterline/lib/waterline/error/WLError');
 
+const types = {
+  request: 'request',
+  loan: 'loan',
+  inProgress: 'inProgress'
+};
+const typesList = _.values(types);
+
 const states = {
-  requested: 'requested',
-  inProgress: 'inProgress',
+  pending: 'pending',
   rejected: 'rejected'
 };
 const statesList = _.values(states);
@@ -25,6 +33,8 @@ const directionsList = _.values(directions);
 
 module.exports = {
   constants: {
+    types,
+    typesList,
     states,
     statesList,
     directions,
@@ -32,11 +42,9 @@ module.exports = {
   },
 
   attributes: {
-    state: {
-      type: 'string',
-      in: statesList,
-      defaultsTo: states.requested
-    },
+    type: { type: 'string', in: typesList, defaultsTo: types.request },
+
+    state: { type: 'string', in: statesList, defaultsTo: states.pending },
 
     from: { model: 'user', required: true },
 

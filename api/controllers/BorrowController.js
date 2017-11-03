@@ -12,7 +12,12 @@ module.exports = {
     const directions = Borrow.constants.directions;
     const userId = req.user.id;
     const sort = 'updatedAt DESC';
-    const {direction, state, limit = 10, skip = 0} = req.allParams();
+    let {
+      direction,
+      type = req.options.type,
+      state,
+      limit = 10,
+      skip = 0} = req.allParams();
 
     let where = {
       or: [
@@ -24,17 +29,21 @@ module.exports = {
       ]
     };
 
+    if (type) {
+      where.type = type;
+    }
+
     if (state) {
       where.state = state;
     }
 
     if (direction) {
-      // If direction  will be Array
-      let directions = Array.isArray(direction) ? direction : [direction];
+      // If direction will be Array
+      direction = Array.isArray(direction) ? direction : [direction];
 
-      directions.forEach(d => {
+      direction.forEach(d => {
         if (d === directions.guarantor) {
-          [1, 2, 3].forEach(n => (where[d + n] = userId));
+          where.or = where.or.filter(el => !el.from && !el.to);
         } else {
           where[d] = userId;
         }
@@ -102,6 +111,7 @@ module.exports = {
 
   filters: function (req, res) {
     return res.json({
+      type: Borrow.constants.typesList,
       state: Borrow.constants.statesList,
       direction: Borrow.constants.directionsList
     });
