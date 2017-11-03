@@ -14,10 +14,13 @@ module.exports = {
     const sort = 'updatedAt DESC';
     let {
       direction,
-      type = req.options.type,
+      type,
       state,
       limit = 10,
-      skip = 0} = req.allParams();
+      skip = 0
+    } = req.allParams();
+
+    type = req.options.type || type;
 
     let where = {
       or: [
