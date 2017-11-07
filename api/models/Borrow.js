@@ -56,6 +56,14 @@ module.exports = {
 
     guarantor3: { model: 'user' },
 
+    toAgree: { type: 'boolean' },
+
+    guarantor1Agree: { type: 'boolean' },
+
+    guarantor2Agree: { type: 'boolean' },
+
+    guarantor3Agree: { type: 'boolean' },
+
     fromAmount: { type: 'float', required: true },
 
     toAmount: { type: 'float', required: true },

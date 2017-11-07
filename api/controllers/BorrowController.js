@@ -7,6 +7,8 @@
 
 /* global Borrow */
 
+const WLError = require('waterline/lib/waterline/error/WLError');
+
 module.exports = {
   find: function (req, res) {
     const directions = Borrow.constants.directions;
@@ -98,17 +100,52 @@ module.exports = {
     allParams.rate = parseFloat(allParams.rate, 10);
 
     Borrow.create(allParams)
-      .then(({id}) => Borrow.findOne({id})
-        .populate('from')
-        .populate('to')
-        .populate('guarantor1')
-        .populate('guarantor2')
-        .populate('guarantor3')
-    )
+      .then(({id}) => findBorrowPopulate({id}))
       .then(result => {
         result.direction = Borrow.constants.directions.from;
         return res.ok(result);
       })
+      .catch(err => res.negotiate(err));
+  },
+
+  update: function (req, res) {
+    let {id, agree} = req.allParams();
+
+    if (typeof agree === 'undefined') {
+      return res.badRequest(new WLError({message: `Parameter 'agree' must be set`, status: 400}));
+    }
+
+    agree = (typeof agree === 'string') ? agree !== 'false' : !!agree;
+
+    findBorrow({id, user: req.user})
+      .then(({borrow, participant}) => {
+        if (participant === 'from') {
+          return Promise.reject(new WLError({message: 'Not implemented yet', status: 404}));
+        }
+
+        if (borrow.type !== Borrow.constants.types.request) {
+          return Promise.reject(new WLError({message: 'Not implemented yet', status: 404}));
+        }
+
+        if (typeof borrow[participant + 'Agree'] === 'boolean') {
+          return Promise.reject(new WLError({message: 'User already did agreement', status: 400}));
+        }
+
+        borrow[participant + 'Agree'] = agree;
+
+        if (!agree) {
+          borrow.state = Borrow.constants.states.rejected;
+        }
+
+        return new Promise((resolve, reject) => borrow.save(err => {
+          if (err) {
+            return reject(err);
+          }
+          return resolve(borrow);
+        }));
+      })
+      .then(({id}) => findBorrowPopulate({id}))
+      .then(result => res.send(result))
       .catch(err => res.negotiate(err));
   },
 
@@ -120,3 +157,48 @@ module.exports = {
     });
   }
 };
+
+function findBorrowPopulate ({id}) {
+  return Borrow.findOne({id})
+    .populate('from')
+    .populate('to')
+    .populate('guarantor1')
+    .populate('guarantor2')
+    .populate('guarantor3');
+}
+
+function findBorrow ({id, user}) {
+  const {rejected} = Borrow.constants.states;
+
+  return Borrow.findOne({id})
+    .then(borrow => {
+      if (!borrow) {
+        return Promise.reject(new WLError({
+          status: 404,
+          message: 'Current borrow money not found'
+        }));
+      }
+
+      const {from, to, guarantor1, guarantor2, guarantor3} = borrow;
+      const participants = [from, to, guarantor1, guarantor2, guarantor3];
+
+      if (!~participants.indexOf(user.id)) {
+        return Promise.reject(new WLError({
+          status: 400,
+          message: `Current user must be participant of borrow money`
+        }));
+      }
+
+      if (borrow.state === rejected) {
+        return Promise.reject(new WLError({
+          status: 400,
+          message: 'Current borrow money is already rejected'
+        }));
+      }
+
+      let participant = Object.keys({from, to, guarantor1, guarantor2, guarantor3})
+        .find(key => borrow[key] === user.id);
+
+      return Promise.resolve({borrow, participant});
+    });
+}
