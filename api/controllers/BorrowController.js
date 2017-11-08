@@ -12,7 +12,7 @@ const WLError = require('waterline/lib/waterline/error/WLError');
 module.exports = {
   find: function (req, res) {
     const directions = Borrow.constants.directions;
-    const userId = req.user.id;
+    const userId = req._sails.user.id;
     const sort = 'updatedAt DESC';
     let {
       direction,
@@ -65,28 +65,7 @@ module.exports = {
         .populate('guarantor3'),
       Borrow.count(where)
     ])
-      .then(([data, total]) => {
-        data.forEach(el => {
-          if (el.from && el.from.id && el.from.id === userId) {
-            el.direction = directions.from;
-          }
-
-          if (el.to && el.to.id && el.to.id === userId) {
-            el.direction = directions.to;
-          }
-
-          if (
-            [1, 2, 3].some(n => {
-              const guarantor = el[directions.guarantor + n];
-              return guarantor && guarantor.id && guarantor.id === userId;
-            })
-          ) {
-            el.direction = directions.guarantor;
-          }
-        });
-
-        return {data, total};
-      })
+      .then(([data, total]) => ({data, total}))
       .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
@@ -94,17 +73,14 @@ module.exports = {
   create: function (req, res) {
     let allParams = req.allParams();
 
-    allParams.from = req.user.id;
+    allParams.from = req._sails.user.id;
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
     allParams.toAmount = parseFloat(allParams.toAmount, 10);
     allParams.rate = parseFloat(allParams.rate, 10);
 
     Borrow.create(allParams)
       .then(({id}) => findBorrowPopulate({id}))
-      .then(result => {
-        result.direction = Borrow.constants.directions.from;
-        return res.ok(result);
-      })
+      .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
 
@@ -117,7 +93,7 @@ module.exports = {
 
     agree = (typeof agree === 'string') ? agree !== 'false' : !!agree;
 
-    findBorrow({id, user: req.user})
+    findBorrow({id, user: req._sails.user})
       .then(({borrow, participant}) => {
         if (participant === 'from') {
           return Promise.reject(new WLError({message: 'Not implemented yet', status: 404}));

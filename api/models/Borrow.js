@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global UserValidationService */
+/* global sails UserValidationService */
 
 const _ = require('lodash');
 
@@ -79,6 +79,29 @@ module.exports = {
     toJSON: function () {
       let obj = this.toObject();
 
+      // Add direction
+      if (sails.user) {
+        const userId = sails.user.id;
+
+        if (obj.from && obj.from.id && obj.from.id === userId) {
+          obj.direction = directions.from;
+        }
+
+        if (obj.to && obj.to.id && obj.to.id === userId) {
+          obj.direction = directions.to;
+        }
+
+        if (
+          [1, 2, 3].some(n => {
+            const guarantor = obj['guarantor' + n];
+            return guarantor && guarantor.id && guarantor.id === userId;
+          })
+        ) {
+          obj.direction = directions.guarantor;
+        }
+      }
+
+      // Map guarantors and agree attributes
       obj.guarantors = [];
 
       ['to', 'guarantor1', 'guarantor2', 'guarantor3'].forEach(g => {

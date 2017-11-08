@@ -27,7 +27,7 @@ module.exports = {
         delete values.avatar;
       }
 
-      return User.update({id: req.user.id}).set(values).exec((err, user) => {
+      return User.update({id: req._sails.user.id}).set(values).exec((err, user) => {
         if (err) {
           return res.negotiate(err);
         }
@@ -36,14 +36,14 @@ module.exports = {
       });
     }
 
-    return res.json(req.user);
+    return res.json(req._sails.user);
   },
 
   /**
    * `ProfileController.avatar()`
    */
   avatar: function (req, res) {
-    const id = req.user.id;
+    const id = req._sails.user.id;
 
     if (!id) {
       return res.badRequest({message: 'User id param must be set'});

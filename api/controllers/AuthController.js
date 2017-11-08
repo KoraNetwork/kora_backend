@@ -86,6 +86,7 @@ module.exports = {
   },
 
   logout: function (req, res) {
+    delete req._sails.user;
     return res.ok({message: 'Fake logout success :)'});
   }
 };

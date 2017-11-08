@@ -29,8 +29,8 @@ module.exports = {
       ]
     };
 
-    if (req.user) {
-      where.id = {'!': req.user.id};
+    if (req._sails.user) {
+      where.id = {'!': req._sails.user.id};
     }
 
     Promise.all([

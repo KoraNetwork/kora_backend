@@ -9,7 +9,7 @@
 
 module.exports = {
   find: function (req, res) {
-    const userId = req.user.id;
+    const userId = req._sails.user.id;
     const sort = 'updatedAt DESC';
     const {
       direction,
@@ -67,7 +67,7 @@ module.exports = {
   create: function (req, res) {
     let allParams = req.allParams();
 
-    allParams.from = req.user.id;
+    allParams.from = req._sails.user.id;
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
     allParams.toAmount = parseFloat(allParams.toAmount, 10);
 

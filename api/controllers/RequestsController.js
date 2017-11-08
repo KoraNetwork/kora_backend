@@ -11,7 +11,7 @@ const WLError = require('waterline/lib/waterline/error/WLError');
 
 module.exports = {
   find: function (req, res) {
-    const userId = req.user.id;
+    const userId = req._sails.user.id;
     const sort = 'updatedAt DESC';
     const {
       direction,
@@ -64,7 +64,7 @@ module.exports = {
   create: function (req, res) {
     let allParams = req.allParams();
 
-    allParams.from = req.user.id;
+    allParams.from = req._sails.user.id;
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
     allParams.toAmount = parseFloat(allParams.toAmount, 10);
 
@@ -81,7 +81,7 @@ module.exports = {
     let allParams = req.allParams();
     const {rejected} = Requests.constants.states;
 
-    findRequest({id: allParams.id, user: req.user})
+    findRequest({id: allParams.id, user: req._sails.user})
       .then(record => {
         record.state = rejected;
 
@@ -115,7 +115,7 @@ module.exports = {
       values.fromAmount = allParams.toAmount;
     }
 
-    findRequest({id: allParams.id, user: req.user})
+    findRequest({id: allParams.id, user: req._sails.user})
       .then(request => {
         const {from, to, fromAmount, toAmount, additionalNote} = request;
 

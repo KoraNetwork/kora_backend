@@ -45,7 +45,7 @@ module.exports = function sessionTokenHook (sails) {
                   return res.json(401, {message: 'Could not find user in session!'});
                 }
 
-                req.user = user;
+                req._sails.user = user;
 
                 // TODO: Add session store logic for JWTokens
 
