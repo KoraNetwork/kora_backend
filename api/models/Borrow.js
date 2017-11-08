@@ -85,13 +85,9 @@ module.exports = {
 
         if (obj.from && obj.from.id && obj.from.id === userId) {
           obj.direction = directions.from;
-        }
-
-        if (obj.to && obj.to.id && obj.to.id === userId) {
+        } else if (obj.to && obj.to.id && obj.to.id === userId) {
           obj.direction = directions.to;
-        }
-
-        if (
+        } else if (
           [1, 2, 3].some(n => {
             const guarantor = obj['guarantor' + n];
             return guarantor && guarantor.id && guarantor.id === userId;
