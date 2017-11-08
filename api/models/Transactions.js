@@ -64,6 +64,19 @@ module.exports = {
 
       delete obj.rawTransactions;
 
+      // Add direction
+      if (sails.user) {
+        const userId = sails.user.id;
+
+        if (obj.from && obj.from.id === userId) {
+          obj.direction = directions.from;
+        }
+
+        if (obj.to && obj.to.id === userId) {
+          obj.direction = directions.to;
+        }
+      }
+
       return obj;
     }
   },
@@ -101,7 +114,6 @@ module.exports = {
 
   afterCreate: function (record, cb) {
     const { rawTransactions } = record;
-    console.log('record', record);
 
     if (!(rawTransactions && rawTransactions.length)) {
       return cb();

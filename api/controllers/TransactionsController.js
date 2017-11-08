@@ -48,19 +48,7 @@ module.exports = {
         .populate('to'),
       Transactions.count(where)
     ])
-    .then(([data, total]) => {
-      data.forEach(el => {
-        if (el.from && el.from.id === userId) {
-          el.direction = Transactions.constants.directions.from;
-        }
-
-        if (el.to && el.to.id === userId) {
-          el.direction = Transactions.constants.directions.to;
-        }
-      });
-
-      return res.json({data, total});
-    })
+    .then(([data, total]) => res.json({data, total}))
     .catch(err => res.negotiate(err));
   },
 
@@ -73,10 +61,7 @@ module.exports = {
 
     Transactions.create(allParams)
       .then(({id}) => Transactions.findOne({id}).populate('from').populate('to'))
-      .then(result => {
-        result.direction = Transactions.constants.directions.from;
-        return res.ok(result);
-      })
+      .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
 
