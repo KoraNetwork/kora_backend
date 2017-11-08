@@ -74,7 +74,27 @@ module.exports = {
 
     maturityDate: { type: 'date', required: true, after: new Date() },
 
-    additionalNote: { type: 'string' }
+    additionalNote: { type: 'string' },
+
+    toJSON: function () {
+      let obj = this.toObject();
+
+      obj.guarantors = [];
+
+      ['to', 'guarantor1', 'guarantor2', 'guarantor3'].forEach(g => {
+        if (obj[g]) {
+          if (typeof obj[g + 'Agree'] !== 'undefined') {
+            obj[g].agree = obj[g + 'Agree'];
+          }
+
+          if (g !== 'to') {
+            obj.guarantors.push(obj[g]);
+          }
+        }
+      });
+
+      return obj;
+    }
   },
 
   indexes: [
