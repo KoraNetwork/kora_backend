@@ -35,7 +35,7 @@ module.exports = {
       // If direction accidentally will be Array
       let directions = Array.isArray(direction) ? direction : [direction];
 
-      directions.forEach(el => (where[el] = userId));
+      directions.forEach(d => (where[d] = userId));
     }
 
     Promise.all([
@@ -45,19 +45,7 @@ module.exports = {
         .populate('to'),
       Requests.count(where)
     ])
-    .then(([data, total]) => {
-      data.forEach(el => {
-        if (el.from && el.from.id && el.from.id === userId) {
-          el.direction = Requests.constants.directions.from;
-        }
-
-        if (el.to && el.to.id && el.to.id === userId) {
-          el.direction = Requests.constants.directions.to;
-        }
-      });
-
-      return res.json({data, total});
-    })
+    .then(([data, total]) => res.json({data, total}))
     .catch(err => res.negotiate(err));
   },
 
@@ -70,10 +58,7 @@ module.exports = {
 
     Requests.create(allParams)
       .then(({id}) => Requests.findOne({id}).populate('from').populate('to'))
-      .then(result => {
-        result.direction = Requests.constants.directions.from;
-        return res.ok(result);
-      })
+      .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
 

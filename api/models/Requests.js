@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ UserValidationService */
+/* global _ sails UserValidationService */
 
 const states = {
   inProgress: 'inProgress',
@@ -42,7 +42,26 @@ module.exports = {
 
     toAmount: { type: 'float', required: true },
 
-    additionalNote: { type: 'string' }
+    additionalNote: { type: 'string' },
+
+    toJSON: function () {
+      var obj = this.toObject();
+
+      // Add direction
+      if (sails.user) {
+        const userId = sails.user.id;
+
+        if (obj.from && obj.from.id === userId) {
+          obj.direction = directions.from;
+        }
+
+        if (obj.to && obj.to.id === userId) {
+          obj.direction = directions.to;
+        }
+      }
+
+      return obj;
+    }
   },
 
   indexes: [
