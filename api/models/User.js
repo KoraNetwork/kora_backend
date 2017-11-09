@@ -184,7 +184,7 @@ module.exports = {
   },
 
   findOneUnique: function (identifier, cb) {
-    this.findOne({$or: [
+    this.findOne({or: [
       {phone: identifier},
       {userName: identifier.toLowerCase()},
       {email: identifier.toLowerCase()}
