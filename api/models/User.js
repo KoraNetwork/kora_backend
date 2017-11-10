@@ -43,19 +43,19 @@ module.exports = {
 
     countryCode: { type: 'string', in: CountriesService.list.map(el => el.countryCode) },
 
-    ERC20Token: { type: 'string', address: true, in: CountriesService.list.map(el => el.ERC20Token) },
+    ERC20Token: { type: 'string', ethereumAddress: true, in: CountriesService.list.map(el => el.ERC20Token) },
 
     postalCode: { type: 'string' },
 
     address: { type: 'string' },
 
-    identity: { type: 'string', address: true },
+    identity: { type: 'string', ethereumAddress: true },
 
-    creator: { type: 'string', address: true },
+    creator: { type: 'string', ethereumAddress: true },
 
-    owner: { type: 'string', address: true },
+    owner: { type: 'string', ethereumAddress: true },
 
-    recoveryKey: { type: 'string', address: true },
+    recoveryKey: { type: 'string', ethereumAddress: true },
 
     keystore: { type: 'json' },
 
@@ -89,7 +89,7 @@ module.exports = {
 
   types: {
     phoneNumber: value => ValidationService.phoneNumber(value),
-    address: value => ValidationService.address(value)
+    ethereumAddress: value => ValidationService.ethereumAddress(value)
   },
 
   indexes: [
