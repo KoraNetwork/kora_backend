@@ -27,6 +27,11 @@ contract KoraLend {
         _;
     }
 
+    modifier validDates(uint startDate, uint maturityDate) {
+        require(startDate > now && maturityDate > startDate + 1 days);
+        _;
+    }
+
     function createLoan(
         address lender,
         address[] guarantors,
@@ -38,6 +43,7 @@ contract KoraLend {
     )
         public
         limitGuarantorsLength(guarantors)
+        validDates(startDate, maturityDate)
         returns (uint loanId)
     {
         loanId = numLoans++;
