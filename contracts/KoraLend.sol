@@ -21,6 +21,8 @@ contract KoraLend {
     mapping (uint => Loan) public loans;
 
     event LoanCreated(uint loanId);
+    event GuarantorAgreed(uint loanId, address guarantor);
+    event LoanAgreed(uint loanId);
 
     modifier limitGuarantorsLength(address[] guarantors) {
         require(guarantors.length > 0 && guarantors.length <= 3);
@@ -29,6 +31,25 @@ contract KoraLend {
 
     modifier validDates(uint startDate, uint maturityDate) {
         require(startDate > now && maturityDate > startDate + 1 days);
+        _;
+    }
+
+    modifier atState(uint loanId, States state) {
+        require(loans[loanId].state == state);
+        _;
+    }
+
+    modifier onlyGuarantor(uint loanId) {
+        bool condition = false;
+        address[] storage guarantors = loans[loanId].guarantors;
+
+        for (uint i = 0; i < guarantors.length; i++) {
+            if (msg.sender == guarantors[i]) {
+                condition = true;
+            }
+        }
+
+        require(condition);
         _;
     }
 
@@ -61,5 +82,29 @@ contract KoraLend {
         });
 
         LoanCreated(loanId);
+    }
+
+    function agreeLoan(uint loanId)
+        public
+        atState(loanId, States.Created)
+        onlyGuarantor(loanId)
+        validDates(loans[loanId].startDate, loans[loanId].maturityDate)
+    {
+        bool agreed = true;
+        Loan storage loan = loans[loanId];
+
+        loan.guarantorsAgree[msg.sender] = true;
+        GuarantorAgreed(loanId, msg.sender);
+
+        for (uint i = 0; i < loan.guarantors.length; i++) {
+            if (!loan.guarantorsAgree[loan.guarantors[i]]) {
+                agreed = false;
+            }
+        }
+
+        if (agreed) {
+            loan.state = States.Agreed;
+            LoanAgreed(loanId);
+        }
     }
 }
