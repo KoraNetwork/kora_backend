@@ -90,11 +90,20 @@ contract KoraLend {
         onlyGuarantor(loanId)
         validDates(loans[loanId].startDate, loans[loanId].maturityDate)
     {
-        bool agreed = true;
         Loan storage loan = loans[loanId];
 
-        loan.guarantorsAgree[msg.sender] = true;
+        loans[loanId].guarantorsAgree[msg.sender] = true;
         GuarantorAgreed(loanId, msg.sender);
+
+        if (isLoanAgreed(loanId)) {
+            loan.state = States.Agreed;
+            LoanAgreed(loanId);
+        }
+    }
+
+    function isLoanAgreed(uint loanId) internal view returns (bool agreed) {
+        agreed = true;
+        Loan storage loan = loans[loanId];
 
         for (uint i = 0; i < loan.guarantors.length; i++) {
             if (!loan.guarantorsAgree[loan.guarantors[i]]) {
@@ -102,9 +111,5 @@ contract KoraLend {
             }
         }
 
-        if (agreed) {
-            loan.state = States.Agreed;
-            LoanAgreed(loanId);
-        }
-    }
-}
+        return agreed;
+    }}
