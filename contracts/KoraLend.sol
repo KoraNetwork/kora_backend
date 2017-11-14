@@ -66,6 +66,11 @@ contract KoraLend {
         _;
     }
 
+    modifier notGuarantorAgreed(uint loanId) {
+        require(!loans[loanId].guarantorsAgree[msg.sender]);
+        _;
+    }
+
     function createLoan(
         address lender,
         address[] guarantors,
@@ -100,8 +105,9 @@ contract KoraLend {
     function agreeLoan(uint loanId)
         public
         atState(loanId, States.Created)
-        onlyGuarantor(loanId)
         validDates(loans[loanId].startDate, loans[loanId].maturityDate)
+        onlyGuarantor(loanId)
+        notGuarantorAgreed(loanId)
     {
         Loan storage loan = loans[loanId];
 
