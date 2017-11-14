@@ -1,4 +1,4 @@
-pragma solidity ^0.4.16;
+pragma solidity ^0.4.15;
 
 contract KoraLend {
 
@@ -24,8 +24,21 @@ contract KoraLend {
     event GuarantorAgreed(uint loanId, address guarantor);
     event LoanAgreed(uint loanId);
 
-    modifier limitGuarantorsLength(address[] guarantors) {
+    modifier validAdresses(address lender, address[] guarantors) {
         require(guarantors.length > 0 && guarantors.length <= 3);
+
+        require(lender != address(0));
+        require(lender != msg.sender);
+
+        for (uint i = 0; i < guarantors.length; i++) {
+          require(guarantors[i] != address(0));
+          require(guarantors[i] != lender);
+
+          for (uint j = 0; j < i; j++) {
+              require(guarantors[i] != guarantors[j]);
+          }
+        }
+
         _;
     }
 
@@ -63,7 +76,7 @@ contract KoraLend {
         uint maturityDate
     )
         public
-        limitGuarantorsLength(guarantors)
+        validAdresses(lender, guarantors)
         validDates(startDate, maturityDate)
         returns (uint loanId)
     {
