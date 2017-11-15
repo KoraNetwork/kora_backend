@@ -48,23 +48,23 @@ module.exports.policies = {
   // feed : ['isNiceToAnimals', 'hasRabbitFood']
   // }
 
-  '*': ['isAuthorized'], // Everything resctricted here
+  '*': ['isAuthorized'],
 
   VerificationCodeController: {
     '*': true
   },
 
   UserController: {
-    '*': ['isMyProfile'],
+    '*': ['isAuthorized', 'isMyProfile'],
     create: true,
     destroy: false,
-    // Remove this after register will be done
+    // TODO: Remove this after register will be done
     find: true,
     findOne: true
   },
 
   AuthController: {
-    '*': true, // We dont need authorization here, allowing public access
+    '*': true,
     logout: ['isAuthorized']
   },
 
@@ -80,19 +80,22 @@ module.exports.policies = {
     '*': true
   },
 
-  EthereumController: {
-    getBalance: true
-  },
-
   CountriesController: {
     '*': true
   },
 
+  EthereumController: {
+    '*': ['isAuthorized'],
+    getBalance: true
+  },
+
   RecentsController: {
+    '*': ['isAuthorized'],
     destroy: false
   },
 
   TransactionsController: {
+    '*': ['isAuthorized'],
     destroy: false
   }
 };
