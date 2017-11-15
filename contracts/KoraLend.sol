@@ -2,7 +2,7 @@ pragma solidity ^0.4.15;
 
 contract KoraLend {
 
-    enum States { Created, Agreed, Funded, PaidBack, Expired }
+    enum States { Created, Agreed, Expired, Funded, PaidBack, Overdue }
 
     struct Loan {
         address borrower;

@@ -19,8 +19,12 @@ const types = {
 const typesList = _.values(types);
 
 const states = {
+  onGoing: 'onGoing',
+  agreed: 'agreed',
+  rejected: 'rejected',
+  expired: 'expired',
   pending: 'pending',
-  rejected: 'rejected'
+  overdue: 'overdue'
 };
 const statesList = _.values(states);
 
@@ -44,7 +48,7 @@ module.exports = {
   attributes: {
     type: { type: 'string', in: typesList, defaultsTo: types.request },
 
-    state: { type: 'string', in: statesList, defaultsTo: states.pending },
+    state: { type: 'string', in: statesList, defaultsTo: states.onGoing },
 
     from: { model: 'user', required: true },
 
@@ -75,6 +79,8 @@ module.exports = {
     maturityDate: { type: 'date', required: true, after: new Date() },
 
     additionalNote: { type: 'string' },
+
+    loanId: { type: 'string' },
 
     toJSON: function () {
       let obj = this.toObject();
