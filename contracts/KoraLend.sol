@@ -10,7 +10,7 @@ contract KoraLend {
         address[] guarantors;
         uint borrowerAmount;
         uint lenderAmount;
-        uint rate;
+        uint interestRate;
         uint startDate;
         uint maturityDate;
         States state;
@@ -76,7 +76,7 @@ contract KoraLend {
         address[] guarantors,
         uint borrowerAmount,
         uint lenderAmount,
-        uint rate,
+        uint interestRate,
         uint startDate,
         uint maturityDate
     )
@@ -93,7 +93,7 @@ contract KoraLend {
             guarantors: guarantors,
             borrowerAmount: borrowerAmount,
             lenderAmount: lenderAmount,
-            rate: rate,
+            interestRate: interestRate,
             startDate: startDate,
             maturityDate: maturityDate,
             state: States.Created

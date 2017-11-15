@@ -76,7 +76,7 @@ module.exports = {
     allParams.from = req._sails.user.id;
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
     allParams.toAmount = parseFloat(allParams.toAmount, 10);
-    allParams.rate = parseFloat(allParams.rate, 10);
+    allParams.interestRate = parseFloat(allParams.interestRate, 10);
 
     Borrow.create(allParams)
       .then(({id}) => findBorrowPopulate({id}))

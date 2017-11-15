@@ -68,7 +68,7 @@ module.exports = {
 
     toAmount: { type: 'float', required: true },
 
-    rate: { type: 'float', required: true, min: 0 },
+    interestRate: { type: 'float', required: true, min: 0 },
 
     startDate: { type: 'date', required: true, after: new Date() },
 
