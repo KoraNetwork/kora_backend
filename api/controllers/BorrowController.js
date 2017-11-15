@@ -85,32 +85,74 @@ module.exports = {
   },
 
   update: function (req, res) {
-    let {id, agree} = req.allParams();
+    const types = Borrow.constants.types;
+    const states = Borrow.constants.states;
+    let allParams = req.allParams();
 
-    if (typeof agree === 'undefined') {
-      return res.badRequest(new WLError({message: `Parameter 'agree' must be set`, status: 400}));
-    }
-
-    agree = (typeof agree === 'string') ? agree !== 'false' : !!agree;
-
-    findBorrow({id, user: req._sails.user})
+    findBorrow({id: allParams.id, user: req._sails.user})
       .then(({borrow, participant}) => {
-        if (participant === 'from') {
-          return Promise.reject(new WLError({message: 'Not implemented yet', status: 404}));
-        }
+        const {to, guarantor1, guarantor2, guarantor3} = borrow;
 
-        if (borrow.type !== Borrow.constants.types.request) {
-          return Promise.reject(new WLError({message: 'Not implemented yet', status: 404}));
-        }
+        switch (borrow.type) {
+          case types.request:
+            switch (borrow.state) {
+              case states.onGoing:
+                let {agree} = allParams;
 
-        if (typeof borrow[participant + 'Agree'] === 'boolean') {
-          return Promise.reject(new WLError({message: 'User already did agreement', status: 400}));
-        }
+                if (participant === 'from') {
+                  return Promise.reject(new WLError({message: 'Borrow money not agreed', status: 400}));
+                }
 
-        borrow[participant + 'Agree'] = agree;
+                if (typeof borrow[participant + 'Agree'] === 'boolean') {
+                  return Promise.reject(new WLError({message: 'User already did agreement', status: 400}));
+                }
 
-        if (!agree) {
-          borrow.state = Borrow.constants.states.rejected;
+                if (typeof agree === 'undefined') {
+                  return res.badRequest(new WLError({message: `Parameter 'agree' must be set`, status: 400}));
+                }
+
+                agree = (typeof agree === 'string') ? agree !== 'false' : !!agree;
+
+                borrow[participant + 'Agree'] = agree;
+
+                if (!agree) {
+                  borrow.state = states.rejected;
+                } else if (Object.keys({to, guarantor1, guarantor2, guarantor3}).every(k => borrow[k + 'Agree'])) {
+                  borrow.state = states.agreed;
+                }
+
+                break;
+
+              // case states.agreed:
+              //   let {rawCreateLoan} = allParams;
+              //
+              //   if (participant !== 'from') {
+              //     return Promise.reject(new WLError({message: 'Borrow money already agreed', status: 400}));
+              //   }
+              //
+              //   if (!rawCreateLoan) {
+              //     return res.badRequest(new WLError({message: `Parameter 'rawCreateLoan' must be set`, status: 400}));
+              //   }
+              //
+              //   borrow.type = types.loan;
+              //   borrow.state = states.pending;
+              //
+              //   break;
+
+              default:
+                return Promise.reject(new WLError({
+                  message: 'Not implemented yet',
+                  status: 404
+                }));
+            }
+
+            break;
+
+          default:
+            return Promise.reject(new WLError({
+              message: 'Not implemented yet',
+              status: 404
+            }));
         }
 
         return new Promise((resolve, reject) => borrow.save(err => {
@@ -144,7 +186,7 @@ function findBorrowPopulate ({id}) {
 }
 
 function findBorrow ({id, user}) {
-  const {rejected} = Borrow.constants.states;
+  const {rejected, expired, overdue} = Borrow.constants.states;
 
   return Borrow.findOne({id})
     .then(borrow => {
@@ -165,10 +207,10 @@ function findBorrow ({id, user}) {
         }));
       }
 
-      if (borrow.state === rejected) {
+      if (~[rejected, expired, overdue].indexOf(borrow.state)) {
         return Promise.reject(new WLError({
           status: 400,
-          message: 'Current borrow money is already rejected'
+          message: `Current borrow money is already ${borrow.state}`
         }));
       }
 
