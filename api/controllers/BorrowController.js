@@ -117,7 +117,11 @@ module.exports = {
 
                 if (!agree) {
                   borrow.state = states.rejected;
-                } else if (Object.keys({to, guarantor1, guarantor2, guarantor3}).every(k => borrow[k + 'Agree'])) {
+                } else if (
+                  Object.keys({to, guarantor1, guarantor2, guarantor3})
+                    .filter(k => borrow[k])
+                    .every(k => borrow[k + 'Agree'])
+                ) {
                   borrow.state = states.agreed;
                 }
 
