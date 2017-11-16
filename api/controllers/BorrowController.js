@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global Borrow */
+/* global Borrow ValidationService */
 
 const WLError = require('waterline/lib/waterline/error/WLError');
 
@@ -127,25 +127,26 @@ module.exports = {
 
                 break;
 
-              // case states.agreed:
-              //   let {rawCreateLoan} = allParams;
-              //
-              //   if (participant !== 'from') {
-              //     return Promise.reject(new WLError({message: 'Borrow money already agreed', status: 400}));
-              //   }
-              //
-              //   if (!rawCreateLoan) {
-              //     return res.badRequest(new WLError({message: `Parameter 'rawCreateLoan' must be set`, status: 400}));
-              //   }
-              //
-              //   borrow.type = types.loan;
-              //   borrow.state = states.pending;
-              //
-              //   break;
+              case states.agreed:
+                let {rawCreateLoan} = allParams;
+
+                if (participant !== 'from') {
+                  return Promise.reject(new WLError({message: 'Borrow money already agreed', status: 400}));
+                }
+
+                if (!(rawCreateLoan && ValidationService.hex(rawCreateLoan))) {
+                  return res.badRequest(new WLError({message: `Parameter 'rawCreateLoan' must be set and must be hex`, status: 400}));
+                }
+
+                borrow.type = types.loan;
+                borrow.state = states.pending;
+                borrow.rawCreateLoan = rawCreateLoan;
+
+                break;
 
               default:
                 return Promise.reject(new WLError({
-                  message: 'Not implemented yet',
+                  message: 'Not found',
                   status: 404
                 }));
             }

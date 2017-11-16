@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global sails UserValidationService */
+/* global sails ValidationService UserValidationService LendService */
 
 const _ = require('lodash');
 
@@ -82,6 +82,8 @@ module.exports = {
 
     loanId: { type: 'string' },
 
+    transactionHashes: { type: 'array', hexArray: true },
+
     toJSON: function () {
       let obj = this.toObject();
 
@@ -120,6 +122,10 @@ module.exports = {
 
       return obj;
     }
+  },
+
+  types: {
+    hexArray: value => value.every(el => ValidationService.hex(el))
   },
 
   indexes: [
@@ -169,5 +175,62 @@ module.exports = {
     ])
       .then(() => cb())
       .catch(err => cb(err));
+  },
+
+  beforeUpdate: function (values, cb) {
+    if (values.rawCreateLoan) {
+      this.rawCreateLoan = values.rawCreateLoan;
+      delete values.rawCreateLoan;
+      values.state = states.pending;
+    }
+
+    return cb();
+  },
+
+  afterUpdate: function (record, cb) {
+    if (!this.rawCreateLoan) {
+      return cb();
+    }
+
+    if (!Array.isArray(record.transactionHashes)) {
+      record.transactionHashes = [];
+    }
+
+    let rawCreateLoan = this.rawCreateLoan;
+    delete this.rawCreateLoan;
+
+    LendService.sendRawCreateLoan({rawCreateLoan})
+      .then(receipt => {
+        record.transactionHashes.push(receipt.transactionHash);
+        record.state = states.onGoing;
+        record.loanId = receipt.events.LoanCreated.returnValues.loanId;
+
+        this.update({id: record.id}, record)
+          .then(updated => {
+            // TODO: Add push here
+            sails.log.info('Borrow money loan created and onGoing state saved:\n', updated[0]);
+          })
+          .catch(err => sails.log.error('Borrow money loan created and onGoing state save error:\n', err));
+      })
+      .catch(err => {
+        sails.log.error('Borrow money create loan send error:\n', err);
+
+        record.state = states.agreed;
+        record.type = types.request;
+
+        if (err.receipt) {
+          record.transactionHashes.push(err.receipt.transactionHash);
+        }
+
+        this.update({id: record.id}, record).exec((err, updated) => {
+          if (err) {
+            return sails.log.error('Borrow money loan not created save error:\n', err);
+          }
+          // TODO: Add push here
+          sails.log.info('Borrow money loan not created state saved:\n', updated[0]);
+        });
+      });
+
+    return cb();
   }
 };
