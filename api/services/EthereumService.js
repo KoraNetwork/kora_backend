@@ -27,6 +27,33 @@ const txRelayAddress = TxRelay.networks[networkId].address; // Testnet
 const txRelay = new Contract(TxRelay.abi, txRelayAddress);
 
 module.exports = {
+  sendSignedTransaction: function ({rawTransaction, name = 'rawTransaction'}, cb) {
+    sails.log.info(`Send signed ${name} transaction:\n`, rawTransaction);
+
+    let promise = eth.sendSignedTransaction(rawTransaction)
+      // .on('confirmation', function (confirmationNumber, receipt) {
+      //   sails.log.info('rawCreateLoan confirmationNumber, receipt:\n', confirmationNumber, receipt);
+      // })
+      .then(receipt => {
+        sails.log.info(`Transaction ${name} receipt:\n`, receipt);
+
+        if (!Web3.utils.hexToNumber(receipt.status)) {
+          let err = new Error(`Transaction ${name} status fail`);
+          err.receipt = receipt;
+
+          return Promise.reject(err);
+        }
+
+        return receipt;
+      });
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
   /**
    * Generates an account object with private key and public key
    * @param  {[type]} password Password for a private key encryption to the web3 keystore v3 standard

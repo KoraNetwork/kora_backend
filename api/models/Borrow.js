@@ -200,10 +200,10 @@ module.exports = {
     delete this.rawCreateLoan;
 
     LendService.sendRawCreateLoan({rawCreateLoan})
-      .then(receipt => {
+      .then(({receipt, event}) => {
         record.transactionHashes.push(receipt.transactionHash);
+        record.loanId = event.returnValues.loanId;
         record.state = states.onGoing;
-        // record.loanId = receipt.events.LoanCreated.returnValues.loanId;
         ['to', 'guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
           .forEach(k => (record[k + 'Agree'] = null));
 

@@ -34,5 +34,16 @@ module.exports.ethereum = {
 
   koraTokenExponent: 2,
 
-  koraTokenSymbol: 'KTN'
+  koraTokenSymbol: 'KTN',
+
+  /**
+   * KoraLend
+   */
+  KoraLend: {
+    networks: {
+      4: {
+        address: '0x683ca4Eb5e3d34Cda515995598C0f719281Ce872'
+      }
+    }
+  }
 };
