@@ -16,9 +16,9 @@ module.exports = {
     sails.log.info('Send signed rawCreateLoan transaction:\n', rawCreateLoan);
 
     let promise = eth.sendSignedTransaction(rawCreateLoan)
-      .on('confirmation', function (confirmationNumber, receipt) {
-        sails.log.info('rawCreateLoan confirmationNumber, receipt:\n', confirmationNumber, receipt);
-      })
+      // .on('confirmation', function (confirmationNumber, receipt) {
+      //   sails.log.info('rawCreateLoan confirmationNumber, receipt:\n', confirmationNumber, receipt);
+      // })
       .then(receipt => {
         sails.log.info('Transaction rawCreateLoan receipt:\n', receipt);
 

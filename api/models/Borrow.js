@@ -204,6 +204,8 @@ module.exports = {
         record.transactionHashes.push(receipt.transactionHash);
         record.state = states.onGoing;
         // record.loanId = receipt.events.LoanCreated.returnValues.loanId;
+        ['to', 'guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
+          .forEach(k => (record[k + 'Agree'] = null));
 
         this.update({id: record.id}, record)
           .then(updated => {
