@@ -203,7 +203,7 @@ module.exports = {
       .then(receipt => {
         record.transactionHashes.push(receipt.transactionHash);
         record.state = states.onGoing;
-        record.loanId = receipt.events.LoanCreated.returnValues.loanId;
+        // record.loanId = receipt.events.LoanCreated.returnValues.loanId;
 
         this.update({id: record.id}, record)
           .then(updated => {
