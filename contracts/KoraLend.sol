@@ -1,5 +1,7 @@
 pragma solidity ^0.4.15;
 
+import "./Token.sol";
+
 contract KoraLend {
 
     enum States { Created, Agreed, Expired, Funded, PaidBack, Overdue }
@@ -23,6 +25,7 @@ contract KoraLend {
     event LoanCreated(uint loanId);
     event GuarantorAgreed(uint loanId, address guarantor);
     event LoanAgreed(uint loanId);
+    event LoanFunded(uint loanId);
 
     modifier validAdresses(address lender, address[] guarantors) {
         require(guarantors.length > 0 && guarantors.length <= 3);
@@ -68,6 +71,11 @@ contract KoraLend {
 
     modifier notGuarantorAgreed(uint loanId) {
         require(!loans[loanId].guarantorsAgree[msg.sender]);
+        _;
+    }
+
+    modifier  onlyLender(uint loanId) {
+        require(loans[loanId].lender == msg.sender);
         _;
     }
 
@@ -120,6 +128,30 @@ contract KoraLend {
         }
     }
 
+    // Before calling this method all transfers must be allowed for this smart contract
+    function fundLoan(uint loanId, address borrowerToken, address lenderToken, address koraWallet)
+        public
+        atState(loanId, States.Agreed)
+        validDates(loans[loanId].startDate, loans[loanId].maturityDate)
+        onlyLender(loanId)
+    {
+        bool success = false;
+        Loan storage loan = loans[loanId];
+
+        if (borrowerToken == lenderToken) {
+            require(loan.borrowerAmount == loan.lenderAmount);
+            success = transfer(borrowerToken, loan.lender, loan.borrower, loan.borrowerAmount);
+        } else {
+            success = transfer(lenderToken, loan.lender, koraWallet, loan.lenderAmount) &&
+                transfer(borrowerToken, koraWallet, loan.borrower, loan.borrowerAmount);
+        }
+
+        if (success) {
+            loan.state = States.Funded;
+            LoanFunded(loanId);
+        }
+    }
+
     function isLoanAgreed(uint loanId) internal view returns (bool agreed) {
         agreed = true;
         Loan storage loan = loans[loanId];
@@ -131,4 +163,10 @@ contract KoraLend {
         }
 
         return agreed;
-    }}
+    }
+
+    function transfer(address _token, address from, address to, uint value) internal returns (bool success) {
+        Token token = Token(_token);
+        return token.transferFrom(from, to, value);
+    }
+}
