@@ -17,33 +17,13 @@ const koraLend = new Contract(koraLendAbi, koraLendAddress);
 
 module.exports = {
   sendRawCreateLoan: function ({rawCreateLoan}, cb) {
-    sails.log.info('Send signed rawCreateLoan transaction:\n', rawCreateLoan);
-
-    let cacheReceipt;
-
-    let promise = EthereumService.sendSignedTransaction({
+    let promise = EthereumService.sendSignedTransactionWithEvent({
       rawTransaction: rawCreateLoan,
-      name: 'rawCreateLoan'
+      name: 'KoraLend.createLoan',
+      contract: koraLend,
+      event: 'LoanCreated'
     })
-      .then(receipt => {
-        cacheReceipt = receipt;
-
-        return koraLend.getPastEvents('LoanCreated', {
-          fromBlock: receipt.blockNumber
-        });
-      })
-      .then(events => {
-        sails.log.info('LoanCreated events:\n', events);
-
-        if (!(events && events.length)) {
-          return Promise.reject(new Error(`Method getPastEvents didn't return any events`));
-        }
-
-        return {
-          receipt: cacheReceipt,
-          event: events[0]
-        };
-      });
+      .then(({receipt, events}) => ({receipt, event: events[0]}));
 
     if (cb && typeof cb === 'function') {
       promise.then(cb.bind(null, null), cb);

@@ -139,7 +139,6 @@ module.exports = {
                 }
 
                 borrow.type = types.loan;
-                borrow.state = states.pending;
                 borrow.rawCreateLoan = rawCreateLoan;
 
                 break;

@@ -206,16 +206,9 @@ module.exports = {
           ['to', 'guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
             .forEach(k => (record[k + 'Agree'] = null));
 
-          this.update({id: record.id}, record)
-            .then(updated => {
-              // TODO: Add push here
-              sails.log.info('Borrow money loan created and onGoing state saved:\n', updated[0]);
-            })
-            .catch(err => sails.log.error('Borrow money loan created and onGoing state save error:\n', err));
+          return this.update({id: record.id}, record);
         })
         .catch(err => {
-          sails.log.error('Borrow money create loan send error:\n', err);
-
           record.state = states.agreed;
           record.type = types.request;
 
@@ -223,14 +216,13 @@ module.exports = {
             record.transactionHashes.push(err.receipt.transactionHash);
           }
 
-          this.update({id: record.id}, record).exec((err, updated) => {
-            if (err) {
-              return sails.log.error('Borrow money loan not created save error:\n', err);
-            }
-            // TODO: Add push here
-            sails.log.info('Borrow money loan not created state saved:\n', updated[0]);
-          });
-        });
+          return this.update({id: record.id}, record);
+        })
+        .then(updated => {
+          // TODO: Add push here
+          sails.log.info('Borrow money after KoraLend.createLoan tx saved:\n', updated[0]);
+        })
+        .catch(err => sails.log.error('Borrow money after KoraLend.createLoan tx save error:\n', err));
     }
 
     if (this.rawAgreeLoan) {
@@ -288,9 +280,9 @@ module.exports = {
         })
         .then(updated => {
           // TODO: Add push here
-          sails.log.info('Borrow money GuarantorAgreed and onGoing state saved:\n', updated[0]);
+          sails.log.info('Borrow money after KoraLend.agreeLoan tx saved:\n', updated[0]);
         })
-        .catch(err => sails.log.error('Borrow money GuarantorAgreed and onGoing state save error:\n', err));
+        .catch(err => sails.log.error('Borrow money after KoraLend.agreeLoan tx save error:\n', err));
     }
 
     return cb();
