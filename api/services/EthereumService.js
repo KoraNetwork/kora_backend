@@ -54,6 +54,56 @@ module.exports = {
     return promise;
   },
 
+  sendSignedTransactionWithEvent: function ({rawTransaction, name, contract, event}, cb) {
+    sails.log.info(`Send signed ${name} raw transaction:\n`, rawTransaction);
+
+    let cacheReceipt;
+
+    let promise = eth.sendSignedTransaction(rawTransaction)
+      // .on('confirmation', function (confirmationNumber, receipt) {
+      //   sails.log.info('rawCreateLoan confirmationNumber, receipt:\n', confirmationNumber, receipt);
+      // })
+      .then(receipt => {
+        sails.log.info(`Transaction ${name} receipt:\n`, receipt);
+
+        if (!Web3.utils.hexToNumber(receipt.status)) {
+          let err = new Error(`Transaction ${name} status fail`);
+          err.receipt = receipt;
+
+          return Promise.reject(err);
+        }
+
+        cacheReceipt = receipt;
+
+        return contract.getPastEvents(event, {
+          fromBlock: receipt.blockNumber,
+          toBlock: receipt.blockNumber
+        });
+      })
+      .then(events => {
+        sails.log.info(`${event} events:\n`, events);
+
+        if (!(events && events.length)) {
+          return Promise.reject(new Error(`Can't get any ${event} events for ${name} method`));
+        }
+
+        return {
+          receipt: cacheReceipt,
+          events
+        };
+      })
+      .catch(err => {
+        sails.log.error(`Transaction ${name} error:\n`, err);
+        return Promise.reject(err);
+      });
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
   /**
    * Generates an account object with private key and public key
    * @param  {[type]} password Password for a private key encryption to the web3 keystore v3 standard

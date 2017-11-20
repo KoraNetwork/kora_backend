@@ -82,7 +82,7 @@ module.exports = {
 
     loanId: { type: 'string' },
 
-    transactionHashes: { type: 'array', hexArray: true },
+    transactionHashes: { type: 'array', hexArray: true, defaultsTo: [] },
 
     toJSON: function () {
       let obj = this.toObject();
@@ -184,55 +184,130 @@ module.exports = {
       values.state = states.pending;
     }
 
+    if (values.rawAgreeLoan) {
+      this.rawAgreeLoan = values.rawAgreeLoan;
+      delete values.rawAgreeLoan;
+      values.state = states.pending;
+    }
+
     return cb();
   },
 
   afterUpdate: function (record, cb) {
-    if (!this.rawCreateLoan) {
-      return cb();
-    }
+    if (this.rawCreateLoan) {
+      let rawCreateLoan = this.rawCreateLoan;
+      delete this.rawCreateLoan;
 
-    if (!Array.isArray(record.transactionHashes)) {
-      record.transactionHashes = [];
-    }
+      LendService.sendRawCreateLoan({rawCreateLoan})
+        .then(({receipt, event}) => {
+          record.transactionHashes.push(receipt.transactionHash);
+          record.loanId = event.returnValues.loanId;
+          record.state = states.onGoing;
+          ['to', 'guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
+            .forEach(k => (record[k + 'Agree'] = null));
 
-    let rawCreateLoan = this.rawCreateLoan;
-    delete this.rawCreateLoan;
+          this.update({id: record.id}, record)
+            .then(updated => {
+              // TODO: Add push here
+              sails.log.info('Borrow money loan created and onGoing state saved:\n', updated[0]);
+            })
+            .catch(err => sails.log.error('Borrow money loan created and onGoing state save error:\n', err));
+        })
+        .catch(err => {
+          sails.log.error('Borrow money create loan send error:\n', err);
 
-    LendService.sendRawCreateLoan({rawCreateLoan})
-      .then(({receipt, event}) => {
-        record.transactionHashes.push(receipt.transactionHash);
-        record.loanId = event.returnValues.loanId;
-        record.state = states.onGoing;
-        ['to', 'guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
-          .forEach(k => (record[k + 'Agree'] = null));
+          record.state = states.agreed;
+          record.type = types.request;
 
-        this.update({id: record.id}, record)
-          .then(updated => {
-            // TODO: Add push here
-            sails.log.info('Borrow money loan created and onGoing state saved:\n', updated[0]);
-          })
-          .catch(err => sails.log.error('Borrow money loan created and onGoing state save error:\n', err));
-      })
-      .catch(err => {
-        sails.log.error('Borrow money create loan send error:\n', err);
-
-        record.state = states.agreed;
-        record.type = types.request;
-
-        if (err.receipt) {
-          record.transactionHashes.push(err.receipt.transactionHash);
-        }
-
-        this.update({id: record.id}, record).exec((err, updated) => {
-          if (err) {
-            return sails.log.error('Borrow money loan not created save error:\n', err);
+          if (err.receipt) {
+            record.transactionHashes.push(err.receipt.transactionHash);
           }
-          // TODO: Add push here
-          sails.log.info('Borrow money loan not created state saved:\n', updated[0]);
+
+          this.update({id: record.id}, record).exec((err, updated) => {
+            if (err) {
+              return sails.log.error('Borrow money loan not created save error:\n', err);
+            }
+            // TODO: Add push here
+            sails.log.info('Borrow money loan not created state saved:\n', updated[0]);
+          });
         });
-      });
+    }
+
+    if (this.rawAgreeLoan) {
+      let rawAgreeLoan = this.rawAgreeLoan;
+      delete this.rawAgreeLoan;
+
+      let guarantorIdentity;
+
+      LendService.sendRawAgreeLoan({rawAgreeLoan})
+        .then(({receipt, event}) => {
+          record.transactionHashes.push(receipt.transactionHash);
+
+          // eslint-disable-next-line eqeqeq
+          if (record.loanId != event.returnValues.loanId) {
+            let err = new Error('Borrow record and GuarantorAgreed event loanIds not equals');
+            sails.log.error(err);
+            return Promise.reject(err);
+          }
+
+          guarantorIdentity = event.returnValues.guarantor;
+
+          return this.findOnePopulate({id: record.id});
+        })
+        .then(populatedRecord => {
+          let guarantorKey = ['guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
+            .find(k => record[k].identity === guarantorIdentity);
+
+          if (!guarantorKey) {
+            let err = new Error(`Borrow record not has guarantor with identity equal GuarantorAgreed event guarantor`);
+            sails.log.error(err);
+            return Promise.reject(err);
+          }
+
+          record[guarantorKey + 'Agree'] = true;
+
+          if (
+            ['guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
+              .every(k => record[k + 'Agree'])
+          ) {
+            record.state = states.agreed;
+          } else {
+            record.state = states.onGoing;
+          }
+
+          return this.update({id: record.id}, record);
+        })
+        .catch(err => {
+          record.state = states.onGoing;
+
+          if (err.receipt) {
+            record.transactionHashes.push(err.receipt.transactionHash);
+          }
+
+          return this.update({id: record.id}, record);
+        })
+        .then(updated => {
+          // TODO: Add push here
+          sails.log.info('Borrow money GuarantorAgreed and onGoing state saved:\n', updated[0]);
+        })
+        .catch(err => sails.log.error('Borrow money GuarantorAgreed and onGoing state save error:\n', err));
+    }
 
     return cb();
+  },
+
+  findOnePopulate: function ({id}, cb) {
+    let promise = this.findOne({id})
+      .populate('from')
+      .populate('to')
+      .populate('guarantor1')
+      .populate('guarantor2')
+      .populate('guarantor3');
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
   }
 };

@@ -79,7 +79,7 @@ module.exports = {
     allParams.interestRate = parseFloat(allParams.interestRate, 10);
 
     Borrow.create(allParams)
-      .then(({id}) => findBorrowPopulate({id}))
+      .then(({id}) => Borrow.findOnePopulate({id}))
       .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
@@ -89,7 +89,7 @@ module.exports = {
     const states = Borrow.constants.states;
     let allParams = req.allParams();
 
-    findBorrow({id: allParams.id, user: req._sails.user})
+    findOneValidBorrow({id: allParams.id, user: req._sails.user})
       .then(({borrow, participant}) => {
         const {to, guarantor1, guarantor2, guarantor3} = borrow;
 
@@ -153,6 +153,56 @@ module.exports = {
 
             break;
 
+          case types.loan:
+            switch (borrow.state) {
+              case states.onGoing:
+                let {rawAgreeLoan} = allParams;
+
+                if (participant === 'from') {
+                  return Promise.reject(new WLError({message: 'Borrow money not funded', status: 400}));
+                }
+
+                if (participant === 'to') {
+                  return Promise.reject(new WLError({message: 'Borrow money not agreed', status: 400}));
+                }
+
+                if (typeof borrow[participant + 'Agree'] === 'boolean') {
+                  return Promise.reject(new WLError({message: 'User already did agreement', status: 400}));
+                }
+
+                if (!(rawAgreeLoan && ValidationService.hex(rawAgreeLoan))) {
+                  return res.badRequest(new WLError({message: `Parameter 'rawAgreeLoan' must be set and must be hex`, status: 400}));
+                }
+
+                borrow.rawAgreeLoan = rawAgreeLoan;
+
+                break;
+
+              // case states.agreed:
+              //   let {rawCreateLoan} = allParams;
+              //
+              //   if (participant !== 'from') {
+              //     return Promise.reject(new WLError({message: 'Borrow money already agreed', status: 400}));
+              //   }
+              //
+              //   if (!(rawCreateLoan && ValidationService.hex(rawCreateLoan))) {
+              //     return res.badRequest(new WLError({message: `Parameter 'rawCreateLoan' must be set and must be hex`, status: 400}));
+              //   }
+              //
+              //   borrow.type = types.loan;
+              //   borrow.rawCreateLoan = rawCreateLoan;
+              //
+              //   break;
+
+              default:
+                return Promise.reject(new WLError({
+                  message: 'Not implemented yet',
+                  status: 404
+                }));
+            }
+
+            break;
+
           default:
             return Promise.reject(new WLError({
               message: 'Not implemented yet',
@@ -167,7 +217,7 @@ module.exports = {
           return resolve(borrow);
         }));
       })
-      .then(({id}) => findBorrowPopulate({id}))
+      .then(({id}) => Borrow.findOnePopulate({id}))
       .then(result => res.send(result))
       .catch(err => res.negotiate(err));
   },
@@ -181,16 +231,7 @@ module.exports = {
   }
 };
 
-function findBorrowPopulate ({id}) {
-  return Borrow.findOne({id})
-    .populate('from')
-    .populate('to')
-    .populate('guarantor1')
-    .populate('guarantor2')
-    .populate('guarantor3');
-}
-
-function findBorrow ({id, user}) {
+function findOneValidBorrow ({id, user}) {
   const {rejected, expired, overdue} = Borrow.constants.states;
 
   return Borrow.findOne({id})

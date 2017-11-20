@@ -35,7 +35,7 @@ module.exports = {
       .then(events => {
         sails.log.info('LoanCreated events:\n', events);
 
-        if (!events.length) {
+        if (!(events && events.length)) {
           return Promise.reject(new Error(`Method getPastEvents didn't return any events`));
         }
 
@@ -44,6 +44,22 @@ module.exports = {
           event: events[0]
         };
       });
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
+  sendRawAgreeLoan: function ({rawAgreeLoan}, cb) {
+    let promise = EthereumService.sendSignedTransactionWithEvent({
+      rawTransaction: rawAgreeLoan,
+      name: 'KoraLend.agreeLoan',
+      contract: koraLend,
+      event: 'GuarantorAgreed'
+    })
+      .then(({receipt, events}) => ({receipt, event: events[0]}));
 
     if (cb && typeof cb === 'function') {
       promise.then(cb.bind(null, null), cb);
