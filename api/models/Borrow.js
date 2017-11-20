@@ -248,7 +248,7 @@ module.exports = {
         })
         .then(populatedRecord => {
           let guarantorKey = ['guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
-            .find(k => populatedRecord[k].identity === guarantorIdentity);
+            .find(k => populatedRecord[k].identity.toLowerCase() === guarantorIdentity.toLowerCase());
 
           if (!guarantorKey) {
             let err = new Error(`Borrow record not has guarantor with identity equal GuarantorAgreed event guarantor`);
