@@ -27,6 +27,11 @@ contract KoraLend {
     event LoanAgreed(uint loanId);
     event LoanFunded(uint loanId);
 
+    modifier validAdress(address addr) {
+        require(addr != address(0));
+        _;
+    }
+
     modifier validAdresses(address lender, address[] guarantors) {
         require(guarantors.length > 0 && guarantors.length <= 3);
 
@@ -131,6 +136,9 @@ contract KoraLend {
     // Before calling this method all transfers must be allowed for this smart contract
     function fundLoan(uint loanId, address borrowerToken, address lenderToken, address koraWallet)
         public
+        validAdress(borrowerToken)
+        validAdress(lenderToken)
+        validAdress(koraWallet)
         atState(loanId, States.Agreed)
         validDates(loans[loanId].startDate, loans[loanId].maturityDate)
         onlyLender(loanId)
