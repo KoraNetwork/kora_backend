@@ -176,8 +176,7 @@ contract KoraLend {
         address borrowerToken,
         address lenderToken,
         address koraWallet,
-        uint borrowerValue,
-        uint lenderValue
+        uint value
     )
         public
         atState(loanId, States.Funded)
@@ -189,38 +188,37 @@ contract KoraLend {
         require(borrowerToken != address(0) && lenderToken != address(0));
 
         bool success = false;
-        uint calculatedBorrowerValue = borrowerValue;
-        uint calculatedLenderValue = lenderValue;
+        uint borrowerValue = value;
+        uint lenderValue;
 
-        if (calculatedBorrowerValue > loan.borrowerBalance) {
-            calculatedBorrowerValue = loan.borrowerBalance;
+        if (borrowerValue > loan.borrowerBalance) {
+            borrowerValue = loan.borrowerBalance;
         }
 
         if (borrowerToken == lenderToken) {
             require(loan.borrowerAmount == loan.lenderAmount);
 
-            calculatedLenderValue = calculatedBorrowerValue;
+            lenderValue = borrowerValue;
 
-            success = transfer(borrowerToken, loan.borrower, loan.lender, calculatedBorrowerValue);
+            success = transfer(borrowerToken, loan.borrower, loan.lender, borrowerValue);
         } else {
             require(koraWallet != address(0));
 
-            calculatedLenderValue = calculatedBorrowerValue * loan.lenderBalance / loan.borrowerBalance;
-            require(lenderValue >= calculatedLenderValue);
-
-            if (calculatedLenderValue > loan.lenderBalance) {
-                calculatedLenderValue = loan.lenderBalance;
+            if (borrowerValue == loan.borrowerBalance) {
+                lenderValue = loan.lenderBalance;
+            } else {
+                lenderValue = borrowerValue * loan.lenderBalance / loan.borrowerBalance;
             }
 
-            success = transfer(borrowerToken, loan.borrower, koraWallet, calculatedBorrowerValue) &&
-                transfer(lenderToken, koraWallet, loan.lender, calculatedLenderValue);
+            success = transfer(borrowerToken, loan.borrower, koraWallet, borrowerValue) &&
+                transfer(lenderToken, koraWallet, loan.lender, lenderValue);
         }
 
         if (success) {
-            loan.borrowerBalance -= calculatedBorrowerValue;
-            loan.lenderBalance -= calculatedLenderValue;
+            loan.borrowerBalance -= borrowerValue;
+            loan.lenderBalance -= lenderValue;
 
-            LoanPaymentDone(loanId, calculatedBorrowerValue, calculatedLenderValue, loan.borrowerBalance, loan.lenderBalance);
+            LoanPaymentDone(loanId, borrowerValue, lenderValue, loan.borrowerBalance, loan.lenderBalance);
 
             if (loan.borrowerBalance == 0) {
                 loan.state = States.PaidBack;
