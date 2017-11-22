@@ -54,11 +54,6 @@ contract KoraLend {
         _;
     }
 
-    modifier validPayBackDates(uint startDate, uint maturityDate) {
-        require(startDate <= now && now <= maturityDate);
-        _;
-    }
-
     modifier atState(uint loanId, States state) {
         require(loans[loanId].state == state);
         _;
@@ -186,45 +181,46 @@ contract KoraLend {
     )
         public
         atState(loanId, States.Funded)
-        validPayBackDates(loans[loanId].startDate, loans[loanId].maturityDate)
         onlyBorrower(loanId)
     {
+        Loan storage loan = loans[loanId];
+
+        require(loan.startDate <= now && now <= loan.maturityDate);
         require(borrowerToken != address(0) && lenderToken != address(0));
 
         bool success = false;
-        Loan storage loan = loans[loanId];
+        uint calculatedBorrowerValue = borrowerValue;
+        uint calculatedLenderValue = lenderValue;
 
-        if (borrowerValue > loan.borrowerBalance) {
-            borrowerValue = loan.borrowerBalance;
+        if (calculatedBorrowerValue > loan.borrowerBalance) {
+            calculatedBorrowerValue = loan.borrowerBalance;
         }
 
         if (borrowerToken == lenderToken) {
             require(loan.borrowerAmount == loan.lenderAmount);
 
-            require(lenderValue >= borrowerValue);
-            lenderValue = borrowerValue;
+            calculatedLenderValue = calculatedBorrowerValue;
 
-            success = transfer(borrowerToken, loan.borrower, loan.lender, borrowerValue);
+            success = transfer(borrowerToken, loan.borrower, loan.lender, calculatedBorrowerValue);
         } else {
             require(koraWallet != address(0));
 
-            if (lenderValue > loan.lenderBalance) {
-                lenderValue = loan.lenderBalance;
-            } else {
-                uint calculatedLenderValue = borrowerValue * loan.lenderBalance / loan.borrowerBalance;
-                require(lenderValue >= calculatedLenderValue);
-                lenderValue = calculatedLenderValue;
+            calculatedLenderValue = calculatedBorrowerValue * loan.lenderBalance / loan.borrowerBalance;
+            require(lenderValue >= calculatedLenderValue);
+
+            if (calculatedLenderValue > loan.lenderBalance) {
+                calculatedLenderValue = loan.lenderBalance;
             }
 
-            success = transfer(borrowerToken, loan.borrower, koraWallet, borrowerValue) &&
-                transfer(lenderToken, koraWallet, loan.lender, lenderValue);
+            success = transfer(borrowerToken, loan.borrower, koraWallet, calculatedBorrowerValue) &&
+                transfer(lenderToken, koraWallet, loan.lender, calculatedLenderValue);
         }
 
         if (success) {
-            loan.borrowerBalance -= borrowerValue;
-            loan.lenderBalance -= lenderValue;
+            loan.borrowerBalance -= calculatedBorrowerValue;
+            loan.lenderBalance -= calculatedLenderValue;
 
-            LoanPaymentDone(loanId, borrowerValue, lenderValue, loan.borrowerBalance, loan.lenderBalance);
+            LoanPaymentDone(loanId, calculatedBorrowerValue, calculatedLenderValue, loan.borrowerBalance, loan.lenderBalance);
 
             if (loan.borrowerBalance == 0) {
                 loan.state = States.PaidBack;
