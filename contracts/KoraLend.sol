@@ -13,6 +13,8 @@ contract KoraLend {
         uint borrowerAmount;
         uint lenderAmount;
         uint interestRate;
+        uint borrowerBalance;
+        uint lenderBalance;
         uint startDate;
         uint maturityDate;
         States state;
@@ -25,14 +27,11 @@ contract KoraLend {
     event LoanCreated(uint loanId);
     event GuarantorAgreed(uint loanId, address guarantor);
     event LoanAgreed(uint loanId);
-    event LoanFunded(uint loanId);
+    event LoanFunded(uint loanId, uint borrowerBalance, uint lenderBalance);
+    event LoanPaymentDone(uint loanId, uint borrowerValue, uint lenderValue, uint borrowerBalance, uint lenderBalance);
+    event LoanPaidBack(uint loanId);
 
-    modifier validAdress(address addr) {
-        require(addr != address(0));
-        _;
-    }
-
-    modifier validAdresses(address lender, address[] guarantors) {
+    modifier validParticipants(address lender, address[] guarantors) {
         require(guarantors.length > 0 && guarantors.length <= 3);
 
         require(lender != address(0));
@@ -52,6 +51,11 @@ contract KoraLend {
 
     modifier validDates(uint startDate, uint maturityDate) {
         require(startDate > now && maturityDate > startDate + 1 days);
+        _;
+    }
+
+    modifier validPayBackDates(uint startDate, uint maturityDate) {
+        require(startDate <= now && now <= maturityDate);
         _;
     }
 
@@ -84,6 +88,11 @@ contract KoraLend {
         _;
     }
 
+    modifier  onlyBorrower(uint loanId) {
+        require(loans[loanId].borrower == msg.sender);
+        _;
+    }
+
     function createLoan(
         address lender,
         address[] guarantors,
@@ -94,7 +103,7 @@ contract KoraLend {
         uint maturityDate
     )
         public
-        validAdresses(lender, guarantors)
+        validParticipants(lender, guarantors)
         validDates(startDate, maturityDate)
         returns (uint loanId)
     {
@@ -107,6 +116,8 @@ contract KoraLend {
             borrowerAmount: borrowerAmount,
             lenderAmount: lenderAmount,
             interestRate: interestRate,
+            borrowerBalance: 0,
+            lenderBalance: 0,
             startDate: startDate,
             maturityDate: maturityDate,
             state: States.Created
@@ -136,27 +147,89 @@ contract KoraLend {
     // Before calling this method all transfers must be allowed for this smart contract
     function fundLoan(uint loanId, address borrowerToken, address lenderToken, address koraWallet)
         public
-        validAdress(borrowerToken)
-        validAdress(lenderToken)
-        validAdress(koraWallet)
         atState(loanId, States.Agreed)
         validDates(loans[loanId].startDate, loans[loanId].maturityDate)
         onlyLender(loanId)
     {
+        require(borrowerToken != address(0) && lenderToken != address(0));
+
         bool success = false;
         Loan storage loan = loans[loanId];
 
         if (borrowerToken == lenderToken) {
             require(loan.borrowerAmount == loan.lenderAmount);
+
             success = transfer(borrowerToken, loan.lender, loan.borrower, loan.borrowerAmount);
         } else {
+            require(koraWallet != address(0));
+
             success = transfer(lenderToken, loan.lender, koraWallet, loan.lenderAmount) &&
                 transfer(borrowerToken, koraWallet, loan.borrower, loan.borrowerAmount);
         }
 
         if (success) {
+            loan.borrowerBalance = calcBalance(loan.borrowerAmount, loan.interestRate);
+            loan.lenderBalance = calcBalance(loan.lenderAmount, loan.interestRate);
             loan.state = States.Funded;
-            LoanFunded(loanId);
+            LoanFunded(loanId, loan.borrowerBalance, loan.lenderBalance);
+        }
+    }
+
+    // Before calling this method all transfers must be allowed for this smart contract
+    function payBackLoan(
+        uint loanId,
+        address borrowerToken,
+        address lenderToken,
+        address koraWallet,
+        uint borrowerValue,
+        uint lenderValue
+    )
+        public
+        atState(loanId, States.Funded)
+        validPayBackDates(loans[loanId].startDate, loans[loanId].maturityDate)
+        onlyBorrower(loanId)
+    {
+        require(borrowerToken != address(0) && lenderToken != address(0));
+
+        bool success = false;
+        Loan storage loan = loans[loanId];
+
+        if (borrowerValue > loan.borrowerBalance) {
+            borrowerValue = loan.borrowerBalance;
+        }
+
+        if (borrowerToken == lenderToken) {
+            require(loan.borrowerAmount == loan.lenderAmount);
+
+            require(lenderValue >= borrowerValue);
+            lenderValue = borrowerValue;
+
+            success = transfer(borrowerToken, loan.borrower, loan.lender, borrowerValue);
+        } else {
+            require(koraWallet != address(0));
+
+            if (lenderValue > loan.lenderBalance) {
+                lenderValue = loan.lenderBalance;
+            } else {
+                uint calculatedLenderValue = borrowerValue * loan.lenderBalance / loan.borrowerBalance;
+                require(lenderValue >= calculatedLenderValue);
+                lenderValue = calculatedLenderValue;
+            }
+
+            success = transfer(borrowerToken, loan.borrower, koraWallet, borrowerValue) &&
+                transfer(lenderToken, koraWallet, loan.lender, lenderValue);
+        }
+
+        if (success) {
+            loan.borrowerBalance -= borrowerValue;
+            loan.lenderBalance -= lenderValue;
+
+            LoanPaymentDone(loanId, borrowerValue, lenderValue, loan.borrowerBalance, loan.lenderBalance);
+
+            if (loan.borrowerBalance == 0) {
+                loan.state = States.PaidBack;
+                LoanPaidBack(loanId);
+            }
         }
     }
 
@@ -176,5 +249,10 @@ contract KoraLend {
     function transfer(address _token, address from, address to, uint value) internal returns (bool success) {
         Token token = Token(_token);
         return token.transferFrom(from, to, value);
+    }
+
+    function calcBalance(uint amount, uint interestRate) internal pure returns (uint balance) {
+        // Assume that there are two decimals for all numbers
+        return amount + amount * interestRate / 10000;
     }
 }
