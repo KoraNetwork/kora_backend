@@ -50,7 +50,7 @@ contract KoraLend {
     }
 
     modifier validDates(uint startDate, uint maturityDate) {
-        require(startDate > now && maturityDate > startDate + 1 days);
+        require(startDate > now && maturityDate >= startDate + 1 days);
         _;
     }
 
