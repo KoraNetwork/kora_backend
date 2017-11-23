@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global sails ValidationService UserValidationService LendService */
+/* global sails ValidationService UserValidationService LendService EthereumService */
 
 const _ = require('lodash');
 
@@ -68,9 +68,9 @@ module.exports = {
 
     guarantor3Agree: { type: 'boolean' },
 
-    fromAmount: { type: 'float', required: true },
+    fromAmount: { type: 'float', required: true, min: 0 },
 
-    toAmount: { type: 'float', required: true },
+    toAmount: { type: 'float', required: true, min: 0 },
 
     interestRate: { type: 'float', required: true, min: 0 },
 
@@ -81,6 +81,10 @@ module.exports = {
     additionalNote: { type: 'string' },
 
     loanId: { type: 'string' },
+
+    fromBalance: { type: 'float', min: 0 },
+
+    toBalance: { type: 'float', min: 0 },
 
     transactionHashes: { type: 'array', hexArray: true, defaultsTo: [] },
 
@@ -119,6 +123,9 @@ module.exports = {
           }
         }
       });
+
+      obj.totalFromAmount = Math.ceil(obj.fromAmount * obj.interestRate * 100) / 100;
+      obj.totalToAmount = Math.ceil(obj.toAmount * obj.interestRate * 100) / 100;
 
       return obj;
     }
@@ -178,17 +185,13 @@ module.exports = {
   },
 
   beforeUpdate: function (values, cb) {
-    if (values.rawCreateLoan) {
-      this.rawCreateLoan = values.rawCreateLoan;
-      delete values.rawCreateLoan;
-      values.state = states.pending;
-    }
-
-    if (values.rawAgreeLoan) {
-      this.rawAgreeLoan = values.rawAgreeLoan;
-      delete values.rawAgreeLoan;
-      values.state = states.pending;
-    }
+    ['rawCreateLoan', 'rawAgreeLoan', 'rawApproves', 'rawFundLoan'].forEach(rawTx => {
+      if (values[rawTx]) {
+        this[rawTx] = values[rawTx];
+        delete values[rawTx];
+        values.state = states.pending;
+      }
+    });
 
     return cb();
   },
@@ -283,6 +286,50 @@ module.exports = {
           sails.log.info('Borrow money after KoraLend.agreeLoan tx saved:\n', updated[0]);
         })
         .catch(err => sails.log.error('Borrow money after KoraLend.agreeLoan tx save error:\n', err));
+    }
+
+    if (this.rawApproves && (this.rawFundLoan || this.rawPayBackLoan)) {
+      let rawApproves = this.rawApproves;
+      delete this.rawApproves;
+
+      Promise.all(
+        rawApproves.map(rawApprove =>
+          EthereumService.sendSignedTransaction({rawTransaction: rawApprove, name: 'humanStandardToken.approve'})
+        )
+      )
+        .then(receipts => {
+          if (this.rawFundLoan) {
+            let rawFundLoan = this.rawFundLoan;
+            delete this.rawFundLoan;
+
+            return LendService.sendRawFundLoan({rawFundLoan});
+          }
+        })
+        .then(({receipt, event}) => {
+          record.transactionHashes.push(receipt.transactionHash);
+          record.state = states.onGoing;
+          record.fromBalance = event.returnValues.borrowerBalance / 100;
+          record.toBalance = event.returnValues.lenderBalance / 100;
+
+          return this.update({id: record.id}, record);
+        })
+        .catch(err => {
+          if (this.rawFundLoan) {
+            record.state = states.agreed;
+            record.type = types.loan;
+          }
+
+          if (err.receipt) {
+            record.transactionHashes.push(err.receipt.transactionHash);
+          }
+
+          return this.update({id: record.id}, record);
+        })
+        .then(updated => {
+          // TODO: Add push here
+          sails.log.info('Borrow money after KoraLend.fundLoan tx saved:\n', updated[0]);
+        })
+        .catch(err => sails.log.error('Borrow money after KoraLend.fundLoan tx save error:\n', err));
     }
 
     return cb();

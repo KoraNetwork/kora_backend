@@ -177,21 +177,26 @@ module.exports = {
 
                 break;
 
-              // case states.agreed:
-              //   let {rawCreateLoan} = allParams;
-              //
-              //   if (participant !== 'from') {
-              //     return Promise.reject(new WLError({message: 'Borrow money already agreed', status: 400}));
-              //   }
-              //
-              //   if (!(rawCreateLoan && ValidationService.hex(rawCreateLoan))) {
-              //     return res.badRequest(new WLError({message: `Parameter 'rawCreateLoan' must be set and must be hex`, status: 400}));
-              //   }
-              //
-              //   borrow.type = types.loan;
-              //   borrow.rawCreateLoan = rawCreateLoan;
-              //
-              //   break;
+              case states.agreed:
+                let {rawApproves, rawFundLoan} = allParams;
+
+                if (participant !== 'to') {
+                  return Promise.reject(new WLError({message: 'Borrow money not funded', status: 400}));
+                }
+
+                if (!(rawApproves && rawApproves.length && rawApproves.every(a => ValidationService.hex(a)))) {
+                  return res.badRequest(new WLError({message: `Parameter 'rawApproves' must be set and must be hex array`, status: 400}));
+                }
+
+                if (!(rawFundLoan && ValidationService.hex(rawFundLoan))) {
+                  return res.badRequest(new WLError({message: `Parameter 'rawFundLoan' must be set and must be hex`, status: 400}));
+                }
+
+                borrow.type = types.inProgress;
+                borrow.rawApproves = rawApproves;
+                borrow.rawFundLoan = rawFundLoan;
+
+                break;
 
               default:
                 return Promise.reject(new WLError({
