@@ -78,12 +78,12 @@ contract KoraLend {
         _;
     }
 
-    modifier  onlyLender(uint loanId) {
+    modifier onlyLender(uint loanId) {
         require(loans[loanId].lender == msg.sender);
         _;
     }
 
-    modifier  onlyBorrower(uint loanId) {
+    modifier onlyBorrower(uint loanId) {
         require(loans[loanId].borrower == msg.sender);
         _;
     }
