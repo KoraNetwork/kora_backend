@@ -42,7 +42,7 @@ module.exports.ethereum = {
   KoraLend: {
     networks: {
       4: {
-        address: '0x683ca4Eb5e3d34Cda515995598C0f719281Ce872'
+        address: '0x181790fdB1934fa0b616f2e5C4e0Fce5f98443fE'
       }
     }
   }
