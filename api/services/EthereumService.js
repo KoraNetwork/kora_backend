@@ -28,7 +28,7 @@ const txRelay = new Contract(TxRelay.abi, txRelayAddress);
 
 module.exports = {
   sendSignedTransaction: function ({rawTransaction, name = 'rawTransaction'}, cb) {
-    sails.log.info(`Send signed ${name} transaction:\n`, rawTransaction);
+    sails.log.info(`Send signed ${name} raw transaction:\n`, rawTransaction);
 
     let promise = eth.sendSignedTransaction(rawTransaction)
       // .on('confirmation', function (confirmationNumber, receipt) {
@@ -45,6 +45,10 @@ module.exports = {
         }
 
         return receipt;
+      })
+      .catch(err => {
+        sails.log.error(`Transaction ${name} send error:\n`, err);
+        return Promise.reject(err);
       });
 
     if (cb && typeof cb === 'function') {
@@ -55,24 +59,10 @@ module.exports = {
   },
 
   sendSignedTransactionWithEvent: function ({rawTransaction, name, contract, event}, cb) {
-    sails.log.info(`Send signed ${name} raw transaction:\n`, rawTransaction);
-
     let cacheReceipt;
 
-    let promise = eth.sendSignedTransaction(rawTransaction)
-      // .on('confirmation', function (confirmationNumber, receipt) {
-      //   sails.log.info('rawCreateLoan confirmationNumber, receipt:\n', confirmationNumber, receipt);
-      // })
+    let promise = this.sendSignedTransaction({rawTransaction, name})
       .then(receipt => {
-        sails.log.info(`Transaction ${name} receipt:\n`, receipt);
-
-        if (!Web3.utils.hexToNumber(receipt.status)) {
-          let err = new Error(`Transaction ${name} status fail`);
-          err.receipt = receipt;
-
-          return Promise.reject(err);
-        }
-
         cacheReceipt = receipt;
 
         return contract.getPastEvents(event, {
@@ -93,7 +83,7 @@ module.exports = {
         };
       })
       .catch(err => {
-        sails.log.error(`Transaction ${name} error:\n`, err);
+        sails.log.error(`Transaction ${name} event error:\n`, err);
         return Promise.reject(err);
       });
 
