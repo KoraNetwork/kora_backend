@@ -136,35 +136,29 @@ module.exports = {
           name: 'Token.transfer'
         }))
       )
-        .then(receipts => {
-          receipts.forEach(r => record.transactionHashes.push(r.transactionHash));
-          record.state = states.success;
-          record.rawTransactions = [];
+        .then(
+          receipts => {
+            record.state = states.success;
+            receipts.forEach(r => record.transactionHashes.push(r.transactionHash));
 
-          this.update({id: record.id}, record)
-            .then(updated => {
-              // TODO: Add push here
-              sails.log.info('Transaction success state saved:\n', updated[0]);
-            })
-            .catch(err => sails.log.error('Transaction success state save error:\n', err));
-        })
-        .catch(err => {
-          sails.log.error('Signed raw transaction send error:\n', err);
+            return true;
+          },
+          err => {
+            record.state = states.error;
 
-          record.state = states.error;
-          if (err.receipt) {
-            record.transactionHashes.push(err.receipt.transactionHash);
-            record.rawTransactions = [];
-          }
-
-          this.update({id: record.id}, record).exec((err, updated) => {
-            if (err) {
-              return sails.log.error('Transaction error state save error:\n', err);
+            if (err.receipt) {
+              record.transactionHashes.push(err.receipt.transactionHash);
             }
-            // TODO: Add push here
-            sails.log.info('Transaction error state saved:\n', updated[0]);
-          });
-        });
+
+            return false;
+          }
+        )
+        .then(() => this.update({id: record.id}, record))
+        .then(updated => {
+          // TODO: Add push here
+          sails.log.info('Transaction saved:\n', updated[0]);
+        })
+        .catch(err => sails.log.error('Transaction save error:\n', err));
     }
 
     return cb();
