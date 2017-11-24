@@ -366,7 +366,7 @@ module.exports = {
               from: to,
               to: from,
               fromAmount: toAmount,
-              toBalance: fromAmount
+              toAmount: fromAmount
             });
           }
 
