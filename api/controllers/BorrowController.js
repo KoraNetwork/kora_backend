@@ -207,6 +207,37 @@ module.exports = {
 
             break;
 
+          case types.inProgress:
+            switch (borrow.state) {
+              case states.onGoing:
+                let {rawApproves, rawPayBackLoan} = allParams;
+
+                if (participant !== 'from') {
+                  return Promise.reject(new WLError({message: 'Borrow money already funded. Current user is not borrower', status: 400}));
+                }
+
+                if (!(rawApproves && rawApproves.length && rawApproves.every(a => ValidationService.hex(a)))) {
+                  return res.badRequest(new WLError({message: `Parameter 'rawApproves' must be set and must be hex array`, status: 400}));
+                }
+
+                if (!(rawPayBackLoan && ValidationService.hex(rawPayBackLoan))) {
+                  return res.badRequest(new WLError({message: `Parameter 'rawPayBackLoan' must be set and must be hex`, status: 400}));
+                }
+
+                borrow.rawApproves = rawApproves;
+                borrow.rawPayBackLoan = rawPayBackLoan;
+
+                break;
+
+              default:
+                return Promise.reject(new WLError({
+                  message: `Borrow money is ${borrow.state} currently`,
+                  status: 400
+                }));
+            }
+
+            break;
+
           default:
             return Promise.reject(new WLError({
               message: 'Not implemented yet',

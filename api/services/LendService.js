@@ -62,5 +62,21 @@ module.exports = {
     }
 
     return promise;
+  },
+
+  sendRawPayBackLoan: function ({rawPayBackLoan}, cb) {
+    let promise = EthereumService.sendSignedTransactionWithEvent({
+      rawTransaction: rawPayBackLoan,
+      name: 'KoraLend.payBackLoan',
+      contract: koraLend,
+      event: 'LoanPaymentDone'
+    })
+      .then(({receipt, events}) => ({receipt, event: events[0]}));
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
   }
 };

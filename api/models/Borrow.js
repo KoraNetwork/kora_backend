@@ -185,7 +185,7 @@ module.exports = {
   },
 
   beforeUpdate: function (values, cb) {
-    ['rawCreateLoan', 'rawAgreeLoan', 'rawApproves', 'rawFundLoan'].forEach(rawTx => {
+    ['rawCreateLoan', 'rawAgreeLoan', 'rawApproves', 'rawFundLoan', 'rawPayBackLoan'].forEach(rawTx => {
       if (values[rawTx]) {
         this[rawTx] = values[rawTx];
         delete values[rawTx];
@@ -210,8 +210,7 @@ module.exports = {
             .forEach(k => (record[k + 'Agree'] = null));
 
           return this.update({id: record.id}, record);
-        })
-        .catch(err => {
+        }, err => {
           record.state = states.agreed;
           record.type = types.request;
 
@@ -271,8 +270,7 @@ module.exports = {
           }
 
           return this.update({id: record.id}, record);
-        })
-        .catch(err => {
+        }, err => {
           record.state = states.onGoing;
 
           if (err.receipt) {
@@ -299,6 +297,13 @@ module.exports = {
         delete this.rawFundLoan;
       }
 
+      let rawPayBackLoan;
+
+      if (this.rawPayBackLoan) {
+        rawPayBackLoan = this.rawPayBackLoan;
+        delete this.rawPayBackLoan;
+      }
+
       Promise.all(
         rawApproves.map(rawApprove =>
           EthereumService.sendSignedTransaction({rawTransaction: rawApprove, name: 'humanStandardToken.approve'})
@@ -308,27 +313,39 @@ module.exports = {
           if (rawFundLoan) {
             return LendService.sendRawFundLoan({rawFundLoan});
           }
-        })
-        .then(({receipt, event}) => {
-          record.transactionHashes.push(receipt.transactionHash);
-          record.state = states.onGoing;
-          record.fromBalance = event.returnValues.borrowerBalance / 100;
-          record.toBalance = event.returnValues.lenderBalance / 100;
 
-          return this.update({id: record.id}, record);
-        })
-        .catch(err => {
-          if (rawFundLoan) {
-            record.state = states.agreed;
-            record.type = types.loan;
+          if (rawPayBackLoan) {
+            return LendService.sendRawPayBackLoan({rawPayBackLoan});
           }
-
-          if (err.receipt) {
-            record.transactionHashes.push(err.receipt.transactionHash);
-          }
-
-          return this.update({id: record.id}, record);
         })
+        .then(
+          ({receipt, event}) => {
+            record.transactionHashes.push(receipt.transactionHash);
+            record.state = states.onGoing;
+            record.fromBalance = event.returnValues.borrowerBalance / 100;
+            record.toBalance = event.returnValues.lenderBalance / 100;
+
+            if (rawPayBackLoan && record.fromBalance === 0) {
+              return this.destroy({id: record.id});
+            }
+
+            return this.update({id: record.id}, record);
+          },
+          err => {
+            if (rawFundLoan) {
+              record.state = states.agreed;
+              record.type = types.loan;
+            } else if (rawPayBackLoan) {
+              record.state = states.onGoing;
+            }
+
+            if (err.receipt) {
+              record.transactionHashes.push(err.receipt.transactionHash);
+            }
+
+            return this.update({id: record.id}, record);
+          }
+        )
         .then(updated => {
           // TODO: Add push here
           sails.log.info('Borrow money after KoraLend.fundLoan tx saved:\n', updated[0]);
