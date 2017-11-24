@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global sails ValidationService UserValidationService LendService EthereumService */
+/* global sails ValidationService UserValidationService LendService EthereumService Transactions */
 
 const _ = require('lodash');
 
@@ -325,11 +325,11 @@ module.exports = {
             record.fromBalance = event.returnValues.borrowerBalance / 100;
             record.toBalance = event.returnValues.lenderBalance / 100;
 
-            if (rawPayBackLoan && record.fromBalance === 0) {
-              return this.destroy({id: record.id});
-            }
-
-            return this.update({id: record.id}, record);
+            return {
+              state: Transactions.constants.states.success,
+              fromValue: event.returnValues.borrowerValue,
+              toValue: event.returnValues.lenderValue
+            };
           },
           err => {
             if (rawFundLoan) {
@@ -343,14 +343,60 @@ module.exports = {
               record.transactionHashes.push(err.receipt.transactionHash);
             }
 
-            return this.update({id: record.id}, record);
+            return {
+              state: Transactions.constants.states.error,
+              fromValue: 0,
+              toValue: 0
+            };
           }
         )
-        .then(updated => {
-          // TODO: Add push here
-          sails.log.info('Borrow money after KoraLend.fundLoan tx saved:\n', updated[0]);
+        .then(({state, fromValue, toValue}) => {
+          let {from, to, fromAmount, toAmount, fromBalance, additionalNote, loanId, transactionHashes} = record;
+
+          let tx = {
+            state,
+            additionalNote,
+            loanId,
+            transactionHashes: [transactionHashes[transactionHashes.length - 1]]
+          };
+
+          if (rawFundLoan) {
+            Object.assign(tx, {
+              type: Transactions.constants.types.borrowFund,
+              from: to,
+              to: from,
+              fromAmount: toAmount,
+              toBalance: fromAmount
+            });
+          }
+
+          if (rawPayBackLoan) {
+            Object.assign(tx, {
+              type: Transactions.constants.types.borrowPayBack,
+              from,
+              to,
+              fromAmount: fromValue,
+              toAmount: toValue
+            });
+          }
+
+          return Transactions.create(tx)
+            .then(() => {
+              if (fromBalance === 0) {
+                return this.destroy({id: record.id});
+              }
+
+              return this.update({id: record.id}, record);
+            });
         })
-        .catch(err => sails.log.error('Borrow money after KoraLend.fundLoan tx save error:\n', err));
+        .then(records => {
+          // TODO: Add push here
+          sails.log.info(
+            `Borrow money after KoraLend.${rawFundLoan ? 'fundLoan' : 'payBackLoan'} tx ${records[0].fromBalance ? 'destroyed' : 'saved'}:\n`,
+            records[0]
+          );
+        })
+        .catch(err => sails.log.error(`Borrow money after KoraLend.${rawFundLoan ? 'fundLoan' : 'payBackLoan'} tx save/destroy error:\n`, err));
     }
 
     return cb();

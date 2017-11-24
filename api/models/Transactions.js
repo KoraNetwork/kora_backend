@@ -10,7 +10,8 @@
 const WLError = require('waterline/lib/waterline/error/WLError');
 
 const types = {
-  borrow: 'borrow',
+  borrowFund: 'borrowFund',
+  borrowPayBack: 'borrowPayBack',
   cash: 'cash',
   request: 'request',
   send: 'send'
@@ -58,6 +59,8 @@ module.exports = {
     transactionHashes: { type: 'array', hexArray: true },
 
     additionalNote: { type: 'string' },
+
+    loanId: { type: 'string' }, // For borrow transactions
 
     toJSON: function () {
       var obj = this.toObject();
