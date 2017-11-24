@@ -46,9 +46,9 @@ module.exports = {
   },
 
   attributes: {
-    type: { type: 'string', in: typesList, defaultsTo: types.request },
+    type: { type: 'string', in: typesList, defaultsTo: types.request, required: true },
 
-    state: { type: 'string', in: statesList, defaultsTo: states.onGoing },
+    state: { type: 'string', in: statesList, defaultsTo: states.onGoing, required: true },
 
     from: { model: 'user', required: true },
 

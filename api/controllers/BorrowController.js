@@ -145,8 +145,8 @@ module.exports = {
 
               default:
                 return Promise.reject(new WLError({
-                  message: 'Not found',
-                  status: 404
+                  message: `Borrow money is ${borrow.state} currently`,
+                  status: 400
                 }));
             }
 
@@ -200,8 +200,8 @@ module.exports = {
 
               default:
                 return Promise.reject(new WLError({
-                  message: 'Not implemented yet',
-                  status: 404
+                  message: `Borrow money is ${borrow.state} currently`,
+                  status: 400
                 }));
             }
 
