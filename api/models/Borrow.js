@@ -124,8 +124,8 @@ module.exports = {
         }
       });
 
-      obj.totalFromAmount = Math.ceil(obj.fromAmount * obj.interestRate * 100) / 100;
-      obj.totalToAmount = Math.ceil(obj.toAmount * obj.interestRate * 100) / 100;
+      obj.totalFromAmount = Math.floor(obj.fromAmount * (100 + obj.interestRate)) / 100;
+      obj.totalToAmount = Math.floor(obj.toAmount * (100 + obj.interestRate)) / 100;
 
       return obj;
     }
@@ -292,16 +292,20 @@ module.exports = {
       let rawApproves = this.rawApproves;
       delete this.rawApproves;
 
+      let rawFundLoan;
+
+      if (this.rawFundLoan) {
+        rawFundLoan = this.rawFundLoan;
+        delete this.rawFundLoan;
+      }
+
       Promise.all(
         rawApproves.map(rawApprove =>
           EthereumService.sendSignedTransaction({rawTransaction: rawApprove, name: 'humanStandardToken.approve'})
         )
       )
         .then(receipts => {
-          if (this.rawFundLoan) {
-            let rawFundLoan = this.rawFundLoan;
-            delete this.rawFundLoan;
-
+          if (rawFundLoan) {
             return LendService.sendRawFundLoan({rawFundLoan});
           }
         })
@@ -314,7 +318,7 @@ module.exports = {
           return this.update({id: record.id}, record);
         })
         .catch(err => {
-          if (this.rawFundLoan) {
+          if (rawFundLoan) {
             record.state = states.agreed;
             record.type = types.loan;
           }
