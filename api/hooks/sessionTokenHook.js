@@ -56,6 +56,16 @@ module.exports = function sessionTokenHook (sails) {
 
           skipAssets: true
         }
+      },
+
+      after: {
+        '/*': {
+          fn: function (req, res, next) {
+            delete req._sails.user;
+
+            return next();
+          }
+        }
       }
     }
   };
