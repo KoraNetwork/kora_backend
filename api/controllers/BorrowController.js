@@ -100,6 +100,10 @@ module.exports = {
 
         switch (borrow.type) {
           case types.request:
+            if (Date.now() > Date.parse(borrow.startDate)) {
+              return Promise.reject(new WLError({message: 'Borrow money must be already expired', status: 400}));
+            }
+
             switch (borrow.state) {
               case states.onGoing:
                 let {agree} = allParams;
@@ -158,6 +162,10 @@ module.exports = {
             break;
 
           case types.loan:
+            if (Date.now() > Date.parse(borrow.startDate)) {
+              return Promise.reject(new WLError({message: 'Borrow money must be already expired', status: 400}));
+            }
+
             switch (borrow.state) {
               case states.onGoing:
                 let {rawAgreeLoan} = allParams;
@@ -213,6 +221,14 @@ module.exports = {
             break;
 
           case types.inProgress:
+            if (Date.now() > Date.parse(borrow.startDate)) {
+              return Promise.reject(new WLError({message: 'Start date has not arrived', status: 400}));
+            }
+
+            if (Date.now() > Date.parse(borrow.maturityDate)) {
+              return Promise.reject(new WLError({message: 'Borrow money must be already overdue', status: 400}));
+            }
+
             switch (borrow.state) {
               case states.onGoing:
                 let {rawApproves, rawPayBackLoan} = allParams;

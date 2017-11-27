@@ -74,9 +74,9 @@ module.exports = {
 
     interestRate: { type: 'float', required: true, min: 0 },
 
-    startDate: { type: 'date', required: true, after: new Date() },
+    startDate: { type: 'date', required: true },
 
-    maturityDate: { type: 'date', required: true, after: new Date() },
+    maturityDate: { type: 'date', required: true },
 
     additionalNote: { type: 'string' },
 
@@ -142,10 +142,10 @@ module.exports = {
   beforeValidate: function (values, cb) {
     const { from, to, guarantor1, guarantor2, guarantor3, startDate, maturityDate } = values;
 
-    if (Date.parse(startDate) >= Date.parse(maturityDate)) {
+    if (Date.parse(startDate) + 24 * 60 * 60 * 1000 > Date.parse(maturityDate)) {
       return cb(new WLError({
         status: 400,
-        reason: 'startDate could not be greater or equal then maturityDate'
+        message: 'Maturity date must be greater than start date at least by one day'
       }));
     }
 
@@ -168,6 +168,19 @@ module.exports = {
     ])
       .then(() => cb())
       .catch(err => cb(err));
+  },
+
+  beforeCreate: function (values, cb) {
+    const { startDate } = values;
+
+    if (Date.parse(startDate) < Date.now()) {
+      return cb(new WLError({
+        status: 400,
+        message: 'Start date must be in future'
+      }));
+    }
+
+    return cb();
   },
 
   beforeUpdate: function (values, cb) {
