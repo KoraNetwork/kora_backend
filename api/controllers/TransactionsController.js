@@ -42,25 +42,32 @@ module.exports = {
     }
 
     Promise.all([
-      Transactions
-        .find({ where, limit, skip, sort })
-        .populate('from')
-        .populate('to'),
+      Transactions.findPopulate({ where, limit, skip, sort, userId }),
       Transactions.count(where)
     ])
     .then(([data, total]) => res.json({data, total}))
     .catch(err => res.negotiate(err));
   },
 
+  findOne: function (req, res) {
+    let allParams = req.allParams();
+    const userId = req._sails.user.id;
+
+    Transactions.findOnePopulate({id: allParams.id, userId})
+      .then(result => res.ok(result))
+      .catch(err => res.negotiate(err));
+  },
+
   create: function (req, res) {
     let allParams = req.allParams();
+    const userId = req._sails.user.id;
 
-    allParams.from = req._sails.user.id;
+    allParams.from = userId;
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
     allParams.toAmount = parseFloat(allParams.toAmount, 10);
 
     Transactions.create(allParams)
-      .then(({id}) => Transactions.findOne({id}).populate('from').populate('to'))
+      .then(({id}) => Transactions.findOnePopulate({id, userId}))
       .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },

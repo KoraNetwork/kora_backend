@@ -63,19 +63,6 @@ module.exports = {
     toJSON: function () {
       var obj = this.toObject();
 
-      delete obj.rawTransactions;
-
-      // Add direction
-      if (sails.user) {
-        const userId = sails.user.id;
-
-        if (obj.from && obj.from.id === userId) {
-          obj.direction = directions.from;
-        } else if (obj.to && obj.to.id === userId) {
-          obj.direction = directions.to;
-        }
-      }
-
       return obj;
     }
   },
@@ -162,5 +149,49 @@ module.exports = {
     }
 
     return cb();
+  },
+
+  findOnePopulate: function ({id, userId}, cb) {
+    let promise = this.findOne({id})
+      .populate('from')
+      .populate('to');
+
+    // Add direction
+    if (userId) {
+      promise.then(record => addDirection({record, userId}));
+    }
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
+  findPopulate: function ({where, limit, skip, sort, userId}, cb) {
+    let promise = this.find({where, limit, skip, sort})
+      .populate('from')
+      .populate('to');
+
+    // Add direction
+    if (userId) {
+      promise.then(records => records.map(record => addDirection({record, userId})));
+    }
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
   }
 };
+
+function addDirection ({record, userId}) {
+  if (record.from && record.from.id && record.from.id === userId) {
+    record.direction = directions.from;
+  } else if (record.to && record.to.id && record.to.id === userId) {
+    record.direction = directions.to;
+  }
+
+  return record;
+}
