@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ sails UserValidationService */
+/* global _ UserValidationService */
 
 const states = {
   inProgress: 'inProgress',
@@ -67,8 +67,7 @@ module.exports = {
     ])
       .then(() => cb())
       .catch(err => cb(err));
-  }
-,
+  },
 
   findOnePopulate: function ({id, userId}, cb) {
     let promise = this.findOne({id})
