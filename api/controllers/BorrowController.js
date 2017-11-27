@@ -221,7 +221,7 @@ module.exports = {
             break;
 
           case types.inProgress:
-            if (Date.now() > Date.parse(borrow.startDate)) {
+            if (Date.now() < Date.parse(borrow.startDate)) {
               return Promise.reject(new WLError({message: 'Start date has not arrived', status: 400}));
             }
 
