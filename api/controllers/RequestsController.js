@@ -39,25 +39,32 @@ module.exports = {
     }
 
     Promise.all([
-      Requests
-        .find({ where, limit, skip, sort })
-        .populate('from')
-        .populate('to'),
+      Requests.findPopulate({ where, limit, skip, sort, userId }),
       Requests.count(where)
     ])
     .then(([data, total]) => res.json({data, total}))
     .catch(err => res.negotiate(err));
   },
 
+  findOne: function (req, res) {
+    let allParams = req.allParams();
+    const userId = req._sails.user.id;
+
+    Requests.findOnePopulate({id: allParams.id, userId})
+      .then(result => res.ok(result))
+      .catch(err => res.negotiate(err));
+  },
+
   create: function (req, res) {
     let allParams = req.allParams();
+    const userId = req._sails.user.id;
 
-    allParams.from = req._sails.user.id;
+    allParams.from = userId;
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
     allParams.toAmount = parseFloat(allParams.toAmount, 10);
 
     Requests.create(allParams)
-      .then(({id}) => Requests.findOne({id}).populate('from').populate('to'))
+      .then(({id}) => Requests.findOnePopulate({id, userId}))
       .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
@@ -65,8 +72,9 @@ module.exports = {
   update: function (req, res) {
     let allParams = req.allParams();
     const {rejected} = Requests.constants.states;
+    const userId = req._sails.user.id;
 
-    findRequest({id: allParams.id, user: req._sails.user})
+    findRequest({id: allParams.id, userId})
       .then(record => {
         record.state = rejected;
 
@@ -78,13 +86,14 @@ module.exports = {
           return resolve(record);
         }));
       })
-      .then(({id}) => Requests.findOne({id}).populate('from').populate('to'))
+      .then(({id}) => Requests.findOnePopulate({id, userId}))
       .then(result => res.send(result))
       .catch(err => res.negotiate(err));
   },
 
   destroy: function (req, res) {
     let allParams = req.allParams();
+    const userId = req._sails.user.id;
     let values = {
       rawTransactions: allParams.rawTransactions
     };
@@ -100,7 +109,7 @@ module.exports = {
       values.fromAmount = allParams.toAmount;
     }
 
-    findRequest({id: allParams.id, user: req._sails.user})
+    findRequest({id: allParams.id, userId})
       .then(request => {
         const {from, to, fromAmount, toAmount, additionalNote} = request;
 
@@ -117,7 +126,7 @@ module.exports = {
       .then(({transaction, request}) => Requests.destroy({id: request.id})
             .then(() => transaction)
       )
-      .then(({id}) => Transactions.findOne({id}).populate('from').populate('to'))
+      .then(({id}) => Transactions.findOnePopulate({id, userId}))
       .then(transaction => ({
         message: 'Request for money was confirmed and deleted. Transaction was created and sent',
         transaction
@@ -134,7 +143,7 @@ module.exports = {
   }
 };
 
-function findRequest ({id, user}) {
+function findRequest ({id, userId}) {
   const {rejected} = Requests.constants.states;
 
   return Requests.findOne({id})
@@ -146,7 +155,7 @@ function findRequest ({id, user}) {
         }));
       }
 
-      if (request.to !== user.id) {
+      if (request.to !== userId) {
         return Promise.reject(new WLError({
           status: 400,
           message: `Current user must be in 'to' attribute of request`
