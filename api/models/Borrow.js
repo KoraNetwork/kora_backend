@@ -326,8 +326,8 @@ module.exports = {
 
             return {
               state: Transactions.constants.states.success,
-              fromValue: event.returnValues.borrowerValue,
-              toValue: event.returnValues.lenderValue
+              fromValue: event.returnValues.borrowerValue / 100,
+              toValue: event.returnValues.lenderValue / 100
             };
           },
           err => {
