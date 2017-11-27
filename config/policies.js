@@ -85,17 +85,19 @@ module.exports.policies = {
   },
 
   EthereumController: {
-    '*': ['isAuthorized'],
     getBalance: true
   },
 
   RecentsController: {
-    '*': ['isAuthorized'],
     destroy: false
   },
 
   TransactionsController: {
-    '*': ['isAuthorized'],
     destroy: false
+  },
+
+  TokensController: {
+    '*': false,
+    balanceOf: true
   }
 };
