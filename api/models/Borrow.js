@@ -107,8 +107,11 @@ module.exports = {
       });
 
       // Additional values
-      obj.totalFromAmount = Math.floor(obj.fromAmount * (100 + obj.interestRate)) / 100;
-      obj.totalToAmount = Math.floor(obj.toAmount * (100 + obj.interestRate)) / 100;
+      obj.fromTotalAmount = Math.floor(obj.fromAmount * (100 + obj.interestRate)) / 100;
+      obj.toTotalAmount = Math.floor(obj.toAmount * (100 + obj.interestRate)) / 100;
+
+      obj.fromReturnedMoney = obj.fromBalance ? obj.fromTotalAmount - obj.fromBalance : 0;
+      obj.toReturnedMoney = obj.toBalance ? obj.toTotalAmount - obj.toBalance : 0;
 
       return obj;
     }
