@@ -6,8 +6,8 @@
  */
 
 module.exports = function (req, res, next) {
-  // req._sails.user creates in sessionTokenHook
-  if (!req._sails.user) {
+  // req.user creates in sessionTokenHook
+  if (!req.user) {
     return res.json(401, {message: 'No Session-Token header was found'});
   }
 

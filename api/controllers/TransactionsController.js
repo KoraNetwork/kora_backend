@@ -9,7 +9,7 @@
 
 module.exports = {
   find: function (req, res) {
-    const userId = req._sails.user.id;
+    const userId = req.user.id;
     const sort = 'updatedAt DESC';
     const {
       direction,
@@ -51,7 +51,7 @@ module.exports = {
 
   findOne: function (req, res) {
     let allParams = req.allParams();
-    const userId = req._sails.user.id;
+    const userId = req.user.id;
 
     Transactions.findOnePopulate({id: allParams.id, userId})
       .then(result => res.ok(result))
@@ -60,7 +60,7 @@ module.exports = {
 
   create: function (req, res) {
     let allParams = req.allParams();
-    const userId = req._sails.user.id;
+    const userId = req.user.id;
 
     allParams.from = userId;
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);

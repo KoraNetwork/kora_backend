@@ -12,7 +12,7 @@ const WLError = require('waterline/lib/waterline/error/WLError');
 module.exports = {
   find: function (req, res) {
     const directions = Borrow.constants.directions;
-    const userId = req._sails.user.id;
+    const userId = req.user.id;
     const sort = 'updatedAt DESC';
     let {
       direction,
@@ -66,7 +66,7 @@ module.exports = {
 
   findOne: function (req, res) {
     let allParams = req.allParams();
-    const userId = req._sails.user.id;
+    const userId = req.user.id;
 
     Borrow.findOnePopulate({id: allParams.id, userId})
       .then(result => res.ok(result))
@@ -75,7 +75,7 @@ module.exports = {
 
   create: function (req, res) {
     let allParams = req.allParams();
-    const userId = req._sails.user.id;
+    const userId = req.user.id;
 
     allParams.from = userId;
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
@@ -92,7 +92,7 @@ module.exports = {
     const types = Borrow.constants.types;
     const states = Borrow.constants.states;
     let allParams = req.allParams();
-    const userId = req._sails.user.id;
+    const userId = req.user.id;
 
     findOneValidBorrow({id: allParams.id, userId})
       .then(({borrow, participant}) => {

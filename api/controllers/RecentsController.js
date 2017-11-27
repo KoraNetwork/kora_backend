@@ -11,14 +11,14 @@ const RECENTS_NUM = 10;
 
 module.exports = {
   find: function (req, res) {
-    findRecents({userId: req._sails.user.id})
+    findRecents({userId: req.user.id})
       .then(records => (records && records.length ? records.map(r => r.recent) : []))
       .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
 
   contacts: function (req, res) {
-    const userId = req._sails.user.id;
+    const userId = req.user.id;
     let {
       search = '',
       not = [],
@@ -69,7 +69,7 @@ module.exports = {
   },
 
   add: function (req, res) {
-    const userId = req._sails.user.id;
+    const userId = req.user.id;
     const id = req.param('id');
 
     if (!id) {
