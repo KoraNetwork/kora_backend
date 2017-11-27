@@ -91,24 +91,6 @@ module.exports = {
     toJSON: function () {
       let obj = this.toObject();
 
-      // Add direction
-      if (sails.user) {
-        const userId = sails.user.id;
-
-        if (obj.from && obj.from.id && obj.from.id === userId) {
-          obj.direction = directions.from;
-        } else if (obj.to && obj.to.id && obj.to.id === userId) {
-          obj.direction = directions.to;
-        } else if (
-          [1, 2, 3].some(n => {
-            const guarantor = obj['guarantor' + n];
-            return guarantor && guarantor.id && guarantor.id === userId;
-          })
-        ) {
-          obj.direction = directions.guarantor;
-        }
-      }
-
       // Map guarantors and agree attributes
       obj.guarantors = [];
 
@@ -124,6 +106,7 @@ module.exports = {
         }
       });
 
+      // Additional values
       obj.totalFromAmount = Math.floor(obj.fromAmount * (100 + obj.interestRate)) / 100;
       obj.totalToAmount = Math.floor(obj.toAmount * (100 + obj.interestRate)) / 100;
 
@@ -402,13 +385,38 @@ module.exports = {
     return cb();
   },
 
-  findOnePopulate: function ({id}, cb) {
+  findOnePopulate: function ({id, userId}, cb) {
     let promise = this.findOne({id})
       .populate('from')
       .populate('to')
       .populate('guarantor1')
       .populate('guarantor2')
       .populate('guarantor3');
+
+    // Add direction
+    if (userId) {
+      promise.then(record => addDirection({record, userId}));
+    }
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
+  findPopulate: function ({where, limit, skip, sort, userId}, cb) {
+    let promise = this.find({where, limit, skip, sort})
+      .populate('from')
+      .populate('to')
+      .populate('guarantor1')
+      .populate('guarantor2')
+      .populate('guarantor3');
+
+    // Add direction
+    if (userId) {
+      promise.then(records => records.map(record => addDirection({record, userId})));
+    }
 
     if (cb && typeof cb === 'function') {
       promise.then(cb.bind(null, null), cb);
@@ -417,3 +425,20 @@ module.exports = {
     return promise;
   }
 };
+
+function addDirection ({record, userId}) {
+  if (record.from && record.from.id && record.from.id === userId) {
+    record.direction = directions.from;
+  } else if (record.to && record.to.id && record.to.id === userId) {
+    record.direction = directions.to;
+  } else if (
+    [1, 2, 3].some(n => {
+      const guarantor = record['guarantor' + n];
+      return guarantor && guarantor.id && guarantor.id === userId;
+    })
+  ) {
+    record.direction = directions.guarantor;
+  }
+
+  return record;
+}

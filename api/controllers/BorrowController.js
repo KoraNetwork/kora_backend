@@ -56,13 +56,7 @@ module.exports = {
     }
 
     Promise.all([
-      Borrow
-        .find({where, limit, skip, sort})
-        .populate('from')
-        .populate('to')
-        .populate('guarantor1')
-        .populate('guarantor2')
-        .populate('guarantor3'),
+      Borrow.findPopulate({where, limit, skip, sort, userId}),
       Borrow.count(where)
     ])
       .then(([data, total]) => ({data, total}))
@@ -70,16 +64,26 @@ module.exports = {
       .catch(err => res.negotiate(err));
   },
 
+  findOne: function (req, res) {
+    let allParams = req.allParams();
+    const userId = req._sails.user.id;
+
+    Borrow.findOnePopulate({id: allParams.id, userId})
+      .then(result => res.ok(result))
+      .catch(err => res.negotiate(err));
+  },
+
   create: function (req, res) {
     let allParams = req.allParams();
+    const userId = req._sails.user.id;
 
-    allParams.from = req._sails.user.id;
+    allParams.from = userId;
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
     allParams.toAmount = parseFloat(allParams.toAmount, 10);
     allParams.interestRate = parseFloat(allParams.interestRate, 10);
 
     Borrow.create(allParams)
-      .then(({id}) => Borrow.findOnePopulate({id}))
+      .then(({id}) => Borrow.findOnePopulate({id, userId}))
       .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
@@ -88,8 +92,9 @@ module.exports = {
     const types = Borrow.constants.types;
     const states = Borrow.constants.states;
     let allParams = req.allParams();
+    const userId = req._sails.user.id;
 
-    findOneValidBorrow({id: allParams.id, user: req._sails.user})
+    findOneValidBorrow({id: allParams.id, userId})
       .then(({borrow, participant}) => {
         const {to, guarantor1, guarantor2, guarantor3} = borrow;
 
@@ -252,7 +257,7 @@ module.exports = {
           return resolve(borrow);
         }));
       })
-      .then(({id}) => Borrow.findOnePopulate({id}))
+      .then(({id}) => Borrow.findOnePopulate({id, userId}))
       .then(result => res.send(result))
       .catch(err => res.negotiate(err));
   },
@@ -266,7 +271,7 @@ module.exports = {
   }
 };
 
-function findOneValidBorrow ({id, user}) {
+function findOneValidBorrow ({id, userId}) {
   const {rejected, expired, overdue} = Borrow.constants.states;
 
   return Borrow.findOne({id})
@@ -281,7 +286,7 @@ function findOneValidBorrow ({id, user}) {
       const {from, to, guarantor1, guarantor2, guarantor3} = borrow;
       const participants = [from, to, guarantor1, guarantor2, guarantor3];
 
-      if (!~participants.indexOf(user.id)) {
+      if (!~participants.indexOf(userId)) {
         return Promise.reject(new WLError({
           status: 400,
           message: `Current user must be participant of borrow money`
@@ -296,7 +301,7 @@ function findOneValidBorrow ({id, user}) {
       }
 
       let participant = Object.keys({from, to, guarantor1, guarantor2, guarantor3})
-        .find(key => borrow[key] === user.id);
+        .find(key => borrow[key] === userId);
 
       return Promise.resolve({borrow, participant});
     });
