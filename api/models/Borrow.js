@@ -391,7 +391,7 @@ module.exports = {
         .then(records => {
           // TODO: Add push here
           sails.log.info(
-            `Borrow money after KoraLend.${rawFundLoan ? 'fundLoan' : 'payBackLoan'} tx ${records[0].fromBalance ? 'destroyed' : 'saved'}:\n`,
+            `Borrow money after KoraLend.${rawFundLoan ? 'fundLoan' : 'payBackLoan'} tx ${records[0].fromBalance ? 'saved' : 'destroyed'}:\n`,
             records[0]
           );
         })
