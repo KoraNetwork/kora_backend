@@ -29,6 +29,8 @@ module.exports = {
         delete values.userNameOrigin;
         delete values.avatar;
 
+        values.agent = (typeof values.agent === 'string') ? values.agent !== 'false' : !!values.agent;
+
         if (values.agent) {
           values.role = User.constants.roles.agent;
         } else {
