@@ -18,52 +18,20 @@ module.exports = {
   },
 
   contacts: function (req, res) {
-    const userId = req.user.id;
-    let {
-      search = '',
-      not = [],
-      limit = 10,
-      skip = 0,
-      sort = 'userName'
-    } = req.allParams();
+    return findRecentsContacts({
+      userId: req.user.id,
+      allParams: req.allParams()
+    })
+      .then(result => res.ok(result))
+      .catch(err => res.negotiate(err));
+  },
 
-    let where = {
-      or: [
-        {phone: {contains: search}},
-        {userName: {contains: search}},
-        {email: {contains: search}},
-        {legalName: {contains: search}}
-      ]
-    };
-
-    not = Array.isArray(not) ? not : [not];
-
-    let recents;
-
-    findRecents({userId, where, not})
-      .then(records => {
-        recents = records && records.length ? records.map(r => r.recent) : [];
-
-        not.push(userId);
-        where.id = {
-          not: not.concat(recents.map(({id}) => id))
-        };
-
-        return Promise.all([
-          User.find({ where, limit, skip, sort }),
-          User.count(where)
-        ]);
-      })
-      .then(([contacts, total]) => {
-        let result = {recents, contacts, total};
-
-        // eslint-disable-next-line eqeqeq
-        if (skip != 0) {
-          delete result.recents;
-        }
-
-        return result;
-      })
+  agents: function (req, res) {
+    return findRecentsContacts({
+      userId: req.user.id,
+      allParams: req.allParams(),
+      role: User.constants.roles.agent
+    })
       .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
   },
@@ -130,4 +98,56 @@ function findRecents ({userId, where = {}, not = []}) {
   })
     .populate('recent', where)
     .then(records => records.filter(r => (r.recent && !~not.indexOf(r.recent.id))));
+}
+
+function findRecentsContacts ({userId, allParams, role}) {
+  let {
+    search = '',
+    not = [],
+    limit = 10,
+    skip = 0,
+    sort = 'userName'
+  } = allParams;
+
+  let where = {
+    or: [
+      {phone: {contains: search}},
+      {userName: {contains: search}},
+      {email: {contains: search}},
+      {legalName: {contains: search}}
+    ]
+  };
+
+  if (role) {
+    where.role = role;
+  }
+
+  not = Array.isArray(not) ? not : [not];
+
+  let recents;
+
+  return findRecents({userId, where, not})
+    .then(records => {
+      recents = records && records.length ? records.map(r => r.recent) : [];
+
+      not.push(userId);
+      where.id = {
+        not: not.concat(recents.map(({id}) => id))
+      };
+
+      return Promise.all([
+        User.find({ where, limit, skip, sort }),
+        User.count(where)
+      ]);
+    })
+    .then(([contacts, total]) => {
+      let result = {recents, contacts, total};
+
+      // eslint-disable-next-line eqeqeq
+      if (skip != 0) {
+        delete result.recents;
+      }
+
+      return result;
+    });
 }
