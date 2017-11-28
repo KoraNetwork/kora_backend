@@ -16,31 +16,36 @@ module.exports = {
    * `ProfileController.index()`
    */
   index: function (req, res) {
-    if (req.method === 'POST' || req.method === 'PUT') {
-      let values = req.allParams();
+    switch (req.method) {
+      case 'GET':
+        return res.json(req.user);
 
-      delete values.role;
-      delete values.password;
-      delete values.encryptedPassword;
-      delete values.userNameOrigin;
-      delete values.avatar;
+      case 'PUT':
+        let values = req.allParams();
 
-      if (values.agent) {
-        values.role = User.constants.roles.agent;
-      } else {
-        values.role = User.constants.roles.smartPhone;
-      }
+        delete values.role;
+        delete values.password;
+        delete values.encryptedPassword;
+        delete values.userNameOrigin;
+        delete values.avatar;
 
-      return User.update({id: req.user.id}).set(values).exec((err, updated) => {
-        if (err) {
-          return res.negotiate(err);
+        if (values.agent) {
+          values.role = User.constants.roles.agent;
+        } else {
+          values.role = User.constants.roles.smartPhone;
         }
 
-        return res.json(updated[0]);
-      });
-    }
+        return User.update({id: req.user.id}).set(values).exec((err, updated) => {
+          if (err) {
+            return res.negotiate(err);
+          }
 
-    return res.json(req.user);
+          return res.json(updated[0]);
+        });
+
+      default:
+        return res.send(405, 'Method not allowed');
+    }
   },
 
   /**
