@@ -12,8 +12,8 @@ const bcrypt = require('bcrypt');
 const WLError = require('waterline/lib/waterline/error/WLError');
 
 const roles = {
-  // agent: 'agent',
   // provider: 'provider',
+  agent: 'agent',
   featurePhone: 'featurePhone',
   smartPhone: 'smartPhone'
 };
@@ -69,6 +69,8 @@ module.exports = {
 
     encryptedPassword: { type: 'string' },
 
+    interestRate: { type: 'float', min: 0 },
+
     toJSON: function () {
       var obj = this.toObject();
 
@@ -82,6 +84,8 @@ module.exports = {
         obj.currencyName = CountriesService.collection[obj.countryCode].currencyName;
         obj.currencyNameFull = CountriesService.collection[obj.countryCode].currencyNameFull;
       }
+
+      obj.agent = obj.role === roles.agent;
 
       return obj;
     }
@@ -125,6 +129,10 @@ module.exports = {
       values.ERC20Token = CountriesService.collection[values.countryCode].ERC20Token;
     }
 
+    if (values.role === roles.agent && typeof values.interestRate === 'undefined') {
+      values.interestRate = 5;
+    }
+
     return cb();
   },
 
@@ -138,7 +146,7 @@ module.exports = {
         // Password for development purposes
         password = 'qwer1234';
       } else {
-        return cb(new WLError({status: 400, reason: 'Password must be set'}));
+        return cb(new WLError({status: 400, message: 'Password must be set'}));
       }
     }
 

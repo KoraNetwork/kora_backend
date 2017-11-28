@@ -19,20 +19,24 @@ module.exports = {
     if (req.method === 'POST' || req.method === 'PUT') {
       let values = req.allParams();
 
-      if (values.encryptedPassword) {
-        delete values.encryptedPassword;
+      delete values.role;
+      delete values.password;
+      delete values.encryptedPassword;
+      delete values.userNameOrigin;
+      delete values.avatar;
+
+      if (values.agent) {
+        values.role = User.constants.roles.agent;
+      } else {
+        values.role = User.constants.roles.smartPhone;
       }
 
-      if (values.avatar) {
-        delete values.avatar;
-      }
-
-      return User.update({id: req.user.id}).set(values).exec((err, user) => {
+      return User.update({id: req.user.id}).set(values).exec((err, updated) => {
         if (err) {
           return res.negotiate(err);
         }
 
-        return res.json(user.pop());
+        return res.json(updated[0]);
       });
     }
 
@@ -43,6 +47,7 @@ module.exports = {
    * `ProfileController.avatar()`
    */
   avatar: function (req, res) {
+    // TODO: Refactor profile/avatar
     const id = req.user.id;
 
     if (!id) {

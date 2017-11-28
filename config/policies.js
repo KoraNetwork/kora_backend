@@ -58,7 +58,8 @@ module.exports.policies = {
     '*': ['isAuthorized', 'isMyProfile'],
     create: true,
     destroy: false,
-    // TODO: Remove this after register will be done
+    update: false,
+    // TODO: Change this after register will be done
     find: true,
     findOne: true
   },
