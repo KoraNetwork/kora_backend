@@ -37,6 +37,10 @@ module.exports = {
           values.role = User.constants.roles.smartPhone;
         }
 
+        if (typeof values.interestRate !== 'undefined') {
+          values.interestRate = parseFloat(values.interestRate, 10);
+        }
+
         return User.update({id: req.user.id}).set(values).exec((err, updated) => {
           if (err) {
             return res.negotiate(err);
