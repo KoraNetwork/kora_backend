@@ -75,7 +75,7 @@ module.exports = {
     const {rejected} = Deposit.constants.states;
     const userId = req.user.id;
 
-    findValidDeposit({id: allParams.id, userId})
+    findValidRecord({id: allParams.id, userId})
       .then(record => {
         record.state = rejected;
 
@@ -98,7 +98,7 @@ module.exports = {
 
     let cache = {};
 
-    findValidDeposit({id: allParams.id, userId})
+    findValidRecord({id: allParams.id, userId})
       .then(record => {
         cache.record = record;
 
@@ -137,7 +137,7 @@ module.exports = {
   }
 };
 
-function findValidDeposit ({id, userId}) {
+function findValidRecord ({id, userId}) {
   const {rejected} = Deposit.constants.states;
 
   return Deposit.findOne({id})
