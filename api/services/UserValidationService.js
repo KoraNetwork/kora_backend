@@ -14,7 +14,7 @@ module.exports = {
     if (from && to && from === to) {
       promise = Promise.reject(new WLError({
         status: 400,
-        reason: 'From and to users could not be equal'
+        message: 'From and to users could not be equal'
       }));
     }
 
@@ -33,7 +33,7 @@ module.exports = {
         if (ids[i] === ids[j]) {
           promise = Promise.reject(new WLError({
             status: 400,
-            reason: `Users ${names[i]} and ${names[j]} could not be equal`
+            message: `Users ${names[i]} and ${names[j]} could not be equal`
           }));
           break;
         }
@@ -53,7 +53,7 @@ module.exports = {
     if (user && users && users.some(u => u === user)) {
       promise = Promise.reject(new WLError({
         status: 400,
-        reason: `${userName} user could not be in ${usersName} collection`
+        message: `${userName} user could not be in ${usersName} collection`
       }));
     }
 
@@ -71,11 +71,11 @@ module.exports = {
     ])
       .then(([fromUser, toUser]) => {
         if (!fromUser) {
-          return Promise.reject(new WLError({status: 404, reason: 'From user not exists'}));
+          return Promise.reject(new WLError({status: 404, message: 'From user not exists'}));
         }
 
         if (!toUser) {
-          return Promise.reject(new WLError({status: 404, reason: 'To user not exists'}));
+          return Promise.reject(new WLError({status: 404, message: 'To user not exists'}));
         }
 
         return Promise.resolve();
@@ -103,12 +103,33 @@ module.exports = {
           if (notExistsNames.length) {
             return Promise.reject(new WLError({
               status: 404,
-              reason: `User${notExistsNames.length !== 1 ? 's' : ''} ${notExistsNames.join(', ')} not exists`
+              message: `User${notExistsNames.length !== 1 ? 's' : ''} ${notExistsNames.join(', ')} not exists`
             }));
           }
 
           return Promise.resolve();
         });
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
+  isAgent: function ({id, name = 'This'}, cb) {
+    let promise = User.findOne({id})
+      .then(user => {
+        if (!user) {
+          return Promise.reject(new WLError({status: 404, message: 'Agent not exists'}));
+        }
+
+        if (user.role !== User.constants.roles.agent) {
+          return Promise.reject(new WLError({status: 400, message: `${name} user not agent`}));
+        }
+
+        return Promise.resolve();
+      });
 
     if (cb && typeof cb === 'function') {
       promise.then(cb.bind(null, null), cb);
