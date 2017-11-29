@@ -5,10 +5,11 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ UserValidationService User */
+/* global _ UserValidationService */
 
 const states = {
   inProgress: 'inProgress',
+  pending: 'pending',
   finished: 'finished',
   rejected: 'rejected'
 };
