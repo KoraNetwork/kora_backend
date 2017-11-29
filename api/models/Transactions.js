@@ -95,19 +95,15 @@ module.exports = {
 
     if (
       ~[types.send, types.request, types.deposit, types.withdraw].indexOf(values.type) &&
-      !(rawTransactions && rawTransactions.length)
+      !(Array.isArray(rawTransactions) && rawTransactions.length && rawTransactions.every(tx => ValidationService.hex(tx)))
     ) {
       return cb(new WLError({
         status: 400,
-        reason: 'Parameter rawTransactions must be set and must have at least one element'
+        reason: 'Parameter rawTransactions must be set and must be hex array with at least one element'
       }));
     }
 
     if (rawTransactions) {
-      if (!(Array.isArray(rawTransactions) && rawTransactions.every(tx => ValidationService.hex(tx)))) {
-        return cb(new WLError({reason: `Parameter 'rawTransactions' must be hex array`, status: 400}));
-      }
-
       this.rawTransactions = rawTransactions;
       delete values.rawTransactions;
     }
