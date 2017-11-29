@@ -70,70 +70,66 @@ module.exports = {
       .catch(err => res.negotiate(err));
   },
 
-  // update: function (req, res) {
-  //   let allParams = req.allParams();
-  //   const {rejected} = Deposit.constants.states;
-  //   const userId = req.user.id;
-  //   let promise;
-  //
-  //   if (allParams.rawTransactions) {
-  //     let values = {
-  //       rawTransactions: allParams.rawTransactions
-  //     };
-  //
-  //     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
-  //     allParams.toAmount = parseFloat(allParams.toAmount, 10);
-  //
-  //     if (!isNaN(allParams.fromAmount)) {
-  //       values.toAmount = allParams.fromAmount;
-  //     }
-  //
-  //     if (!isNaN(allParams.toAmount)) {
-  //       values.fromAmount = allParams.toAmount;
-  //     }
-  //
-  //     promise = findValidDeposit({id: allParams.id, userId})
-  //       .then(request => {
-  //         const {from, to, fromAmount, toAmount, additionalNote} = request;
-  //
-  //         return Transactions.create(Object.assign({
-  //           type: Transactions.constants.types.deposit,
-  //           from: to,
-  //           to: from,
-  //           fromAmount: toAmount,
-  //           toAmount: fromAmount,
-  //           additionalNote
-  //         }, values))
-  //           .then(transaction => ({transaction, request}));
-  //       })
-  //       .then(({transaction, request}) => Deposit.destroy({id: request.id})
-  //             .then(() => transaction)
-  //       )
-  //       .then(({id}) => Transactions.findOnePopulate({id, userId}))
-  //       .then(transaction => ({
-  //         message: 'Request for money was confirmed and deleted. Transaction was created and sent',
-  //         transaction
-  //       }));
-  //   } else {
-  //     promise = findValidDeposit({id: allParams.id, userId})
-  //     .then(record => {
-  //       record.state = rejected;
-  //
-  //       return new Promise((resolve, reject) => record.save(err => {
-  //         if (err) {
-  //           return reject(err);
-  //         }
-  //
-  //         return resolve(record);
-  //       }));
-  //     })
-  //     .then(({id}) => Deposit.findOnePopulate({id, userId}));
-  //   }
-  //
-  //   return promise
-  //     .then(result => res.send(result))
-  //     .catch(err => res.negotiate(err));
-  // },
+  update: function (req, res) {
+    let allParams = req.allParams();
+    const {rejected} = Deposit.constants.states;
+    const userId = req.user.id;
+
+    findValidDeposit({id: allParams.id, userId})
+      .then(record => {
+        record.state = rejected;
+
+        return new Promise((resolve, reject) => record.save(err => {
+          if (err) {
+            return reject(err);
+          }
+
+          return resolve(record);
+        }));
+      })
+      .then(({id}) => Deposit.findOnePopulate({id, userId}))
+      .then(result => res.send(result))
+      .catch(err => res.negotiate(err));
+  },
+
+  destroy: function (req, res) {
+    let allParams = req.allParams();
+    const userId = req.user.id;
+    let values = {
+      rawTransactions: allParams.rawTransactions
+    };
+
+    let cache = {};
+
+    findValidDeposit({id: allParams.id, userId})
+      .then(record => {
+        cache.record = record;
+
+        const {from, to, fromAmount, toAmount, interestRate, additionalNote} = record;
+
+        return Transactions.create(Object.assign({
+          type: Transactions.constants.types.deposit,
+          from: to,
+          to: from,
+          fromAmount: toAmount,
+          toAmount: fromAmount,
+          interestRate,
+          additionalNote
+        }, values));
+      })
+      .then(transaction => {
+        cache.transaction = transaction;
+
+        return Deposit.destroy({id: cache.record.id});
+      })
+      .then(() => Transactions.findOnePopulate({id: cache.transaction.id, userId}))
+      .then(transaction => ({
+        message: 'Deposit was confirmed and deleted. Transaction was created and sent',
+        transaction
+      }))
+      .then(result => res.send(result))
+      .catch(err => res.negotiate(err));
+  },
 
   filters: function (req, res) {
     return res.json({

@@ -9,8 +9,6 @@
 
 const states = {
   inProgress: 'inProgress',
-  pending: 'pending',
-  finished: 'finished',
   rejected: 'rejected'
 };
 const statesList = _.values(states);

@@ -61,6 +61,8 @@ module.exports = {
 
     loanId: { type: 'string' }, // For borrow transactions
 
+    interestRate: { type: 'float' }, // For deposit/withdraw
+
     toJSON: function () {
       var obj = this.toObject();
 
