@@ -95,9 +95,6 @@ module.exports = {
   destroy: function (req, res) {
     let allParams = req.allParams();
     const userId = req.user.id;
-    let values = {
-      rawTransactions: allParams.rawTransactions
-    };
 
     let cache = {};
 
@@ -107,15 +104,16 @@ module.exports = {
 
         const {from, to, fromAmount, toAmount, interestRate, additionalNote} = record;
 
-        return Transactions.create(Object.assign({
+        return Transactions.create({
           type: Transactions.constants.types.deposit,
           from: to,
           to: from,
           fromAmount: toAmount,
           toAmount: fromAmount,
           interestRate,
-          additionalNote
-        }, values));
+          additionalNote,
+          rawTransactions: allParams.rawTransactions
+        });
       })
       .then(transaction => {
         cache.transaction = transaction;
