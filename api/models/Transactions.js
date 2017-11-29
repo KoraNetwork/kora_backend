@@ -10,11 +10,12 @@
 const WLError = require('waterline/lib/waterline/error/WLError');
 
 const types = {
+  send: 'send',
+  request: 'request',
   borrowFund: 'borrowFund',
   borrowPayBack: 'borrowPayBack',
-  cash: 'cash',
-  request: 'request',
-  send: 'send'
+  deposit: 'deposit',
+  withdraw: 'withdraw'
 };
 const typesList = _.values(types);
 
@@ -91,7 +92,7 @@ module.exports = {
     const {rawTransactions} = values;
 
     if (
-      ~[types.send, types.request].indexOf(values.type) &&
+      ~[types.send, types.request, types.deposit, types.withdraw].indexOf(values.type) &&
       !(rawTransactions && rawTransactions.length)
     ) {
       return cb(new WLError({
