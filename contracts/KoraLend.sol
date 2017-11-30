@@ -30,6 +30,8 @@ contract KoraLend {
     event LoanFunded(uint loanId, uint borrowerBalance, uint lenderBalance);
     event LoanPaymentDone(uint loanId, uint borrowerValue, uint lenderValue, uint borrowerBalance, uint lenderBalance);
     event LoanPaidBack(uint loanId);
+    event LoanExpired(uint loanId);
+    event LoanOverdue(uint loanId);
 
     modifier validParticipants(address lender, address[] guarantors) {
         require(guarantors.length > 0 && guarantors.length <= 3);
@@ -225,6 +227,28 @@ contract KoraLend {
                 LoanPaidBack(loanId);
             }
         }
+    }
+
+    function closeLoan(uint loanId) public returns (bool success) {
+        Loan storage loan = loans[loanId];
+
+        require(loan.state != States.Expired && loan.state != States.Overdue);
+
+        if (now >= loan.startDate && (loan.state == States.Created || loan.state == States.Agreed)) {
+            loan.state = States.Expired;
+            LoanExpired(loanId);
+
+            return true;
+        }
+
+        if (now > loan.maturityDate && loan.state == States.Funded) {
+            loan.state = States.Overdue;
+            LoanOverdue(loanId);
+
+            return true;
+        }
+
+        return false;
     }
 
     function isLoanAgreed(uint loanId) internal view returns (bool agreed) {
