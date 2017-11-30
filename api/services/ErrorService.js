@@ -2,6 +2,7 @@
  * ErrorService
  * @description :: Error handlers
  */
+const WLError = require('waterline/lib/waterline/error/WLError');
 
 var util = require('util');
 var http = require('http');
@@ -18,7 +19,9 @@ HttpError.prototype.name = 'HttpError';
 module.exports = {
   HttpError,
 
+  WLError,
+
   throw: function ({status = 500, message}) {
-    return new HttpError(status, message);
+    return new WLError({status, message});
   }
 };
