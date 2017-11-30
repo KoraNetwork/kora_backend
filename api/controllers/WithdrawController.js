@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global Withdraw Transactions ErrorService */
+/* global Withdraw Transactions ErrorService MiscService */
 
 module.exports = {
   find: function (req, res) {
@@ -106,8 +106,8 @@ module.exports = {
           type: Transactions.constants.types.withdraw,
           from: to,
           to: from,
-          fromAmount: Math.floor(toAmount * (100 + interestRate)) / 100,
-          toAmount: Math.floor(fromAmount * (100 + interestRate)) / 100,
+          fromAmount: MiscService.calcTotalAmount(toAmount, interestRate),
+          toAmount: MiscService.calcTotalAmount(fromAmount, interestRate),
           interestRate,
           additionalNote,
           rawTransactions: allParams.rawTransactions

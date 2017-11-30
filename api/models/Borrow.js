@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global sails ValidationService UserValidationService LendService EthereumService Transactions ErrorService */
+/* global sails ValidationService UserValidationService LendService EthereumService Transactions ErrorService MiscService */
 
 const _ = require('lodash');
 
@@ -105,8 +105,8 @@ module.exports = {
       });
 
       // Additional values
-      obj.fromTotalAmount = Math.floor(obj.fromAmount * (100 + obj.interestRate)) / 100;
-      obj.toTotalAmount = Math.floor(obj.toAmount * (100 + obj.interestRate)) / 100;
+      obj.fromTotalAmount = MiscService.calcTotalAmount(obj.fromAmount, obj.interestRate);
+      obj.toTotalAmount = MiscService.calcTotalAmount(obj.toAmount, obj.interestRate);
 
       obj.fromReturnedMoney = obj.fromBalance ? obj.fromTotalAmount - obj.fromBalance : 0;
       obj.toReturnedMoney = obj.toBalance ? obj.toTotalAmount - obj.toBalance : 0;

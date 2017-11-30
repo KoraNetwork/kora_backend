@@ -40,6 +40,9 @@ module.exports = {
     let max = Math.pow(10, n) - 1;
 
     return randomInteger({min, max});
-  }
+  },
 
+  calcTotalAmount: function (amount, interestRate) {
+    return Math.floor(amount * (100 + interestRate)) / 100;
+  }
 };
