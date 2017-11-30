@@ -5,9 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ sails ValidationService UserValidationService EthereumService */
-
-const WLError = require('waterline/lib/waterline/error/WLError');
+/* global _ sails ValidationService UserValidationService EthereumService ErrorService */
 
 const types = {
   send: 'send',
@@ -97,9 +95,9 @@ module.exports = {
       ~[types.send, types.request, types.deposit, types.withdraw].indexOf(values.type) &&
       !(Array.isArray(rawTransactions) && rawTransactions.length && rawTransactions.every(tx => ValidationService.hex(tx)))
     ) {
-      return cb(new WLError({
+      return cb(ErrorService.throw({
         status: 400,
-        reason: 'Parameter rawTransactions must be set and must be hex array with at least one element'
+        message: 'Parameter rawTransactions must be set and must be hex array with at least one element'
       }));
     }
 

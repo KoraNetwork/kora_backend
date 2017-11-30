@@ -5,11 +5,9 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global sails ValidationService UserValidationService LendService EthereumService Transactions */
+/* global sails ValidationService UserValidationService LendService EthereumService Transactions ErrorService */
 
 const _ = require('lodash');
-
-const WLError = require('waterline/lib/waterline/error/WLError');
 
 const types = {
   request: 'request',
@@ -143,7 +141,7 @@ module.exports = {
     const { from, to, guarantor1, guarantor2, guarantor3, startDate, maturityDate } = values;
 
     if (Date.parse(startDate) + 24 * 60 * 60 * 1000 > Date.parse(maturityDate)) {
-      return cb(new WLError({
+      return cb(ErrorService.throw({
         status: 400,
         message: 'Maturity date must be greater than start date at least by one day'
       }));
@@ -174,7 +172,7 @@ module.exports = {
     const { startDate } = values;
 
     if (Date.parse(startDate) < Date.now()) {
-      return cb(new WLError({
+      return cb(ErrorService.throw({
         status: 400,
         message: 'Start date must be in future'
       }));

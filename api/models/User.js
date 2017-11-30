@@ -5,11 +5,9 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ sails EthereumService ValidationService CountriesService */
+/* global _ sails EthereumService ValidationService CountriesService ErrorService */
 
 const bcrypt = require('bcrypt');
-
-const WLError = require('waterline/lib/waterline/error/WLError');
 
 const roles = {
   // provider: 'provider',
@@ -146,7 +144,7 @@ module.exports = {
         // Password for development purposes
         password = 'qwer1234';
       } else {
-        return cb(new WLError({status: 400, message: 'Password must be set'}));
+        return cb(ErrorService.throw({status: 400, message: 'Password must be set'}));
       }
     }
 

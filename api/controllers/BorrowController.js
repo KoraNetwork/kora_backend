@@ -5,9 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global Borrow ValidationService */
-
-const WLError = require('waterline/lib/waterline/error/WLError');
+/* global Borrow ValidationService ErrorService */
 
 module.exports = {
   find: function (req, res) {
@@ -101,7 +99,7 @@ module.exports = {
         switch (borrow.type) {
           case types.request:
             if (Date.now() > Date.parse(borrow.startDate)) {
-              return Promise.reject(new WLError({message: 'Borrow money must be already expired', status: 400}));
+              return Promise.reject(ErrorService.throw({message: 'Borrow money must be already expired', status: 400}));
             }
 
             switch (borrow.state) {
@@ -109,15 +107,15 @@ module.exports = {
                 let {agree} = allParams;
 
                 if (participant === 'from') {
-                  return Promise.reject(new WLError({message: 'Borrow money not agreed', status: 400}));
+                  return Promise.reject(ErrorService.throw({message: 'Borrow money not agreed', status: 400}));
                 }
 
                 if (typeof borrow[participant + 'Agree'] === 'boolean') {
-                  return Promise.reject(new WLError({message: 'User already did agreement', status: 400}));
+                  return Promise.reject(ErrorService.throw({message: 'User already did agreement', status: 400}));
                 }
 
                 if (typeof agree === 'undefined') {
-                  return res.badRequest(new WLError({message: `Parameter 'agree' must be set`, status: 400}));
+                  return res.badRequest(ErrorService.throw({message: `Parameter 'agree' must be set`, status: 400}));
                 }
 
                 agree = (typeof agree === 'string') ? agree !== 'false' : !!agree;
@@ -140,11 +138,11 @@ module.exports = {
                 let {rawCreateLoan} = allParams;
 
                 if (participant !== 'from') {
-                  return Promise.reject(new WLError({message: 'Borrow money already agreed', status: 400}));
+                  return Promise.reject(ErrorService.throw({message: 'Borrow money already agreed', status: 400}));
                 }
 
                 if (!(rawCreateLoan && ValidationService.hex(rawCreateLoan))) {
-                  return res.badRequest(new WLError({message: `Parameter 'rawCreateLoan' must be set and must be hex`, status: 400}));
+                  return res.badRequest(ErrorService.throw({message: `Parameter 'rawCreateLoan' must be set and must be hex`, status: 400}));
                 }
 
                 borrow.type = types.loan;
@@ -153,7 +151,7 @@ module.exports = {
                 break;
 
               default:
-                return Promise.reject(new WLError({
+                return Promise.reject(ErrorService.throw({
                   message: `Borrow money is ${borrow.state} currently`,
                   status: 400
                 }));
@@ -163,7 +161,7 @@ module.exports = {
 
           case types.loan:
             if (Date.now() > Date.parse(borrow.startDate)) {
-              return Promise.reject(new WLError({message: 'Borrow money must be already expired', status: 400}));
+              return Promise.reject(ErrorService.throw({message: 'Borrow money must be already expired', status: 400}));
             }
 
             switch (borrow.state) {
@@ -171,19 +169,19 @@ module.exports = {
                 let {rawAgreeLoan} = allParams;
 
                 if (participant === 'from') {
-                  return Promise.reject(new WLError({message: 'Borrow money not funded', status: 400}));
+                  return Promise.reject(ErrorService.throw({message: 'Borrow money not funded', status: 400}));
                 }
 
                 if (participant === 'to') {
-                  return Promise.reject(new WLError({message: 'Borrow money not agreed', status: 400}));
+                  return Promise.reject(ErrorService.throw({message: 'Borrow money not agreed', status: 400}));
                 }
 
                 if (typeof borrow[participant + 'Agree'] === 'boolean') {
-                  return Promise.reject(new WLError({message: 'User already did agreement', status: 400}));
+                  return Promise.reject(ErrorService.throw({message: 'User already did agreement', status: 400}));
                 }
 
                 if (!(rawAgreeLoan && ValidationService.hex(rawAgreeLoan))) {
-                  return res.badRequest(new WLError({message: `Parameter 'rawAgreeLoan' must be set and must be hex`, status: 400}));
+                  return res.badRequest(ErrorService.throw({message: `Parameter 'rawAgreeLoan' must be set and must be hex`, status: 400}));
                 }
 
                 borrow.rawAgreeLoan = rawAgreeLoan;
@@ -194,15 +192,15 @@ module.exports = {
                 let {rawApproves, rawFundLoan} = allParams;
 
                 if (participant !== 'to') {
-                  return Promise.reject(new WLError({message: 'Borrow money not funded', status: 400}));
+                  return Promise.reject(ErrorService.throw({message: 'Borrow money not funded', status: 400}));
                 }
 
                 if (!(rawApproves && rawApproves.length && rawApproves.every(a => ValidationService.hex(a)))) {
-                  return res.badRequest(new WLError({message: `Parameter 'rawApproves' must be set and must be hex array`, status: 400}));
+                  return res.badRequest(ErrorService.throw({message: `Parameter 'rawApproves' must be set and must be hex array`, status: 400}));
                 }
 
                 if (!(rawFundLoan && ValidationService.hex(rawFundLoan))) {
-                  return res.badRequest(new WLError({message: `Parameter 'rawFundLoan' must be set and must be hex`, status: 400}));
+                  return res.badRequest(ErrorService.throw({message: `Parameter 'rawFundLoan' must be set and must be hex`, status: 400}));
                 }
 
                 borrow.type = types.inProgress;
@@ -212,7 +210,7 @@ module.exports = {
                 break;
 
               default:
-                return Promise.reject(new WLError({
+                return Promise.reject(ErrorService.throw({
                   message: `Borrow money is ${borrow.state} currently`,
                   status: 400
                 }));
@@ -222,11 +220,11 @@ module.exports = {
 
           case types.inProgress:
             if (Date.now() < Date.parse(borrow.startDate)) {
-              return Promise.reject(new WLError({message: 'Start date has not arrived', status: 400}));
+              return Promise.reject(ErrorService.throw({message: 'Start date has not arrived', status: 400}));
             }
 
             if (Date.now() > Date.parse(borrow.maturityDate)) {
-              return Promise.reject(new WLError({message: 'Borrow money must be already overdue', status: 400}));
+              return Promise.reject(ErrorService.throw({message: 'Borrow money must be already overdue', status: 400}));
             }
 
             switch (borrow.state) {
@@ -234,15 +232,15 @@ module.exports = {
                 let {rawApproves, rawPayBackLoan} = allParams;
 
                 if (participant !== 'from') {
-                  return Promise.reject(new WLError({message: 'Borrow money already funded. Current user is not borrower', status: 400}));
+                  return Promise.reject(ErrorService.throw({message: 'Borrow money already funded. Current user is not borrower', status: 400}));
                 }
 
                 if (!(rawApproves && rawApproves.length && rawApproves.every(a => ValidationService.hex(a)))) {
-                  return res.badRequest(new WLError({message: `Parameter 'rawApproves' must be set and must be hex array`, status: 400}));
+                  return res.badRequest(ErrorService.throw({message: `Parameter 'rawApproves' must be set and must be hex array`, status: 400}));
                 }
 
                 if (!(rawPayBackLoan && ValidationService.hex(rawPayBackLoan))) {
-                  return res.badRequest(new WLError({message: `Parameter 'rawPayBackLoan' must be set and must be hex`, status: 400}));
+                  return res.badRequest(ErrorService.throw({message: `Parameter 'rawPayBackLoan' must be set and must be hex`, status: 400}));
                 }
 
                 borrow.rawApproves = rawApproves;
@@ -251,7 +249,7 @@ module.exports = {
                 break;
 
               default:
-                return Promise.reject(new WLError({
+                return Promise.reject(ErrorService.throw({
                   message: `Borrow money is ${borrow.state} currently`,
                   status: 400
                 }));
@@ -260,7 +258,7 @@ module.exports = {
             break;
 
           default:
-            return Promise.reject(new WLError({
+            return Promise.reject(ErrorService.throw({
               message: 'Not implemented yet',
               status: 404
             }));
@@ -293,7 +291,7 @@ function findOneValidBorrow ({id, userId}) {
   return Borrow.findOne({id})
     .then(borrow => {
       if (!borrow) {
-        return Promise.reject(new WLError({
+        return Promise.reject(ErrorService.throw({
           status: 404,
           message: 'Current borrow money not found'
         }));
@@ -303,14 +301,14 @@ function findOneValidBorrow ({id, userId}) {
       const participants = [from, to, guarantor1, guarantor2, guarantor3];
 
       if (!~participants.indexOf(userId)) {
-        return Promise.reject(new WLError({
+        return Promise.reject(ErrorService.throw({
           status: 400,
           message: `Current user must be participant of borrow money`
         }));
       }
 
       if (~[rejected, expired, overdue].indexOf(borrow.state)) {
-        return Promise.reject(new WLError({
+        return Promise.reject(ErrorService.throw({
           status: 400,
           message: `Current borrow money is already ${borrow.state}`
         }));

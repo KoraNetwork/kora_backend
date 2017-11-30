@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global Recents User */
+/* global Recents User ErrorService */
 
 const RECENTS_NUM = 10;
 
@@ -53,10 +53,10 @@ module.exports = {
     User.findOne({id})
       .then(recent => {
         if (!recent) {
-          let err = new Error('Could not find a user with such id');
-          err.status = 400;
-
-          return Promise.reject(err);
+          return Promise.reject(ErrorService.throw({
+            status: 400,
+            message: 'Could not find a user with such id'
+          }));
         }
 
         return Recents.findOne(newRecord);

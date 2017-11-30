@@ -5,9 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global Deposit Transactions */
-
-const WLError = require('waterline/lib/waterline/error/WLError');
+/* global Deposit Transactions ErrorService */
 
 module.exports = {
   find: function (req, res) {
@@ -143,21 +141,21 @@ function findValidRecord ({id, userId}) {
   return Deposit.findOne({id})
     .then(request => {
       if (!request) {
-        return Promise.reject(new WLError({
+        return Promise.reject(ErrorService.throw({
           status: 404,
           message: 'Current deposit not found'
         }));
       }
 
       if (request.to !== userId) {
-        return Promise.reject(new WLError({
+        return Promise.reject(ErrorService.throw({
           status: 400,
           message: `Current user must be in 'to' attribute of deposit`
         }));
       }
 
       if (request.state === rejected) {
-        return Promise.reject(new WLError({
+        return Promise.reject(ErrorService.throw({
           status: 400,
           message: 'Current deposit already rejected'
         }));

@@ -5,9 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global Requests Transactions */
-
-const WLError = require('waterline/lib/waterline/error/WLError');
+/* global Requests Transactions ErrorService */
 
 module.exports = {
   find: function (req, res) {
@@ -149,21 +147,21 @@ function findRequest ({id, userId}) {
   return Requests.findOne({id})
     .then(request => {
       if (!request) {
-        return Promise.reject(new WLError({
+        return Promise.reject(ErrorService.throw({
           status: 404,
           message: 'Current request for money not found'
         }));
       }
 
       if (request.to !== userId) {
-        return Promise.reject(new WLError({
+        return Promise.reject(ErrorService.throw({
           status: 400,
           message: `Current user must be in 'to' attribute of request`
         }));
       }
 
       if (request.state === rejected) {
-        return Promise.reject(new WLError({
+        return Promise.reject(ErrorService.throw({
           status: 400,
           message: 'Current request for money already rejected'
         }));

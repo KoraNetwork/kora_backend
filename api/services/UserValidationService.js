@@ -3,16 +3,14 @@
  * @description :: Set of methods for User
  */
 
-/* global User */
-
-const WLError = require('waterline/lib/waterline/error/WLError');
+/* global User ErrorService */
 
 module.exports = {
   isFromToNotEqual: function ({from, to}, cb) {
     let promise = Promise.resolve();
 
     if (from && to && from === to) {
-      promise = Promise.reject(new WLError({
+      promise = Promise.reject(ErrorService.throw({
         status: 400,
         message: 'From and to users could not be equal'
       }));
@@ -31,7 +29,7 @@ module.exports = {
     for (let i = 0; i < ids.length - 1; i++) {
       for (let j = i + 1; j < ids.length; j++) {
         if (ids[i] === ids[j]) {
-          promise = Promise.reject(new WLError({
+          promise = Promise.reject(ErrorService.throw({
             status: 400,
             message: `Users ${names[i]} and ${names[j]} could not be equal`
           }));
@@ -51,7 +49,7 @@ module.exports = {
     let promise = Promise.resolve();
 
     if (user && users && users.some(u => u === user)) {
-      promise = Promise.reject(new WLError({
+      promise = Promise.reject(ErrorService.throw({
         status: 400,
         message: `${userName} user could not be in ${usersName} collection`
       }));
@@ -71,11 +69,11 @@ module.exports = {
     ])
       .then(([fromUser, toUser]) => {
         if (!fromUser) {
-          return Promise.reject(new WLError({status: 404, message: 'From user not exists'}));
+          return Promise.reject(ErrorService.throw({status: 404, message: 'From user not exists'}));
         }
 
         if (!toUser) {
-          return Promise.reject(new WLError({status: 404, message: 'To user not exists'}));
+          return Promise.reject(ErrorService.throw({status: 404, message: 'To user not exists'}));
         }
 
         return Promise.resolve();
@@ -101,7 +99,7 @@ module.exports = {
           });
 
           if (notExistsNames.length) {
-            return Promise.reject(new WLError({
+            return Promise.reject(ErrorService.throw({
               status: 404,
               message: `User${notExistsNames.length !== 1 ? 's' : ''} ${notExistsNames.join(', ')} not exists`
             }));
@@ -121,11 +119,11 @@ module.exports = {
     let promise = User.findOne({id})
       .then(user => {
         if (!user) {
-          return Promise.reject(new WLError({status: 404, message: 'Agent not exists'}));
+          return Promise.reject(ErrorService.throw({status: 404, message: 'Agent not exists'}));
         }
 
         if (user.role !== User.constants.roles.agent) {
-          return Promise.reject(new WLError({status: 400, message: `${name} user not agent`}));
+          return Promise.reject(ErrorService.throw({status: 400, message: `${name} user not agent`}));
         }
 
         return Promise.resolve();
