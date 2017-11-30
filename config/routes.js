@@ -55,6 +55,8 @@ module.exports.routes = {
 
   'POST /deposit/:id': {controller: 'Deposit', action: 'destroy'},
 
+  'POST /withdraw/:id': {controller: 'Withdraw', action: 'destroy'},
+
   'GET /borrow/requests': {controller: 'Borrow', action: 'find', type: borrowTypes.request},
 
   'GET /borrow/loans': {controller: 'Borrow', action: 'find', type: borrowTypes.loan},
