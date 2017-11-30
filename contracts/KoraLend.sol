@@ -24,6 +24,15 @@ contract KoraLend {
     uint public numLoans;
     mapping (uint => Loan) public loans;
 
+    struct BorrowerLoans {
+        uint numReturned;
+        uint numNotReturned;
+        mapping (uint => uint) returned;
+        mapping (uint => uint) notReturned;
+    }
+
+    mapping (address => BorrowerLoans) public borrowerLoansList;
+
     event LoanCreated(uint loanId);
     event GuarantorAgreed(uint loanId, address guarantor);
     event LoanAgreed(uint loanId);
@@ -224,6 +233,7 @@ contract KoraLend {
 
             if (loan.borrowerBalance == 0) {
                 loan.state = States.PaidBack;
+                addBorrowerLoan(loan.borrower, loanId, true);
                 LoanPaidBack(loanId);
             }
         }
@@ -243,6 +253,7 @@ contract KoraLend {
 
         if (now > loan.maturityDate && loan.state == States.Funded) {
             loan.state = States.Overdue;
+            addBorrowerLoan(loan.borrower, loanId, false);
             LoanOverdue(loanId);
 
             return true;
@@ -272,5 +283,19 @@ contract KoraLend {
     function calcBalance(uint amount, uint interestRate) internal pure returns (uint balance) {
         // Assume that there are two decimals for all numbers
         return amount + amount * interestRate / 10000;
+    }
+
+    function addBorrowerLoan(address borrower, uint loanId, bool returned) internal {
+        BorrowerLoans storage borrowerLoans = borrowerLoansList[borrower];
+
+        uint index;
+
+        if (returned) {
+            index = borrowerLoans.numReturned++;
+            borrowerLoans.returned[index] = loanId;
+        } else {
+            index = borrowerLoans.numNotReturned++;
+            borrowerLoans.notReturned[index] = loanId;
+        }
     }
 }
