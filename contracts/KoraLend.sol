@@ -24,14 +24,7 @@ contract KoraLend {
     uint public numLoans;
     mapping (uint => Loan) public loans;
 
-    struct BorrowerLoans {
-        uint numReturned;
-        uint numNotReturned;
-        mapping (uint => uint) returned;
-        mapping (uint => uint) notReturned;
-    }
-
-    mapping (address => BorrowerLoans) public borrowerLoansList;
+    mapping (address => mapping (bool => uint[])) public borrowerLoans;
 
     event LoanCreated(uint loanId);
     event GuarantorAgreed(uint loanId, address guarantor);
@@ -233,7 +226,7 @@ contract KoraLend {
 
             if (loan.borrowerBalance == 0) {
                 loan.state = States.PaidBack;
-                addBorrowerLoan(loan.borrower, loanId, true);
+                addBorrowerLoan(loan.borrower, true, loanId);
                 LoanPaidBack(loanId);
             }
         }
@@ -249,17 +242,22 @@ contract KoraLend {
             LoanExpired(loanId);
 
             return true;
-        }
-
-        if (now > loan.maturityDate && loan.state == States.Funded) {
+        } else if (now > loan.maturityDate && loan.state == States.Funded) {
             loan.state = States.Overdue;
-            addBorrowerLoan(loan.borrower, loanId, false);
+            addBorrowerLoan(loan.borrower, false, loanId);
             LoanOverdue(loanId);
 
             return true;
+        } else {
+            revert();
         }
 
         return false;
+    }
+
+    function getNumBorrowerLoans(address borrower) public view returns (uint returned, uint notReturned) {
+        returned = borrowerLoans[borrower][true].length;
+        notReturned = borrowerLoans[borrower][false].length;
     }
 
     function isLoanAgreed(uint loanId) internal view returns (bool agreed) {
@@ -285,17 +283,7 @@ contract KoraLend {
         return amount + amount * interestRate / 10000;
     }
 
-    function addBorrowerLoan(address borrower, uint loanId, bool returned) internal {
-        BorrowerLoans storage borrowerLoans = borrowerLoansList[borrower];
-
-        uint index;
-
-        if (returned) {
-            index = borrowerLoans.numReturned++;
-            borrowerLoans.returned[index] = loanId;
-        } else {
-            index = borrowerLoans.numNotReturned++;
-            borrowerLoans.notReturned[index] = loanId;
-        }
+    function addBorrowerLoan(address borrower, bool returned, uint loanId) internal {
+        borrowerLoans[borrower][returned].push(loanId);
     }
 }
