@@ -86,7 +86,8 @@ module.exports.policies = {
   },
 
   EthereumController: {
-    getBalance: true
+    getBalance: true,
+    create: true
   },
 
   RecentsController: {
