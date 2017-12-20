@@ -81,6 +81,10 @@ module.exports.policies = {
     '*': true
   },
 
+  RegistrationICOController: {
+    '*': true
+  },
+
   CountriesController: {
     '*': true
   },
