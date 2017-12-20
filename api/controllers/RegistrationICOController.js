@@ -10,6 +10,7 @@
 const {accountSid, authToken, fromNumber} = sails.config.twilio;
 
 const Twilio = require('twilio');
+require('web3-eth-accounts');
 const client = new Twilio(accountSid, authToken);
 
 module.exports = {
@@ -46,7 +47,7 @@ module.exports = {
               return reject(err);
             }
 
-            const text = 'SMS message with verification code was send throught Kora MVP';
+            const text = 'SMS message with verification code was send to phone number that is connected to Kora MVP account';
 
             sails.log.info(`${text} to ${user.phone}. Massage sid: ${message.sid}`);
 
