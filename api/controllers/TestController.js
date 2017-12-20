@@ -5,6 +5,8 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
+/* global User ParserService */
+
 module.exports = {
   test: function (req, res) {
     let testParameter = req.param('test_parameter');
@@ -20,9 +22,8 @@ module.exports = {
     });
   },
 
-  sms: function (req, res){
+  sms: function (req, res) {
     User.findOne({ phone: req.param('number') }, (err, user) => {
-
       if (err) {
         return res.negotiate(err);
       }
@@ -39,12 +40,12 @@ module.exports = {
           return res.send({
             message: err || message
           });
-        })
+        });
       } else {
         return res.send({
           message: 'Please sign up before.'
-        })
+        });
       }
-    })
-  },
+    });
+  }
 };
