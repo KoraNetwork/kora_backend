@@ -13,6 +13,7 @@ const flagImg = cca2 => `/images/flags/${cca2}.png`;
 
 const list = worldCountries
   // .filter(el => ~Object.keys(ERC20Tokens).indexOf(el.cca2))
+  .filter(el => el.callingCode.length)
   .map(({name: {common: name}, currency: [currency], callingCode: [callingCode], cca2}) => {
     // const {name: currencyNameFull, units: {major: {name: currencyName}}} = worldCurrencies[currency];
     const worldCurrencie = worldCurrencies[currency];
