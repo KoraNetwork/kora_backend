@@ -4,7 +4,7 @@
  * @description :: Countries with currencies and ERC20Tokens list generator
  */
 
-/* global sails _ */
+/* global sails */
 const worldCountries = require('world-countries');
 const worldCurrencies = require('world-currencies');
 const {ERC20Tokens} = sails.config.countries;
@@ -26,9 +26,10 @@ const list = worldCountries
       currency,
       currencyName: currencyName && currencyName[0].toUpperCase() + currencyName.slice(1),
       currencyNameFull,
-      ERC20Token: ERC20Tokens[cca2],
+      ERC20Token: ERC20Tokens[currency],
       phoneCode: `+${callingCode}`,
       flag: flagImg(cca2)
+      // currencyFlag: flagImg(currency.slice(0, 2))
     };
   });
 
@@ -37,7 +38,20 @@ const collection = list.reduce((result, current) => {
   return result;
 }, {});
 
-const currenciesList = list.filter(c => c.ERC20Token);
+const currenciesList = Object.keys(ERC20Tokens)
+  .map(currency => {
+    const {name: currencyNameFull, units: {major: {name: currencyName}}} = worldCurrencies[currency];
+
+    return {
+      currency,
+      currencyName: currencyName[0].toUpperCase() + currencyName.slice(1),
+      currencyNameFull,
+      ERC20Token: ERC20Tokens[currency],
+      flag: flagImg(currency.slice(0, 2))
+    };
+  });
+// const currenciesList = list.filter(c => c.ERC20Token)
+//   .map(c => Object.assign({}, c, {flag: flagImg(c.currency.slice(0, 2))}));
 
 module.exports = {
   list,
