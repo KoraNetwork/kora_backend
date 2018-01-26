@@ -17,5 +17,9 @@ module.exports = {
 
   collection: function (req, res) {
     return res.json(CountriesService.collection);
+  },
+
+  currencies: function (req, res) {
+    return res.json(CountriesService.currenciesList);
   }
 };
