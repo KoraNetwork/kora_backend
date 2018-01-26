@@ -53,9 +53,15 @@ const currenciesList = Object.keys(ERC20Tokens)
 // const currenciesList = list.filter(c => c.ERC20Token)
 //   .map(c => Object.assign({}, c, {flag: flagImg(c.currency.slice(0, 2))}));
 
+const currenciesCollection = currenciesList.reduce((result, current) => {
+  result[current.currency] = current;
+  return result;
+}, {});
+
 module.exports = {
   list,
   collection,
   currenciesList,
+  currenciesCollection,
   flagImg
 };

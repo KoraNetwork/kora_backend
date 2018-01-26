@@ -41,7 +41,7 @@ module.exports = {
 
     countryCode: { type: 'string', in: CountriesService.list.map(el => el.countryCode) },
 
-    ERC20Token: { type: 'string', ethereumAddress: true, in: CountriesService.list.map(el => el.ERC20Token) },
+    ERC20Token: { type: 'string', ethereumAddress: true, in: CountriesService.currenciesList.map(el => el.ERC20Token) },
 
     postalCode: { type: 'string' },
 
@@ -79,8 +79,11 @@ module.exports = {
 
       if (obj.countryCode) {
         obj.flag = CountriesService.flagImg(obj.countryCode);
-        obj.currencyName = CountriesService.collection[obj.countryCode].currencyName;
-        obj.currencyNameFull = CountriesService.collection[obj.countryCode].currencyNameFull;
+      }
+
+      if (obj.currency) {
+        obj.currencyName = CountriesService.currenciesCollection[obj.currency].currencyName;
+        obj.currencyNameFull = CountriesService.currenciesCollection[obj.currency].currencyNameFull;
       }
 
       obj.agent = obj.role === roles.agent;
@@ -120,11 +123,6 @@ module.exports = {
 
     if (values.email) {
       values.email = values.email.toLowerCase();
-    }
-
-    if (values.countryCode) {
-      values.currency = CountriesService.collection[values.countryCode].currency;
-      values.ERC20Token = CountriesService.collection[values.countryCode].ERC20Token;
     }
 
     if (values.role === roles.agent && typeof values.interestRate === 'undefined') {
