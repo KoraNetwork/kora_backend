@@ -6,7 +6,7 @@
 const Web3Utils = require('web3-utils');
 
 module.exports = {
-  phoneNumber: value => /^[1-9]\d{9,12}$/i.test(value),
+  phoneNumber: value => /^[1-9]\d{7,12}$/i.test(value),
 
   ethereumAddress: value => Web3Utils.isAddress(value),
 
