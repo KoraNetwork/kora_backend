@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global User ParserService */
+/* global User ParserService CurrencyConverterService */
 
 module.exports = {
   test: function (req, res) {
@@ -46,6 +46,18 @@ module.exports = {
           message: 'Please sign up before.'
         });
       }
+    });
+  },
+
+  convert: function (req, res) {
+    const q = req.param('q');
+
+    CurrencyConverterService.convert(q, (err, result) => {
+      if (err) {
+        return res.serverError(err);
+      }
+
+      return res.ok(result);
     });
   }
 };
