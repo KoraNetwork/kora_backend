@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails User */
+/* global sails User EthereumService ValidationService */
 
 const path = require('path');
 const fs = require('fs');
@@ -28,6 +28,10 @@ module.exports = {
         delete values.encryptedPassword;
         delete values.userNameOrigin;
         delete values.avatar;
+        delete values.identity;
+        delete values.creator;
+        delete values.owner;
+        delete values.recoveryKey;
 
         values.agent = (typeof values.agent === 'string') ? values.agent !== 'false' : !!values.agent;
 
@@ -105,5 +109,37 @@ module.exports = {
         });
       }
     });
+  },
+
+  createIdentity: function (req, res) {
+    let { owner, recoveryKey } = req.allParams();
+
+    if (req.user.identity) {
+      return res.badRequest({message: `Current user already has identity`});
+    }
+
+    if (!owner && !ValidationService.ethereumAddress(owner)) {
+      return res.badRequest({message: `Param 'owner' must be set and must be ethereum address`});
+    }
+
+    if (!recoveryKey && !ValidationService.ethereumAddress(recoveryKey)) {
+      return res.badRequest({message: `Param 'recoveryKey' must be set and must be ethereum address`});
+    }
+
+    // e.g.
+    // 0 => infinite
+    // 240000 => 4 minutes (240,000 miliseconds)
+    // etc.
+    //
+    // Node defaults to 2 minutes.
+    res.setTimeout(0);
+
+    EthereumService.createIdentity({owner, recoveryKey})
+      .then(({ identity, creator, owner, recoveryKey }) => {
+        return User.update({id: req.user.id}, { identity, creator, owner, recoveryKey });
+      })
+      .then(records => records[0])
+      .then(result => res.ok(result))
+      .catch(err => res.negotiate(err));
   }
 };
