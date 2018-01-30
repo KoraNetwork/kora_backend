@@ -149,7 +149,7 @@ module.exports = {
     if (values.role === roles.featurePhone) {
       const {account, keystore} = EthereumService.createAccount({password});
 
-      EthereumService.createIdentity({account}, (err, { identity, creator, owner, recoveryKey }) => {
+      EthereumService.createIdentity({owner: account.address}, (err, { identity, creator, owner, recoveryKey }) => {
         if (err) {
           return cb(err);
         }

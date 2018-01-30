@@ -22,7 +22,7 @@ module.exports = {
 
       const account = accounts.decrypt(user.keystore, password);
 
-      EthereumService.createIdentity({account}, function (err, result) {
+      EthereumService.createIdentity({owner: account.address}, function (err, result) {
         if (err) {
           return res.negotiate(err);
         }
@@ -40,7 +40,7 @@ module.exports = {
   createIdentity: function (req, res) {
     const {account} = EthereumService.createAccount({password});
 
-    EthereumService.createIdentity({account}, function (err, result) {
+    EthereumService.createIdentity({owner: account.address}, function (err, result) {
       if (err) {
         return res.negotiate(err);
       }
