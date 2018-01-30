@@ -3,7 +3,7 @@
  * @description :: Set of functions for work with Ethereum blockchain
  */
 
-/* global sails */
+/* global sails MiscService */
 
 const {provider, networkId, koraWallet, koraRecoveryKey, gas, gasPrice} = sails.config.ethereum;
 const Web3 = require('web3');
@@ -27,6 +27,12 @@ const txRelayAddress = TxRelay.networks[networkId].address; // Testnet
 const txRelay = new Contract(TxRelay.abi, txRelayAddress);
 
 module.exports = {
+  getBalance: function ({address}, cb) {
+    let promise = eth.getBalance(address);
+
+    return MiscService.cbify(promise, cb);
+  },
+
   sendSignedTransaction: function ({rawTransaction, name = 'rawTransaction'}, cb) {
     sails.log.info(`Send signed ${name} raw transaction:\n`, rawTransaction);
 
@@ -203,5 +209,37 @@ module.exports = {
       })
       .then(receipt => sails.log.info('Transaction relayMetaTx receipt:\n', receipt))
       .catch(err => sails.log.error(err));
+  },
+
+  sendEthFromKora: function ({to, eth = '0.1'}, cb) {
+    const name = 'sendEthFromKora';
+    let tx = {
+      to,
+      value: Web3.utils.toWei(eth, 'ether'),
+      gas,
+      gasPrice
+    };
+
+    sails.log.info(`Sign ${name} transaction:\n`, tx);
+
+    let promise = accounts.signTransaction(tx, koraWallet.privateKey)
+      .then(signedTx => {
+        sails.log.info(`Send signed ${name} transaction:\n`, signedTx);
+
+        return this.sendSignedTransaction({
+          rawTransaction: signedTx.rawTransaction,
+          name
+        });
+      })
+      .catch(err => {
+        sails.log.error(`Transaction createIdentity error:\n`, err);
+        return Promise.reject(err);
+      });
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
   }
 };

@@ -157,31 +157,31 @@ module.exports = {
       .then(receipt => {
         sails.log.info('Transaction forwardTo receipt:\n', receipt);
 
-      //   const proxy = new Contract(Proxy.abi, identity);
-      //
-      //   return proxy.getPastEvents('Forwarded', {
-      //     filter: { destination: humanStandardTokenAddress }
-      //   });
-      // })
-      // .then(events => {
-      //   sails.log.info('Forwarded events:\n', events);
-      //
-      //   return humanStandardToken.getPastEvents('Transfer', {
-      //     filter
-      //     // fromBlock: receipt.blockNumber
-      //   });
-      // })
-      // .then(events => {
-      //   sails.log.info('Transfer events:\n', events);
-      //
-      //   // let event = _.find(events, {returnValues: filter});
-      //   //
-      //   // if (!event) {
-      //   //   return Promise.reject(new Error(`Method getPastEvents didn't return desired Transfer event`));
-      //   // }
-      //   //
-      //   // return cb(null, event.returnValues);
-      //   // return cb(null, events);
+        //   const proxy = new Contract(Proxy.abi, identity);
+        //
+        //   return proxy.getPastEvents('Forwarded', {
+        //     filter: { destination: humanStandardTokenAddress }
+        //   });
+        // })
+        // .then(events => {
+        //   sails.log.info('Forwarded events:\n', events);
+        //
+        //   return humanStandardToken.getPastEvents('Transfer', {
+        //     filter
+        //     // fromBlock: receipt.blockNumber
+        //   });
+        // })
+        // .then(events => {
+        //   sails.log.info('Transfer events:\n', events);
+        //
+        //   // let event = _.find(events, {returnValues: filter});
+        //   //
+        //   // if (!event) {
+        //   //   return Promise.reject(new Error(`Method getPastEvents didn't return desired Transfer event`));
+        //   // }
+        //   //
+        //   // return cb(null, event.returnValues);
+        //   // return cb(null, events);
 
         return cb(null, receipt);
       })

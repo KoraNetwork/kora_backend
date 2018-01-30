@@ -9,6 +9,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const Web3Utils = require('web3-utils');
 
 module.exports = {
 
@@ -141,5 +142,28 @@ module.exports = {
       .then(records => records[0])
       .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
+  },
+
+  sendEthFromKora: function (req, res) {
+    if (!req.user.owner) {
+      return res.badRequest({message: `Current user do not has owner`});
+    }
+
+    res.setTimeout(0);
+
+    EthereumService.getBalance({address: req.user.owner}, (err, balance) => {
+      if (err) {
+        return res.negotiate(err);
+      }
+
+      sails.log.info('balance', balance);
+      if (!Web3Utils.toBN(balance).isZero()) {
+        return res.badRequest({message: `User owner address already has ethers`});
+      }
+
+      EthereumService.sendEthFromKora({to: req.user.owner, eth: '0.1'})
+        .then(result => res.ok(result))
+        .catch(err => res.negotiate(err));
+    });
   }
 };
