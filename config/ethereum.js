@@ -45,5 +45,10 @@ module.exports.ethereum = {
         address: '0x75C5FF68527bD11C71604D5a5BBDF68ce0457987'
       }
     }
+  },
+
+  newUserMoney: {
+    ETH: 0.1,
+    eUSD: 1500
   }
 };

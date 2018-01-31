@@ -207,13 +207,14 @@ module.exports = {
       .catch(err => sails.log.error(err));
   },
 
-  sendEthFromKora: function ({to, eth = '0.1'}, cb) {
+  sendEthFromKora: function ({to, eth = '0.1', nonce}, cb) {
     const name = 'sendEthFromKora';
     let tx = {
       to,
       value: Web3.utils.toWei(eth, 'ether'),
       gas,
-      gasPrice
+      gasPrice,
+      nonce
     };
 
     sails.log.info(`Sign ${name} transaction:\n`, tx);

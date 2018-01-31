@@ -54,9 +54,9 @@ module.exports = {
    * @param  {Number}   value Number of Kora Tokens
    * @param  {Function} cb  Result of transfer
    */
-  transferFromKora: function ({ to, value, tokenAddress }, cb) {
+  transferFromKora: function ({ to, value, tokenAddress, nonce }, cb) {
     const humanStandardToken = new Contract(humanStandardTokenAbi, tokenAddress);
-    const tokensValue = (value * Math.pow(10, koraTokenExponent));
+    const tokensValue = Math.floor(value * Math.pow(10, koraTokenExponent));
     const transfer = humanStandardToken.methods.transfer(to, tokensValue);
     const encodedTransfer = transfer.encodeABI();
 
@@ -64,7 +64,8 @@ module.exports = {
       to: tokenAddress,
       data: encodedTransfer,
       gas,
-      gasPrice
+      gasPrice,
+      nonce
     };
 
     sails.log.info('Sign transferFromKora transaction:\n', tx);

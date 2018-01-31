@@ -5,11 +5,16 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails User EthereumService ValidationService TokensService CurrencyConverterService */
+/* global sails User EthereumService ValidationService TokensService CurrencyConverterService ErrorService */
+
+const {provider, koraWallet, newUserMoney} = sails.config.ethereum;
 
 const path = require('path');
 const fs = require('fs');
 const Web3Utils = require('web3-utils');
+
+const Eth = require('web3-eth');
+const eth = new Eth(provider);
 
 module.exports = {
 
@@ -161,7 +166,7 @@ module.exports = {
         return res.badRequest({message: `User owner address already has ethers`});
       }
 
-      EthereumService.sendEthFromKora({to: req.user.owner, eth: '0.1'})
+      EthereumService.sendEthFromKora({to: req.user.owner, eth: newUserMoney.ETH + ''})
         .then(result => res.ok(result))
         .catch(err => res.negotiate(err));
     });
@@ -189,19 +194,15 @@ module.exports = {
         return res.badRequest({message: `User identity address already has eFiats`});
       }
 
-      const value = 2;
       let promise;
 
       if (user.currency === 'USD') {
-        promise = Promise.resolve(value);
+        promise = Promise.resolve(newUserMoney.eUSD);
       } else {
         const currencyPair = 'USD_' + user.currency;
 
         promise = CurrencyConverterService.convert(currencyPair)
-          .then(result => {
-            console.log(result[currencyPair], value);
-            return result[currencyPair] * value;
-          });
+          .then(result => result[currencyPair] * newUserMoney.eUSD);
       }
 
       promise
@@ -215,5 +216,73 @@ module.exports = {
         .then(result => res.ok(result))
         .catch(err => res.negotiate(err));
     });
+  },
+
+  sendMoneyFromKora: function (req, res) {
+    const user = req.user;
+
+    if (!req.user.owner) {
+      return res.badRequest({message: `Current user do not has owner`});
+    }
+
+    if (!user.identity) {
+      return res.badRequest({message: `Current user do not has identity`});
+    }
+
+    res.setTimeout(0);
+
+    eth.getTransactionCount(koraWallet.address)
+      .then(nonce =>
+        Promise.all([
+          EthereumService.getBalance({address: user.owner}),
+          TokensService.balanceOf({address: user.identity, tokenAddress: user.ERC20Token})
+        ])
+          .then(([ethBalance, tokenBalance]) => {
+            let promises = [];
+            console.log(nonce);
+
+            if (Web3Utils.toBN(ethBalance).isZero()) {
+              promises.push(
+                EthereumService.sendEthFromKora({to: req.user.owner, eth: newUserMoney.ETH + '', nonce: nonce + ''})
+              );
+            }
+
+            if (Web3Utils.toBN(tokenBalance).isZero()) {
+              let promise;
+
+              if (user.currency === 'USD') {
+                promise = Promise.resolve(newUserMoney.eUSD);
+              } else {
+                const currencyPair = 'USD_' + user.currency;
+
+                promise = CurrencyConverterService.convert(currencyPair)
+                  .then(result => result[currencyPair] * newUserMoney.eUSD);
+              }
+
+              promise = promise
+                .then(value =>
+                  TokensService.transferFromKora({
+                    to: user.identity,
+                    value,
+                    tokenAddress: user.ERC20Token,
+                    nonce: ++nonce + ''
+                  })
+                );
+
+              promises.push(promise);
+            }
+
+            if (!promises.length) {
+              return Promise.reject(ErrorService.throw({
+                status: 400,
+                message: 'User ethereum and eFiats balances are not empty'
+              }));
+            }
+
+            return Promise.all(promises);
+          })
+      )
+      .then(result => res.ok(result))
+      .catch(err => res.negotiate(err));
   }
 };
