@@ -151,11 +151,7 @@ module.exports = {
         return Promise.reject(err);
       });
 
-    if (cb && typeof cb === 'function') {
-      promise.then(cb.bind(null, null), cb);
-    }
-
-    return promise;
+    return MiscService.cbify(promise, cb);
   },
 
   createIdentityTxRelay: function ({ account }, cb) {

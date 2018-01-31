@@ -37,7 +37,7 @@ module.exports = {
 
     dateOfBirth: { type: 'string' }, // datetime: true
 
-    currency: { type: 'string', in: CountriesService.list.map(el => el.currency) },
+    currency: { type: 'string', in: CountriesService.currenciesList.map(el => el.currency) },
 
     countryCode: { type: 'string', in: CountriesService.list.map(el => el.countryCode) },
 

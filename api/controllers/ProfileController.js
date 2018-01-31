@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails User EthereumService ValidationService */
+/* global sails User EthereumService ValidationService TokensService CurrencyConverterService */
 
 const path = require('path');
 const fs = require('fs');
@@ -162,6 +162,56 @@ module.exports = {
       }
 
       EthereumService.sendEthFromKora({to: req.user.owner, eth: '0.1'})
+        .then(result => res.ok(result))
+        .catch(err => res.negotiate(err));
+    });
+  },
+
+  transferFromKora: function (req, res) {
+    const user = req.user;
+
+    if (!user.identity) {
+      return res.badRequest({message: `Current user do not has identity`});
+    }
+
+    res.setTimeout(0);
+
+    TokensService.balanceOf({
+      address: user.identity,
+      tokenAddress: user.ERC20Token
+    }, (err, balance) => {
+      if (err) {
+        return res.negotiate(err);
+      }
+
+      sails.log.info('balance', balance);
+      if (!Web3Utils.toBN(balance).isZero()) {
+        return res.badRequest({message: `User identity address already has eFiats`});
+      }
+
+      const value = 2;
+      let promise;
+
+      if (user.currency === 'USD') {
+        promise = Promise.resolve(value);
+      } else {
+        const currencyPair = 'USD_' + user.currency;
+
+        promise = CurrencyConverterService.convert(currencyPair)
+          .then(result => {
+            console.log(result[currencyPair], value);
+            return result[currencyPair] * value;
+          });
+      }
+
+      promise
+        .then(value =>
+          TokensService.transferFromKora({
+            to: user.identity,
+            value,
+            tokenAddress: user.ERC20Token
+          })
+        )
         .then(result => res.ok(result))
         .catch(err => res.negotiate(err));
     });
