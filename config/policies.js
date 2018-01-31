@@ -105,5 +105,10 @@ module.exports.policies = {
   TokensController: {
     '*': false,
     balanceOf: true
+  },
+
+  CurrencyConvertController: {
+    '*': false,
+    create: ['isAuthorized']
   }
 };

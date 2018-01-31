@@ -88,6 +88,6 @@ module.exports = {
 
       return res.json(wallet);
     })
-    .catch(res.negotiate);
+      .catch(res.negotiate);
   }
 };
