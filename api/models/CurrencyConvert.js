@@ -13,7 +13,9 @@ module.exports = {
 
     exchangeRate: { type: 'float', required: true },
 
-    value: { type: 'float', required: true }
+    fromAmount: { type: 'float', required: true },
+
+    toAmount: { type: 'float', required: true }
   },
 
   indexes: [

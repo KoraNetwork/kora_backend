@@ -12,7 +12,7 @@ module.exports = {
     const user = req.user;
     const from = req.user.id;
     const to = req.param('to');
-    const amount = req.param('amount');
+    const fromAmount = req.param('fromAmount');
 
     User.findOne({id: to})
       .then(toUser => {
@@ -37,13 +37,13 @@ module.exports = {
             CurrencyConvert.findOne({from, to})
               .then(record => {
                 const exchangeRate = result[currencyPair];
-                const value = Math.round(exchangeRate * amount * 100) / 100;
+                const toAmount = Math.round(exchangeRate * fromAmount * 100) / 100;
 
                 if (!record) {
-                  return CurrencyConvert.create({ from, to, exchangeRate, value });
+                  return CurrencyConvert.create({ from, to, exchangeRate, fromAmount, toAmount });
                 }
 
-                return CurrencyConvert.update({id: record.id}, { exchangeRate, value })
+                return CurrencyConvert.update({id: record.id}, { exchangeRate, fromAmount, toAmount })
                   .then(records => records[0]);
               })
           );
