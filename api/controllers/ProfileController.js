@@ -335,7 +335,7 @@ module.exports = {
             }
 
             if (!promises.length) {
-              return Promise.reject(ErrorService.throw({
+              return Promise.reject(ErrorService.new({
                 status: 400,
                 message: 'User ethereum and eFiats balances are not empty'
               }));

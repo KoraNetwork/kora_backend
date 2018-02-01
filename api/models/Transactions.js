@@ -95,7 +95,7 @@ module.exports = {
       ~[types.send, types.request, types.deposit, types.withdraw].indexOf(values.type) &&
       !(Array.isArray(rawTransactions) && rawTransactions.length && rawTransactions.every(tx => ValidationService.hex(tx)))
     ) {
-      return cb(ErrorService.throw({
+      return cb(ErrorService.new({
         status: 400,
         message: 'Parameter rawTransactions must be set and must be hex array with at least one element'
       }));

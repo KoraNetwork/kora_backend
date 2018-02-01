@@ -141,21 +141,21 @@ function findValidRecord ({id, userId}) {
   return Withdraw.findOne({id})
     .then(request => {
       if (!request) {
-        return Promise.reject(ErrorService.throw({
+        return Promise.reject(ErrorService.new({
           status: 404,
           message: 'Current withdraw not found'
         }));
       }
 
       if (request.to !== userId) {
-        return Promise.reject(ErrorService.throw({
+        return Promise.reject(ErrorService.new({
           status: 400,
           message: `Current user must be in 'to' attribute of withdraw`
         }));
       }
 
       if (request.state === rejected) {
-        return Promise.reject(ErrorService.throw({
+        return Promise.reject(ErrorService.new({
           status: 400,
           message: 'Current withdraw already rejected'
         }));

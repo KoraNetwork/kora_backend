@@ -53,7 +53,7 @@ module.exports = {
     User.findOne({id})
       .then(recent => {
         if (!recent) {
-          return Promise.reject(ErrorService.throw({
+          return Promise.reject(ErrorService.new({
             status: 400,
             message: 'Could not find a user with such id'
           }));

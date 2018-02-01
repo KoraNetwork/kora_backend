@@ -174,7 +174,7 @@ module.exports = {
         // Password for development purposes
         password = 'qwer1234';
       } else {
-        return cb(ErrorService.throw({status: 400, message: 'Password must be set'}));
+        return cb(ErrorService.new({status: 400, message: 'Password must be set'}));
       }
     }
 

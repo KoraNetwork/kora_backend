@@ -17,14 +17,14 @@ module.exports = {
     User.findOne({id: to})
       .then(toUser => {
         if (!toUser) {
-          return Promise.reject(ErrorService.throw({
+          return Promise.reject(ErrorService.new({
             stutus: 404,
             message: 'To user not exists'
           }));
         }
 
         if (user.currency === toUser.currency) {
-          return Promise.reject(ErrorService.throw({
+          return Promise.reject(ErrorService.new({
             stutus: 400,
             message: `Current user and 'to' user currencies must be not equal`
           }));
