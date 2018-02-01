@@ -76,7 +76,7 @@ module.exports = {
 
         return EthereumService.sendSignedTransactionWithEvent({
           rawTransaction: signedTx.rawTransaction,
-          name: 'HumanStandardToken.transfer (transferFromKora)',
+          name: 'Token.transfer (transferFromKora)',
           contract: humanStandardToken,
           event: 'Transfer'
         });
@@ -91,7 +91,25 @@ module.exports = {
       });
 
     return MiscService.cbify(promise, cb);
-  }
+  },
+
+  sendSignedTransfer: function ({rawTransaction, tokenAddress}) {
+    const humanStandardToken = new Contract(humanStandardTokenAbi, tokenAddress);
+
+    sails.log.info('Send signed transfer transaction');
+
+    return EthereumService.sendSignedTransactionWithEvent({
+      rawTransaction,
+      name: 'Token.transfer',
+      contract: humanStandardToken,
+      event: 'Transfer'
+    })
+      .then(({receipt, events}) => ({receipt, event: events[0].returnValues}));
+  },
+
+  convertValueToToken: value => (value / Math.pow(10, koraTokenExponent)),
+
+  convertTokenToValue: token => Math.floor(token * Math.pow(10, koraTokenExponent))
 
   // transfer: function ({account, identity, to, value}, cb) {
   //   const tokensValue = value * Math.pow(10, koraTokenExponent);

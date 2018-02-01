@@ -110,7 +110,7 @@ module.exports = {
           toAmount: MiscService.calcTotalAmount(fromAmount, interestRate),
           interestRate,
           additionalNote,
-          rawTransactions: allParams.rawTransactions
+          rawTransaction: allParams.rawTransaction
         });
       })
       .then(transaction => {

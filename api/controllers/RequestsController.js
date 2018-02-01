@@ -40,8 +40,8 @@ module.exports = {
       Requests.findPopulate({ where, limit, skip, sort, userId }),
       Requests.count(where)
     ])
-    .then(([data, total]) => res.json({data, total}))
-    .catch(err => res.negotiate(err));
+      .then(([data, total]) => res.json({data, total}))
+      .catch(err => res.negotiate(err));
   },
 
   findOne: function (req, res) {
@@ -93,7 +93,7 @@ module.exports = {
     let allParams = req.allParams();
     const userId = req.user.id;
     let values = {
-      rawTransactions: allParams.rawTransactions
+      rawTransaction: allParams.rawTransaction
     };
 
     allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
@@ -122,7 +122,7 @@ module.exports = {
           .then(transaction => ({transaction, request}));
       })
       .then(({transaction, request}) => Requests.destroy({id: request.id})
-            .then(() => transaction)
+        .then(() => transaction)
       )
       .then(({id}) => Transactions.findOnePopulate({id, userId}))
       .then(transaction => ({

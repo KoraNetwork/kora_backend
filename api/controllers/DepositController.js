@@ -110,7 +110,7 @@ module.exports = {
           toAmount: fromAmount,
           interestRate,
           additionalNote,
-          rawTransactions: allParams.rawTransactions
+          rawTransaction: allParams.rawTransaction
         });
       })
       .then(transaction => {

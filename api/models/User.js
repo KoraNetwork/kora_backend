@@ -132,6 +132,22 @@ module.exports = {
       values.email = values.email.toLowerCase();
     }
 
+    if (values.creator) {
+      values.creator = values.creator.toLowerCase();
+    }
+
+    if (values.owner) {
+      values.owner = values.owner.toLowerCase();
+    }
+
+    if (values.identity) {
+      values.identity = values.identity.toLowerCase();
+    }
+
+    if (values.recoveryKey) {
+      values.recoveryKey = values.recoveryKey.toLowerCase();
+    }
+
     if (values.role === roles.agent && typeof values.interestRate === 'undefined') {
       values.interestRate = 5;
     }
