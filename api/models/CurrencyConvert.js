@@ -5,7 +5,17 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-const {constants: {types, typesList}} = require('./Transactions');
+const {constants: {types: {send}}} = require('./Transactions');
+
+/* global _ */
+const types = {
+  [send]: send,
+  request: 'request',
+  borrow: 'borrow',
+  deposit: 'deposit',
+  withdraw: 'withdraw'
+};
+const typesList = _.values(types);
 
 module.exports = {
   constants: {

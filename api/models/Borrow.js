@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global ValidationService UserValidationService ErrorService MiscService BorrowService */
+/* global ValidationService UserValidationService ErrorService MiscService BorrowService CurrencyConvert */
 
 const _ = require('lodash');
 
@@ -137,10 +137,20 @@ module.exports = {
     }
   ],
 
-  beforeValidate: function (values, cb) {
-    const { from, to, guarantor1, guarantor2, guarantor3, startDate, maturityDate } = values;
+  beforeCreate: function (values, cb) {
+    const { from, to, guarantor1, guarantor2, guarantor3, startDate, maturityDate, fromAmount, toAmount } = values;
 
-    if (Date.parse(startDate) + 24 * 60 * 60 * 1000 > Date.parse(maturityDate)) {
+    if (Date.parse(startDate) < Date.now()) {
+      return cb(ErrorService.new({
+        status: 400,
+        message: 'Start date must be in future'
+      }));
+    }
+
+    if (
+      startDate && maturityDate &&
+      Date.parse(startDate) + 24 * 60 * 60 * 1000 > Date.parse(maturityDate)
+    ) {
       return cb(ErrorService.new({
         status: 400,
         message: 'Maturity date must be greater than start date at least by one day'
@@ -160,28 +170,37 @@ module.exports = {
       names.push('guarantor3');
     }
 
-    Promise.all([
+    return Promise.all([
       UserValidationService.isIdsNotEqual({ids: users, names}),
-      UserValidationService.isUsersExists({users, names})
+      UserValidationService.isUsersExists({users, names}),
+      CurrencyConvert.destroy({type: CurrencyConvert.constants.types.borrow, from, to, fromAmount, toAmount})
+        .then(records => {
+          if (!records.length) {
+            return Promise.reject(ErrorService.new({
+              status: 404,
+              message: 'Currency convertion for this request not found'
+            }));
+          }
+
+          return true;
+        })
     ])
       .then(() => cb())
       .catch(err => cb(err));
   },
 
-  beforeCreate: function (values, cb) {
-    const { startDate } = values;
-
-    if (Date.parse(startDate) < Date.now()) {
-      return cb(ErrorService.new({
-        status: 400,
-        message: 'Start date must be in future'
-      }));
-    }
-
-    return cb();
-  },
-
   beforeUpdate: function (values, cb) {
+    delete values.from;
+    delete values.to;
+    delete values.guarantor1;
+    delete values.guarantor2;
+    delete values.guarantor3;
+    delete values.fromAmount;
+    delete values.toAmount;
+    delete values.interestRate;
+    delete values.startDate;
+    delete values.maturityDate;
+
     ['rawCreateLoan', 'rawAgreeLoan', 'rawApproves', 'rawFundLoan', 'rawPayBackLoan'].forEach(rawTx => {
       if (values[rawTx]) {
         this[rawTx] = values[rawTx];
