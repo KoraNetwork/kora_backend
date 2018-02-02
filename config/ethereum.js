@@ -19,7 +19,7 @@ module.exports.ethereum = {
   // networkId: 42, // Kovan testnet
 
   gas: 4300000,
-  gasPrice: 21000000000,
+  gasPrice: 2000000000,
 
   /**
    * humanStandardToken
@@ -48,7 +48,7 @@ module.exports.ethereum = {
   },
 
   newUserMoney: {
-    ETH: 0.1,
+    ETH: 0.05,
     eUSD: 1500
   }
 };
