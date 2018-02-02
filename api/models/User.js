@@ -152,6 +152,7 @@ module.exports = {
       values.interestRate = 5;
     }
 
+<<<<<<< HEAD
     if (values.password) {
       if (!ValidationService.password(values.password)) {
         return cb(ErrorService.throw({
@@ -177,6 +178,8 @@ module.exports = {
       });
     }
 
+=======
+>>>>>>> Add types to CurrencyConvert
     return cb();
   },
 

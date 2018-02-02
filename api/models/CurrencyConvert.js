@@ -5,8 +5,17 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
+const {constants: {types, typesList}} = require('./Transactions');
+
 module.exports = {
+  constants: {
+    types,
+    typesList
+  },
+
   attributes: {
+    type: { type: 'string', in: typesList, required: true },
+
     from: { model: 'user', required: true },
 
     to: { model: 'user', required: true },
