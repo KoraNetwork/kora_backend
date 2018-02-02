@@ -3,7 +3,7 @@
  * @description :: Sends raw transactions for Borrow
  */
 
-/* global sails Borrow LendService EthereumService Transactions */
+/* global sails Borrow LendService EthereumService Transactions User TokensService */
 
 module.exports = {
   sendRawCreateLoan: function ({rawCreateLoan, record}) {
@@ -93,14 +93,20 @@ module.exports = {
       .catch(err => sails.log.error('Borrow money after KoraLend.agreeLoan tx save error:\n', err));
   },
 
-  sendRawLoanTransfer: function ({rawApproves, rawFundLoan, rawPayBackLoan, record}) {
+  sendRawLoanTransfer: function ({rawApprove, rawFundLoan, rawPayBackLoan, record}) {
     const {states, types} = Borrow.constants;
 
-    Promise.all(
-      rawApproves.map(rawApprove =>
-        EthereumService.sendSignedTransaction({rawTransaction: rawApprove, name: 'humanStandardToken.approve'})
+    Promise.all([
+      User.findOne({id: record.from}),
+      User.findOne({id: record.to})
+    ])
+      .then(([fromUser, toUser]) =>
+        TokensService.sendSignedApprove({
+          rawTransaction: rawApprove,
+          tokenAddress: rawFundLoan ? toUser.ERC20Token : fromUser.ERC20Token
+        })
       )
-    )
+      // TODO: Add another logic
       .then(receipts => {
         if (rawFundLoan) {
           return LendService.sendRawFundLoan({rawFundLoan});
@@ -114,6 +120,7 @@ module.exports = {
         ({receipt, event}) => {
           record.transactionHashes.push(receipt.transactionHash);
           record.state = states.onGoing;
+          // TODO: Rewrite with TokensService functions
           record.fromBalance = event.returnValues.borrowerBalance / 100;
           record.toBalance = event.returnValues.lenderBalance / 100;
 

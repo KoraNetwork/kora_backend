@@ -189,14 +189,14 @@ module.exports = {
                 break;
 
               case states.agreed:
-                let {rawApproves, rawFundLoan} = allParams;
+                let {rawApprove, rawFundLoan} = allParams;
 
                 if (participant !== 'to') {
                   return Promise.reject(ErrorService.new({message: 'Borrow money not funded', status: 400}));
                 }
 
-                if (!(rawApproves && rawApproves.length && rawApproves.every(a => ValidationService.hex(a)))) {
-                  return res.badRequest(ErrorService.new({message: `Parameter 'rawApproves' must be set and must be hex array`, status: 400}));
+                if (!(rawApprove && ValidationService.hex(rawApprove))) {
+                  return res.badRequest(ErrorService.new({message: `Parameter 'rawApprove' must be set and must be hex`, status: 400}));
                 }
 
                 if (!(rawFundLoan && ValidationService.hex(rawFundLoan))) {
@@ -204,7 +204,7 @@ module.exports = {
                 }
 
                 borrow.type = types.inProgress;
-                borrow.rawApproves = rawApproves;
+                borrow.rawApprove = rawApprove;
                 borrow.rawFundLoan = rawFundLoan;
 
                 break;
@@ -229,21 +229,21 @@ module.exports = {
 
             switch (borrow.state) {
               case states.onGoing:
-                let {rawApproves, rawPayBackLoan} = allParams;
+                let {rawApprove, rawPayBackLoan} = allParams;
 
                 if (participant !== 'from') {
                   return Promise.reject(ErrorService.new({message: 'Borrow money already funded. Current user is not borrower', status: 400}));
                 }
 
-                if (!(rawApproves && rawApproves.length && rawApproves.every(a => ValidationService.hex(a)))) {
-                  return res.badRequest(ErrorService.new({message: `Parameter 'rawApproves' must be set and must be hex array`, status: 400}));
+                if (!(rawApprove && ValidationService.hex(rawApprove))) {
+                  return res.badRequest(ErrorService.new({message: `Parameter 'rawApprove' must be set and must be hex`, status: 400}));
                 }
 
                 if (!(rawPayBackLoan && ValidationService.hex(rawPayBackLoan))) {
                   return res.badRequest(ErrorService.new({message: `Parameter 'rawPayBackLoan' must be set and must be hex`, status: 400}));
                 }
 
-                borrow.rawApproves = rawApproves;
+                borrow.rawApprove = rawApprove;
                 borrow.rawPayBackLoan = rawPayBackLoan;
 
                 break;

@@ -201,7 +201,7 @@ module.exports = {
     delete values.startDate;
     delete values.maturityDate;
 
-    ['rawCreateLoan', 'rawAgreeLoan', 'rawApproves', 'rawFundLoan', 'rawPayBackLoan'].forEach(rawTx => {
+    ['rawCreateLoan', 'rawAgreeLoan', 'rawApprove', 'rawFundLoan', 'rawPayBackLoan'].forEach(rawTx => {
       if (values[rawTx]) {
         this[rawTx] = values[rawTx];
         delete values[rawTx];
@@ -225,15 +225,15 @@ module.exports = {
       delete this.rawAgreeLoan;
     }
 
-    if (this.rawApproves && (this.rawFundLoan || this.rawPayBackLoan)) {
+    if (this.rawApprove && (this.rawFundLoan || this.rawPayBackLoan)) {
       BorrowService.sendRawLoanTransfer({
-        rawApproves: this.rawApproves,
+        rawApprove: this.rawApprove,
         rawFundLoan: this.rawFundLoan,
         rawPayBackLoan: this.rawPayBackLoan,
         record
       });
 
-      delete this.rawApproves;
+      delete this.rawApprove;
       delete this.rawFundLoan;
       delete this.rawPayBackLoan;
     }

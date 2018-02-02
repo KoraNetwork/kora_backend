@@ -93,6 +93,45 @@ module.exports = {
     return MiscService.cbify(promise, cb);
   },
 
+  approveFromKora: function ({ spender, value, tokenAddress, nonce }, cb) {
+    const humanStandardToken = new Contract(humanStandardTokenAbi, tokenAddress);
+    const tokensValue = Math.floor(value * Math.pow(10, koraTokenExponent));
+    const approve = humanStandardToken.methods.approve(spender, tokensValue);
+    const encodedApprove = approve.encodeABI();
+
+    let tx = {
+      to: tokenAddress,
+      data: encodedApprove,
+      gas,
+      gasPrice,
+      nonce
+    };
+
+    sails.log.info('Sign approveFromKora transaction:\n', tx);
+
+    let promise = accounts.signTransaction(tx, koraWallet.privateKey)
+      .then(signedTx => {
+        sails.log.info('Send signed approveFromKora transaction:\n', signedTx);
+
+        return EthereumService.sendSignedTransactionWithEvent({
+          rawTransaction: signedTx.rawTransaction,
+          name: 'Token.approve (approveFromKora)',
+          contract: humanStandardToken,
+          event: 'Approval'
+        });
+      })
+      .then(({receipt, events}) => {
+        // sails.log.info('Transaction transferFromKora success:\n', {receipt, events});
+        return events[0].returnValues;
+      })
+      .catch(err => {
+        sails.log.error(`Transaction transferFromKora error:\n`, err);
+        return Promise.reject(err);
+      });
+
+    return MiscService.cbify(promise, cb);
+  },
+
   sendSignedTransfer: function ({rawTransaction, tokenAddress}) {
     const humanStandardToken = new Contract(humanStandardTokenAbi, tokenAddress);
 
@@ -103,6 +142,20 @@ module.exports = {
       name: 'Token.transfer',
       contract: humanStandardToken,
       event: 'Transfer'
+    })
+      .then(({receipt, events}) => ({receipt, event: events[0].returnValues}));
+  },
+
+  sendSignedApprove: function ({rawTransaction, tokenAddress}) {
+    const humanStandardToken = new Contract(humanStandardTokenAbi, tokenAddress);
+
+    sails.log.info('Send signed approve transaction');
+
+    return EthereumService.sendSignedTransactionWithEvent({
+      rawTransaction,
+      name: 'Token.approve',
+      contract: humanStandardToken,
+      event: 'Approval'
     })
       .then(({receipt, events}) => ({receipt, event: events[0].returnValues}));
   },
