@@ -72,7 +72,7 @@ module.exports = {
     const {rejected} = Requests.constants.states;
     const userId = req.user.id;
 
-    findRequest({id: allParams.id, userId})
+    findValidRecord({id: allParams.id, userId})
       .then(record => {
         record.state = rejected;
 
@@ -92,39 +92,31 @@ module.exports = {
   destroy: function (req, res) {
     let allParams = req.allParams();
     const userId = req.user.id;
-    let values = {
-      rawTransaction: allParams.rawTransaction
-    };
 
-    allParams.fromAmount = parseFloat(allParams.fromAmount, 10);
-    allParams.toAmount = parseFloat(allParams.toAmount, 10);
+    let cache = {};
 
-    if (!isNaN(allParams.fromAmount)) {
-      values.toAmount = allParams.fromAmount;
-    }
-
-    if (!isNaN(allParams.toAmount)) {
-      values.fromAmount = allParams.toAmount;
-    }
-
-    findRequest({id: allParams.id, userId})
+    findValidRecord({id: allParams.id, userId})
       .then(request => {
         const {from, to, fromAmount, toAmount, additionalNote} = request;
 
-        return Transactions.create(Object.assign({
+        cache.request = request;
+
+        return Transactions.create({
           type: Transactions.constants.types.request,
           from: to,
           to: from,
           fromAmount: toAmount,
           toAmount: fromAmount,
-          additionalNote
-        }, values))
-          .then(transaction => ({transaction, request}));
+          additionalNote,
+          rawTransaction: allParams.rawTransaction
+        });
       })
-      .then(({transaction, request}) => Requests.destroy({id: request.id})
-        .then(() => transaction)
-      )
-      .then(({id}) => Transactions.findOnePopulate({id, userId}))
+      .then(transaction => {
+        cache.transaction = transaction;
+
+        return Requests.destroy({id: cache.request.id});
+      })
+      .then(() => Transactions.findOnePopulate({id: cache.transaction.id, userId}))
       .then(transaction => ({
         message: 'Request for money was confirmed and deleted. Transaction was created and sent',
         transaction
@@ -141,7 +133,7 @@ module.exports = {
   }
 };
 
-function findRequest ({id, userId}) {
+function findValidRecord ({id, userId}) {
   const {rejected} = Requests.constants.states;
 
   return Requests.findOne({id})

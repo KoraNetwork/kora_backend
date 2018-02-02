@@ -77,21 +77,25 @@ module.exports = {
     { attributes: { to: 1, updatedAt: -1 } }
   ],
 
-  beforeValidate: function (values, cb) {
+  afterValidate: function (values, cb) {
     const { from, to } = values;
 
-    Promise.all([
-      UserValidationService.isFromToNotEqual({from, to}),
-      UserValidationService.isFromToExists({from, to})
-    ])
-      .then(() => cb())
-      .catch(err => cb(err));
+    if (from && to) {
+      return Promise.all([
+        UserValidationService.isFromToNotEqual({from, to}),
+        UserValidationService.isFromToExists({from, to})
+      ])
+        .then(() => cb())
+        .catch(err => cb(err));
+    }
+
+    return cb();
   },
 
   beforeCreate: function (values, cb) {
-    const {rawTransaction, from, to, fromAmount, toAmount} = values;
+    const {rawTransaction, type, from, to, fromAmount, toAmount} = values;
 
-    if (~[types.send, types.request, types.deposit, types.withdraw].indexOf(values.type)) {
+    if (~[types.send, types.request, types.deposit, types.withdraw].indexOf(type)) {
       if (!(rawTransaction && ValidationService.hex(rawTransaction))) {
         return cb(ErrorService.new({
           status: 400,
@@ -117,19 +121,21 @@ module.exports = {
             return true;
           }
 
-          return CurrencyConvert.destroy({from, to, fromAmount, toAmount})
-            .then(records => {
-              if (!records.length) {
-                return Promise.reject(ErrorService.new({
-                  status: 404,
-                  message: 'Currency convertion for this transaction not found'
-                }));
-              }
+          if (type === types.send) {
+            return CurrencyConvert.destroy({type, from, to, fromAmount, toAmount})
+              .then(records => {
+                if (!records.length) {
+                  return Promise.reject(ErrorService.new({
+                    status: 404,
+                    message: 'Currency convertion for this transaction not found'
+                  }));
+                }
 
-              this.currencyConvert = records[0];
+                return true;
+              });
+          }
 
-              return true;
-            });
+          return true;
         })
         .then(() => cb())
         .catch(err => cb(err));
@@ -142,9 +148,6 @@ module.exports = {
     if (this.rawTransaction) {
       const rawTransaction = this.rawTransaction;
       delete this.rawTransaction;
-
-      const currencyConvert = this.currencyConvert;
-      delete this.currencyConvert;
 
       User.findOne({id: record.from})
         .then(fromUser =>
@@ -181,7 +184,7 @@ module.exports = {
 
               return User.findOne({id: record.to})
                 .then(toUser => {
-                  if (!currencyConvert) {
+                  if (fromUser.currency !== toUser.currency) {
                     if (toUser.identity.toLowerCase() !== _to.toLowerCase()) {
                       record.state = states.error;
 
@@ -203,12 +206,10 @@ module.exports = {
 
                   return TokensService.transferFromKora({
                     to: toUser.identity,
-                    value: currencyConvert.toAmount,
+                    value: record.toAmount,
                     tokenAddress: toUser.ERC20Token
                   })
                     .then(event => {
-                      record.toAmount = currencyConvert.toAmount;
-
                       record.state = states.success;
 
                       return true;

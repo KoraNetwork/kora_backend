@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ UserValidationService */
+/* global _ UserValidationService CurrencyConvert ErrorService */
 
 const states = {
   inProgress: 'inProgress',
@@ -56,15 +56,37 @@ module.exports = {
     { attributes: { to: 1, updatedAt: -1 } }
   ],
 
-  beforeCreate: function (values, cb) {
+  afterValidate: function (values, cb) {
     const { from, to } = values;
+
+    if (from && to) {
+      return Promise.all([
+        UserValidationService.isFromToNotEqual({from, to}),
+        UserValidationService.isFromToExists({from, to})
+      ])
+        .then(() => cb())
+        .catch(err => cb(err));
+    }
+
+    return cb();
+  },
+
+  beforeCreate: function (values, cb) {
+    const {from, to, fromAmount, toAmount} = values;
 
     values.state = states.inProgress;
 
-    Promise.all([
-      UserValidationService.isFromToNotEqual({from, to}),
-      UserValidationService.isFromToExists({from, to})
-    ])
+    return CurrencyConvert.destroy({type: CurrencyConvert.constants.types.request, from, to, fromAmount, toAmount})
+      .then(records => {
+        if (!records.length) {
+          return Promise.reject(ErrorService.new({
+            status: 404,
+            message: 'Currency convertion for this request not found'
+          }));
+        }
+
+        return true;
+      })
       .then(() => cb())
       .catch(err => cb(err));
   },
