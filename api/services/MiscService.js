@@ -9,6 +9,9 @@
  * @param  {Number} max Max vaue
  * @return {Number}     Random integer
  */
+
+const secureRandomString = require('secure-random-string');
+
 function randomInteger ({min, max}) {
   var rand = min + Math.random() * (max + 1 - min);
   rand = Math.floor(rand);
@@ -52,5 +55,9 @@ module.exports = {
 
   calcTotalAmount: function (amount, interestRate) {
     return Math.floor(amount * (100 + interestRate)) / 100;
-  }
+  },
+
+  generateRandomString: function (length = 10, alphanumeric = false) {
+    return secureRandomString({length, alphanumeric});
+  },
 };

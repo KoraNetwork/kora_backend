@@ -33,6 +33,10 @@ module.exports = {
 
     email: { type: 'string', email: true },
 
+    emailVerificationToken: { type: 'string', defaultsTo: MiscService.generateRandomString(50) },
+
+    emailVerified: { type: 'boolean', defaultsTo: false },
+
     legalName: { type: 'string' },
 
     dateOfBirth: { type: 'string' }, // datetime: true
@@ -175,6 +179,22 @@ module.exports = {
         });
       });
     }
+  },
+
+  afterCreate: function(values, cb) {
+    MailerService.sendConfirmationEmail(values);
+
+    return cb()
+  },
+
+  beforeUpdate: function(valuesToUpdate, cb) {
+    if (valuesToUpdate.email) {
+      valuesToUpdate.emailVerified = false;
+      valuesToUpdate.emailVerificationToken = MiscService.generateRandomString(50);
+      MailerService.sendConfirmationEmail(valuesToUpdate);
+    }
+
+    return cb();
   },
 
   comparePassword: function (password, user, cb) {

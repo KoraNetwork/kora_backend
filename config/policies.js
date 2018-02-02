@@ -64,6 +64,11 @@ module.exports.policies = {
     findOne: true
   },
 
+  ProfileController: {
+    '*': 'isAuthorized',
+    confirmEmail: true
+  },
+
   AuthController: {
     '*': true,
     logout: ['isAuthorized']
