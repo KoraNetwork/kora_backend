@@ -161,6 +161,52 @@ module.exports = {
                 record.transactionHashes.push(receipt.transactionHash);
 
                 return event;
+              }
+            )
+            .then(
+              ({_from, _to, _value}) => {
+                console.log('_from, _to, _value', _from, _to, _value);
+                if (fromUser.identity.toLowerCase() !== _from.toLowerCase()) {
+                  record.state = states.error;
+
+                  return false;
+                }
+
+                record.fromAmount = TokensService.convertValueToToken(_value);
+
+                return User.findOne({id: record.to})
+                  .then(toUser => {
+                    if (fromUser.currency === toUser.currency) {
+                      if (toUser.identity.toLowerCase() !== _to.toLowerCase()) {
+                        record.state = states.error;
+
+                        return false;
+                      }
+
+                      record.toAmount = record.fromAmount;
+
+                      record.state = states.success;
+
+                      return true;
+                    }
+
+                    if (_to.toLowerCase() !== sails.config.ethereum.koraWallet.address.toLowerCase()) {
+                      record.state = states.error;
+
+                      return false;
+                    }
+
+                    return TokensService.transferFromKora({
+                      to: toUser.identity,
+                      value: record.toAmount,
+                      tokenAddress: toUser.ERC20Token
+                    })
+                      .then(event => {
+                        record.state = states.success;
+
+                        return true;
+                      });
+                  });
               },
               err => {
                 record.state = states.error;
@@ -170,52 +216,7 @@ module.exports = {
                 }
 
                 return false;
-              }
-            )
-            .then(({_from, _to, _value}) => {
-              console.log('_from, _to, _value', _from, _to, _value);
-              if (fromUser.identity.toLowerCase() !== _from.toLowerCase()) {
-                record.state = states.error;
-
-                return false;
-              }
-
-              record.fromAmount = TokensService.convertValueToToken(_value);
-
-              return User.findOne({id: record.to})
-                .then(toUser => {
-                  if (fromUser.currency !== toUser.currency) {
-                    if (toUser.identity.toLowerCase() !== _to.toLowerCase()) {
-                      record.state = states.error;
-
-                      return false;
-                    }
-
-                    record.toAmount = record.fromAmount;
-
-                    record.state = states.success;
-
-                    return true;
-                  }
-
-                  if (_to.toLowerCase() !== sails.config.ethereum.koraWallet.address.toLowerCase()) {
-                    record.state = states.error;
-
-                    return false;
-                  }
-
-                  return TokensService.transferFromKora({
-                    to: toUser.identity,
-                    value: record.toAmount,
-                    tokenAddress: toUser.ERC20Token
-                  })
-                    .then(event => {
-                      record.state = states.success;
-
-                      return true;
-                    });
-                });
-            })
+              })
         )
         .then(() => this.update({id: record.id}, record))
         .then(updated => {
