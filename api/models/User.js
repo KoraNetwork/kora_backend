@@ -71,6 +71,8 @@ module.exports = {
 
     encryptedPassword: { type: 'string' },
 
+    resetPasswordToken: { type: 'string', defaultsTo: ''},
+
     interestRate: { type: 'float', min: 0 },
 
     toJSON: function () {
@@ -80,6 +82,7 @@ module.exports = {
       delete obj.userNameOrigin;
       delete obj.encryptedPassword;
       delete obj.keystore;
+      delete obj.resetPasswordToken;
 
       if (obj.countryCode) {
         obj.flag = CountriesService.flagImg(obj.countryCode);
@@ -131,6 +134,31 @@ module.exports = {
 
     if (values.role === roles.agent && typeof values.interestRate === 'undefined') {
       values.interestRate = 5;
+    }
+
+    if (values.password) {
+      if (!ValidationService.password(values.password)) {
+        return cb(ErrorService.throw({
+          status: 400,
+          message: 'Password must be over 8 characters, have at least 1 uppercase English letter, 1 lowercase English letter and 1 number'
+        }));
+      }
+
+      return bcrypt.genSalt(10, function (err, salt) {
+        if (err) {
+          return cb(err);
+        }
+
+        bcrypt.hash(values.password, salt, function (err, hash) {
+          if (err) {
+            return cb(err);
+          }
+
+          values.encryptedPassword = hash;
+
+          return cb();
+        });
+      });
     }
 
     return cb();

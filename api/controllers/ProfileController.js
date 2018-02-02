@@ -235,6 +235,51 @@ module.exports = {
     });
   },
 
+  // POST /api/profile/forgotPassword
+  forgotPassword: function (req, res) {
+    const email = req.param('email');
+
+    User.findOne({email})
+      .then(user => {
+        if (!user) {
+          return ErrorService.throw({message: 'No user with such email found', status: 404});
+        }
+
+        User.update({id: user.id}, { resetPasswordToken: MiscService.generateRandomString(50)})
+          .then(updatedUsers => {
+            MailerService.sendResetPwEmail(updatedUsers[0])
+          })
+          .then(() => {
+            res.ok({ message: 'Forgot password request has been successfully sent' })
+          })
+          .catch(err => res.negotiate(err))
+      })
+      .catch(err => res.negotiate(err))
+  },
+
+  // PUT /api/profile/restorePassword
+  restorePassword: function (req, res) {
+    const resetPasswordToken = req.param('token');
+    const password = req.param('newPassword');
+
+    if (!password) res.badRequest({ message: 'No password provided' });
+
+    User.findOne({resetPasswordToken})
+      .then(user => {
+        if (!user) {
+          return Promise.reject(ErrorService.throw({message: 'No user with such token found', status: 404}));
+        }
+
+        User.update({id: user.id}, { password, resetPasswordToken: '' })
+          .then(result => {
+            res.ok({ message: 'Password has been successfully restored' })
+          })
+          .catch(err => res.negotiate(err))
+      })
+      .catch(err => res.negotiate(err))
+
+  },
+
   sendMoneyFromKora: function (req, res) {
     const user = req.user;
 

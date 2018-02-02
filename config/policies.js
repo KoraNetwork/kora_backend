@@ -66,7 +66,9 @@ module.exports.policies = {
 
   ProfileController: {
     '*': 'isAuthorized',
-    confirmEmail: true
+    confirmEmail: true,
+    forgotPassword: true,
+    restorePassword: true
   },
 
   AuthController: {

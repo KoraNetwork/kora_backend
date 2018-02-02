@@ -20,8 +20,17 @@ function sendConfirmationEmail(user) {
   });
 }
 
+function sendResetPwEmail(user) {
+  return sendEmail({
+    to: user.email,
+    subject: 'You have requested password restoration at Kora',
+    html: `<p>Please, follow the <a href="${sails.config.HOST}/${user.resetPasswordToken}">link</a> to restore your password</p>`
+  })
+}
+
 const mailer = {
-  sendConfirmationEmail
+  sendConfirmationEmail,
+  sendResetPwEmail
 };
 
 module.exports = mailer;
