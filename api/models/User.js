@@ -71,7 +71,7 @@ module.exports = {
 
     encryptedPassword: { type: 'string' },
 
-    resetPasswordToken: { type: 'string', defaultsTo: ''},
+    resetPasswordToken: { type: 'string', defaultsTo: '' },
 
     interestRate: { type: 'float', min: 0 },
 

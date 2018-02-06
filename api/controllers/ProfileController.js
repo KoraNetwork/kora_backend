@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails User EthereumService ValidationService TokensService CurrencyConverterService ErrorService */
+/* global sails User EthereumService ValidationService TokensService CurrencyConverterService ErrorService MailerService MiscService */
 
 const {provider, koraWallet, newUserMoney} = sails.config.ethereum;
 
@@ -144,16 +144,16 @@ module.exports = {
           return ErrorService.throw({message: 'No user with such email found', status: 404});
         }
 
-        User.update({id: user.id}, { resetPasswordToken: MiscService.generateRandomString(50)})
+        User.update({id: user.id}, {resetPasswordToken: MiscService.generateRandomString(50)})
           .then(updatedUsers => {
-            MailerService.sendResetPwEmail(updatedUsers[0])
+            MailerService.sendResetPwEmail(updatedUsers[0]);
           })
           .then(() => {
-            res.ok({ message: 'Forgot password request has been successfully sent' })
+            res.ok({ message: 'Forgot password request has been successfully sent' });
           })
-          .catch(err => res.negotiate(err))
+          .catch(err => res.negotiate(err));
       })
-      .catch(err => res.negotiate(err))
+      .catch(err => res.negotiate(err));
   },
 
   // PUT /api/profile/restorePassword
@@ -171,12 +171,11 @@ module.exports = {
 
         User.update({id: user.id}, { password, resetPasswordToken: '' })
           .then(result => {
-            res.ok({ message: 'Password has been successfully restored' })
+            res.ok({ message: 'Password has been successfully restored' });
           })
-          .catch(err => res.negotiate(err))
+          .catch(err => res.negotiate(err));
       })
-      .catch(err => res.negotiate(err))
-
+      .catch(err => res.negotiate(err));
   },
 
   createIdentity: function (req, res) {
@@ -301,11 +300,11 @@ module.exports = {
         ])
           .then(([ethBalance, tokenBalance]) => {
             let promises = [];
-            console.log(nonce);
+            --nonce;
 
             if (Web3Utils.toBN(ethBalance).isZero()) {
               promises.push(
-                EthereumService.sendEthFromKora({to: req.user.owner, eth: newUserMoney.ETH + '', nonce: nonce + ''})
+                EthereumService.sendEthFromKora({to: req.user.owner, eth: newUserMoney.ETH + '', nonce: ++nonce + ''})
               );
             }
 
