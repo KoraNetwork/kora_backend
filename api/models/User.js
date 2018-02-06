@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ sails EthereumService ValidationService CountriesService ErrorService */
+/* global _ sails EthereumService ValidationService CountriesService ErrorService MailerService MiscService */
 
 const bcrypt = require('bcrypt');
 
@@ -152,7 +152,6 @@ module.exports = {
       values.interestRate = 5;
     }
 
-<<<<<<< HEAD
     if (values.password) {
       if (!ValidationService.password(values.password)) {
         return cb(ErrorService.throw({
@@ -178,8 +177,6 @@ module.exports = {
       });
     }
 
-=======
->>>>>>> Add types to CurrencyConvert
     return cb();
   },
 
@@ -228,13 +225,13 @@ module.exports = {
     }
   },
 
-  afterCreate: function(values, cb) {
+  afterCreate: function (values, cb) {
     MailerService.sendConfirmationEmail(values);
 
-    return cb()
+    return cb();
   },
 
-  beforeUpdate: function(valuesToUpdate, cb) {
+  beforeUpdate: function (valuesToUpdate, cb) {
     if (valuesToUpdate.email) {
       valuesToUpdate.emailVerified = false;
       valuesToUpdate.emailVerificationToken = MiscService.generateRandomString(50);
