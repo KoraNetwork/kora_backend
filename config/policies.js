@@ -48,14 +48,14 @@ module.exports.policies = {
   // feed : ['isNiceToAnimals', 'hasRabbitFood']
   // }
 
-  '*': ['isAuthorized'],
+  '*': ['isAuthorized', 'isEmailVerified'],
 
   VerificationCodeController: {
     '*': true
   },
 
   UserController: {
-    '*': ['isAuthorized', 'isMyProfile'],
+    '*': ['isAuthorized', 'isMyProfile', 'isEmailVerified'],
     create: true,
     destroy: false,
     update: false,
@@ -106,6 +106,7 @@ module.exports.policies = {
   },
 
   TransactionsController: {
+    find: ['isAuthorized'],
     destroy: false
   },
 
