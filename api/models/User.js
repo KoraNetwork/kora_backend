@@ -33,7 +33,7 @@ module.exports = {
 
     email: { type: 'string', email: true },
 
-    emailVerificationToken: { type: 'string', defaultsTo: MiscService.generateRandomString(50) },
+    emailVerificationToken: { type: 'string' },
 
     emailVerified: { type: 'boolean', defaultsTo: false },
 
@@ -193,6 +193,8 @@ module.exports = {
         return cb(ErrorService.new({status: 400, message: 'Password must be set'}));
       }
     }
+
+    values.emailVerificationToken = MiscService.generateRandomString(50);
 
     if (values.role === roles.featurePhone) {
       const {account, keystore} = EthereumService.createAccount({password});
