@@ -120,7 +120,8 @@ module.exports = {
   },
 
   confirmEmail: function (req, res) {
-    const token = req.param('token');
+    // TODO: Change param to token if blueprint actions will be disabled
+    const token = req.param('id');
 
     User.findOne({emailVerificationToken: token})
       .then(user => {

@@ -83,6 +83,7 @@ module.exports = {
       delete obj.encryptedPassword;
       delete obj.keystore;
       delete obj.resetPasswordToken;
+      delete obj.emailVerificationToken;
 
       if (obj.countryCode) {
         obj.flag = CountriesService.flagImg(obj.countryCode);
