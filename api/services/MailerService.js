@@ -16,7 +16,7 @@ function sendConfirmationEmail(user) {
   return sendEmail({
     to: user.email,
     subject: 'Kora email confirmation instructions',
-    html: `<p>To confirm your email click the <a href="${sails.config.HOST}/api/profile/confirmEmail/${user.emailVerificationToken}">link</a></p>`
+    html: `<p>To confirm your email click the <a href="${sails.config.HOST}/profile/confirmEmail/${user.emailVerificationToken}">link</a></p>`
   });
 }
 
