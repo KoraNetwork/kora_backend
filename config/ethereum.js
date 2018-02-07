@@ -3,14 +3,20 @@
  * @type {Object}
  */
 
+const {infuraToken} = require('./local');
+
+const Web3 = require('web3');
+const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/' + infuraToken));
+// const net = require('net');
+// const web3 = new Web3('/home/user/.rinkeby/geth.ipc', net);
+
 module.exports.ethereum = {
 
   /**
    * Ethereum provider
    * @type {String}
    */
-  // provider: 'http://localhost:8545',
-  // provider: 'ws://localhost:8546',
+  provider: web3.currentProvider,
 
   /**
    * Network id

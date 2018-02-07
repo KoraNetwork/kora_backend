@@ -10,13 +10,6 @@
  *
  */
 
-const {infuraToken} = require('../local');
-
-// const net = require('net');
-const Web3 = require('web3');
-// const web3 = new Web3('/home/roma/.rinkeby/geth.ipc', net);
-const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/' + infuraToken));
-
 module.exports = {
 
   /***************************************************************************
@@ -26,10 +19,6 @@ module.exports = {
 
   models: {
     connection: 'localMongodbServer'
-  },
-
-  ethereum: {
-    provider: web3.currentProvider
   }
 
 };
