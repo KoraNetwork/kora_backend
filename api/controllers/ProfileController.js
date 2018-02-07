@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global sails User EthereumService ValidationService TokensService CurrencyConverterService ErrorService MailerService MiscService */
+/* global _ sails User EthereumService ValidationService TokensService CurrencyConverterService ErrorService MailerService MiscService */
 
 const {provider, koraWallet, newUserMoney} = sails.config.ethereum;
 
@@ -15,6 +15,8 @@ const Web3Utils = require('web3-utils');
 
 const Eth = require('web3-eth');
 const eth = new Eth(provider);
+
+const updateAttrs = ['email', 'legalName', 'dateOfBirth', 'postalCode', 'address', 'agent', 'interestRate'];
 
 module.exports = {
 
@@ -27,17 +29,7 @@ module.exports = {
         return res.json(req.user);
 
       case 'PUT':
-        let values = req.allParams();
-
-        delete values.role;
-        delete values.password;
-        delete values.encryptedPassword;
-        delete values.userNameOrigin;
-        delete values.avatar;
-        delete values.identity;
-        delete values.creator;
-        delete values.owner;
-        delete values.recoveryKey;
+        let values = _.pick(req.allParams(), updateAttrs);
 
         values.agent = (typeof values.agent === 'string') ? values.agent !== 'false' : !!values.agent;
 
@@ -47,8 +39,18 @@ module.exports = {
           values.role = User.constants.roles.smartPhone;
         }
 
+        delete values.agent;
+
         if (typeof values.interestRate !== 'undefined') {
           values.interestRate = parseFloat(values.interestRate, 10);
+        }
+
+        values = _.pick(values, (value, key) => (req.user[key] !== value));
+
+        if (_.isEmpty(values)) {
+          return res.badRequest({
+            message: 'Nothing was changed'
+          });
         }
 
         return User.update({id: req.user.id}).set(values).exec((err, updated) => {
