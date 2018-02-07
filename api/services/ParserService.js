@@ -56,7 +56,7 @@ module.exports = {
 
       case '2': {
         init(session, 'deposit');
-        result = 'tmp message';
+        result = 'Would you like to deposit or withdraw? 2.1 Deposit 2.2 Withdraw';
         break;
       }
 
@@ -198,7 +198,78 @@ module.exports = {
           }
 
           case 'deposit': {
+            switch (session.step) {
+              case 0: {
+                if (message === '2.2') {
+                  nextStep(session);
+                  result = checkAttemptCount(session) || 'Howmuch would you like to withdraw?';
+                }
+                break;
+              }
+              case 1: {
+                amount = message.substr(1);
+                if (message[0] === '$' && parseInt(amount).toString() === amount) {
+                  session.amount = parseInt(amount);
+                  nextStep(session);
+                  result = `Please enter agent number ORselect: 2: NearbyAgents 3, 4, 5, 6: recent agents`;
+                } else {
+                  result = checkAttemptCount(session) || 'Wrong amount format. Please try again (example $100).';
+                }
+                break;
+              }
+              case 2: {
+                return User.findOne({ phone: message }, (err, user) => {
+                  if (err) {
+                    cb(err);
+                  }
+                  if (user) {
+                    session.contact = message;
+                    nextStep(session);
+                    cb(null, `User ${ phoneNumber } wants to withdraw $${ session.amount } from , do you accept? Accept OR Reject`);
+                  } else {
+                    cb(null, checkAttemptCount(session) || 'Contact not found. Please try again.');
+                  }
+                });
+              }
+              case 2: {
+                if (message.toLowerCase().indexOf('accept') >= 0) {
+                  nextStep(session);
+                  result = 'Please enter your commission as total amount or percentage. Add "%" if youwant to set aspercentage.'
+                } else if (message.toLowerCase().indexOf('reject') >= 0) {
+                  init(session, 'menu');
+                  result = messages.menu;
+                } else {
+                  checkAttemptCount(session);
+                  result = 'Please enter Accept OR Reject!';
+                }
+                break;
+              }
+              case 3: {
+                if (message.indexOf('%') > 0) {
+                  session.percentage = parseInt(message);
+                  result = `Please confirm ${ phoneNumber } withdraws $${ session.amount } from ${ session.contact } for $1 commission.`
+                  nextStep(session);
+                }
+                break;
+              }
+              case 4: {
+                return User.comparePassword(message, user, (err, valid) => {
+                  if (err) {
+                    cb(err);
+                  } else {
+                    if (valid) {
+                      result = `Withdrew $${ session.amount } from ${ phoneNumber } for $1 commission on ${ dateFormat(new Date(), 'dd/mm/yyyy H:M') }.`
+                      cb(null, result);
+                    } else {
+                      cb(null, checkAttemptCount(session) || 'Wrong PIN. Please try again.');
+                    }
+                  }
+                })
+              }
+              default: {
 
+              }
+            }
             break;
           }
 
