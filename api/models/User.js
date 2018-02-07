@@ -154,7 +154,7 @@ module.exports = {
 
     if (values.password) {
       if (!ValidationService.password(values.password)) {
-        return cb(ErrorService.throw({
+        return cb(ErrorService.new({
           status: 400,
           message: 'Password must be over 8 characters, have at least 1 uppercase English letter, 1 lowercase English letter and 1 number'
         }));
