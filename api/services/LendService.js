@@ -3,7 +3,7 @@
  * @description :: Set of functions for work with KoraLend smart-contract
  */
 
-/* global sails EthereumService */
+/* global sails EthereumService MiscService */
 
 const {provider, networkId, KoraLend} = sails.config.ethereum;
 
@@ -78,5 +78,17 @@ module.exports = {
     }
 
     return promise;
+  },
+
+  getLoan: function ({loanId}, cb) {
+    let promise = koraLend.methods.loans(loanId).call();
+
+    return MiscService.cbify(promise, cb);
+  },
+
+  getLoanGuarantors: function ({loanId}, cb) {
+    let promise = koraLend.methods.getLoanGuarantors(loanId).call();
+
+    return MiscService.cbify(promise, cb);
   }
 };

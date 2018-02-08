@@ -14,8 +14,63 @@ module.exports = {
 
     LendService.sendRawCreateLoan({rawCreateLoan})
       .then(({receipt, event}) => {
+        const loanId = event.returnValues.loanId;
+
         record.transactionHashes.push(receipt.transactionHash);
-        record.loanId = event.returnValues.loanId;
+        record.loanId = loanId;
+
+        return Promise.all([
+          Borrow.findOnePopulate({id: record.id}),
+          LendService.getLoan({loanId}),
+          LendService.getLoanGuarantors({loanId})
+        ]);
+      })
+      .then(([populatedRecord, loan, guarantors]) => {
+        if (loan.borrower.toLowerCase() !== populatedRecord.from.identity.toLowerCase()) {
+          return Promise.reject(new Error(`Borrower address does not match`));
+        }
+
+        if (loan.lender.toLowerCase() !== populatedRecord.to.identity.toLowerCase()) {
+          return Promise.reject(new Error(`Lender address does not match`));
+        }
+
+        let lowerCasedGuarantors = guarantors.map(g => g.toLowerCase());
+
+        if (populatedRecord.guarantor1 && lowerCasedGuarantors.indexOf(populatedRecord.guarantor1.identity.toLowerCase()) === -1) {
+          return Promise.reject(new Error(`Guarantor1 address does not match`));
+        }
+
+        if (populatedRecord.guarantor2 && lowerCasedGuarantors.indexOf(populatedRecord.guarantor2.identity.toLowerCase()) === -1) {
+          return Promise.reject(new Error(`Guarantor2 address does not match`));
+        }
+
+        if (populatedRecord.guarantor3 && lowerCasedGuarantors.indexOf(populatedRecord.guarantor3.identity.toLowerCase()) === -1) {
+          return Promise.reject(new Error(`Guarantor3 address does not match`));
+        }
+
+        if (TokensService.convertValueToToken(loan.borrowerAmount) !== populatedRecord.fromAmount) {
+          return Promise.reject(new Error(`Borrower amount does not match`));
+        }
+
+        if (TokensService.convertValueToToken(loan.lenderAmount) !== populatedRecord.toAmount) {
+          return Promise.reject(new Error(`Lender amount does not match`));
+        }
+
+        if (TokensService.convertValueToToken(loan.interestRate) !== populatedRecord.interestRate) {
+          return Promise.reject(new Error(`Interest rate does not match`));
+        }
+
+        if (loan.startDate * 1 !== Math.floor(Date.parse(populatedRecord.startDate) / 1000)) {
+          return Promise.reject(new Error(`Start date does not match`));
+        }
+
+        if (loan.maturityDate * 1 !== Math.floor(Date.parse(populatedRecord.maturityDate) / 1000)) {
+          return Promise.reject(new Error(`Maturity date does not match`));
+        }
+
+        return Promise.resolve();
+      })
+      .then(() => {
         record.state = states.onGoing;
         ['to', 'guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
           .forEach(k => (record[k + 'Agree'] = null));
@@ -27,6 +82,11 @@ module.exports = {
 
         if (err.receipt) {
           record.transactionHashes.push(err.receipt.transactionHash);
+        }
+
+        if (err.message) {
+          // TODO: Maybe add push with error message here
+          sails.log.error(err.message);
         }
 
         return Borrow.update({id: record.id}, record);
