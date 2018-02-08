@@ -280,7 +280,7 @@ module.exports = {
 
         return Transactions.create(tx)
           .then(() => {
-            if (fromBalance === 0) {
+            if (rawPayBackLoan && fromBalance === 0) {
               return Borrow.destroy({id: record.id});
             }
 
