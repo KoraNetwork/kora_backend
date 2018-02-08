@@ -73,7 +73,7 @@ module.exports = {
       }
 
       case '5': {
-        result = 'Whowould you like to lend to?';
+        result = 'Who would you like to lend to?';
         init(session, 'lendMoney');
         break;
       }
@@ -344,7 +344,7 @@ module.exports = {
                   if (user) {
                     session.contact = message;
                     nextStep(session);
-                    cb(null, 'Howmuchwould you like to lend?.');
+                    cb(null, 'How much would you like to lend?.');
                   } else {
                     cb(null, checkAttemptCount(session) || 'Contact not found. Please try again.');
                   }
