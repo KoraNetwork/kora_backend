@@ -72,6 +72,12 @@ module.exports = {
         break;
       }
 
+      case '5': {
+        result = 'Whowould you like to lend to?';
+        init(session, 'lendMoney');
+        break;
+      }
+
       case 'count': {
         const smsCount = session.counter || 0;
 
@@ -323,6 +329,87 @@ module.exports = {
                     }
                   }
                 })
+              }
+            }
+            break;
+          }
+
+          case 'lendMoney': {
+            switch (session.step) {
+              case 0: {
+                return User.findOne({ phone: message }, (err, user) => {
+                  if (err) {
+                    cb(err);
+                  }
+                  if (user) {
+                    session.contact = message;
+                    nextStep(session);
+                    cb(null, 'Howmuchwould you like to lend?.');
+                  } else {
+                    cb(null, checkAttemptCount(session) || 'Contact not found. Please try again.');
+                  }
+                });
+              }
+
+              case 1: {
+                amount = message.substr(1);
+                if (message[0] === '$' && parseInt(amount).toString() === amount) {
+                  session.amount = parseInt(amount);
+                  nextStep(session);
+                  result = `Please enter lending period in days.`;
+                } else {
+                  result = checkAttemptCount(session) || 'Wrong amount format. Please try again (example $100).';
+                }
+                break;
+              }
+
+              case 2: {
+                var days = parseInt(message)
+                if (days) {
+                  session.days = days;
+                  nextStep(session);
+                  result = `Please enter your total interest required or annual interest rate. e.g. 1.5 or 3%.`;
+                } else {
+                  result = checkAttemptCount(session) || 'Wrong days format. Please try again (example 180).';
+                }
+                break;
+              }
+
+              case 3: {
+                var rate = parseInt(rate)
+                if ([1.5, 3].indexOf(rate) >= 0) {
+                  session.rate = rate;
+                  nextStep(session);
+                  result = `Please confirmyou want to lend $${ session.amount } from ${ dateFormat(new Date(), 'dd/mm/yyyy') } to ${ dateFormat(new Date(new Date().setDate(new Date().getDate() + session.days)), 'dd/mm/yyyy') } at ${ session.rate }% interest for a total of $3, confirmby replying with your PIN, or reply "DENY" to cancel.`;
+                } else {
+                  result = checkAttemptCount(session) || 'Please try again. Please enter your total interest required or annual interest rate. e.g. 1.5 or 3%';
+                }
+                break;
+              }
+
+              case 4: {
+                if (message.toLowerCase() === 'deny') {
+                  init(session, 'menu');
+                  result = messages.menu;
+                } else {
+                  return User.comparePassword(message, user, (err, valid) => {
+                    if (err) {
+                      cb(err);
+                    } else {
+                      if (valid) {
+                        result = `Lend $${ session.amount } from ${ dateFormat(new Date(), 'dd/mm/yyyy') } to ${ dateFormat(new Date(new Date().setDate(new Date().getDate() + session.days)), 'dd/mm/yyyy') } from ${ phoneNumber } for ${ session.rate }% interest on ${ dateFormat(new Date(), 'dd/mm/yyyy H:M') }.`
+                        cb(null, result);
+                      } else {
+                        cb(null, checkAttemptCount(session) || 'Wrong PIN. Please try again.');
+                      }
+                    }
+                  })
+                }
+              }
+
+              default: {
+                init(session, 'menu');
+                result = messages.menu;
               }
             }
             break;
