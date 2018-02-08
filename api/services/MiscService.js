@@ -59,5 +59,5 @@ module.exports = {
 
   generateRandomString: function (length = 10, alphanumeric = false) {
     return secureRandomString({length, alphanumeric});
-  },
+  }
 };

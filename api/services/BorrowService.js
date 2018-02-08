@@ -3,7 +3,10 @@
  * @description :: Sends raw transactions for Borrow
  */
 
-/* global sails Borrow LendService EthereumService Transactions User TokensService */
+/* global sails Borrow LendService Transactions User TokensService */
+
+const {networkId, KoraLend} = sails.config.ethereum;
+const koraLendAddress = KoraLend.networks[networkId].address;
 
 module.exports = {
   sendRawCreateLoan: function ({rawCreateLoan, record}) {
@@ -105,9 +108,45 @@ module.exports = {
           rawTransaction: rawApprove,
           tokenAddress: rawFundLoan ? toUser.ERC20Token : fromUser.ERC20Token
         })
+          .then(({_spender, _value}) => {
+            if (rawFundLoan) {
+              if (
+                !(
+                  _spender.toLowerCase() === koraLendAddress.toLowerCase() &&
+                  TokensService.convertValueToToken(_value) >= record.toAmount
+                )
+              ) {
+                return Promise.reject(new Error(`Transaction 'rawApprove' not valid`));
+              }
+
+              if (fromUser.currency !== toUser.currency) {
+                return TokensService.approveFromKora({
+                  spender: koraLendAddress,
+                  value: record.fromAmount,
+                  tokenAddress: fromUser.ERC20Token
+                });
+              }
+            }
+
+            if (rawPayBackLoan) {
+              const fromValue = TokensService.convertValueToToken(_value);
+              const {fromBalance, toBalance} = record;
+
+              if (!(_spender.toLowerCase() === koraLendAddress.toLowerCase() && fromValue > 0)) {
+                return Promise.reject(new Error(`Transaction 'rawApprove' not valid`));
+              }
+
+              if (fromUser.currency !== toUser.currency) {
+                return TokensService.approveFromKora({
+                  spender: koraLendAddress,
+                  value: (fromValue >= fromBalance) ? toBalance : fromValue * toBalance / fromBalance,
+                  tokenAddress: fromUser.ERC20Token
+                });
+              }
+            }
+          })
       )
-      // TODO: Add another logic
-      .then(receipts => {
+      .then(() => {
         if (rawFundLoan) {
           return LendService.sendRawFundLoan({rawFundLoan});
         }
@@ -120,14 +159,13 @@ module.exports = {
         ({receipt, event}) => {
           record.transactionHashes.push(receipt.transactionHash);
           record.state = states.onGoing;
-          // TODO: Rewrite with TokensService functions
-          record.fromBalance = event.returnValues.borrowerBalance / 100;
-          record.toBalance = event.returnValues.lenderBalance / 100;
+          record.fromBalance = TokensService.convertValueToToken(event.returnValues.borrowerBalance);
+          record.toBalance = TokensService.convertValueToToken(event.returnValues.lenderBalance);
 
           return {
             state: Transactions.constants.states.success,
-            fromValue: event.returnValues.borrowerValue / 100,
-            toValue: event.returnValues.lenderValue / 100
+            fromValue: TokensService.convertValueToToken(event.returnValues.borrowerValue),
+            toValue: TokensService.convertValueToToken(event.returnValues.lenderValue)
           };
         },
         err => {
@@ -145,16 +183,17 @@ module.exports = {
           return {
             state: Transactions.constants.states.error,
             fromValue: 0,
-            toValue: 0
+            toValue: 0,
+            message: err.message || 'Something went wrong'
           };
         }
       )
-      .then(({state, fromValue, toValue}) => {
+      .then(({state, fromValue, toValue, message}) => {
         let {from, to, fromAmount, toAmount, fromBalance, additionalNote, loanId, transactionHashes} = record;
 
         let tx = {
           state,
-          additionalNote,
+          additionalNote: message || additionalNote,
           loanId,
           transactionHashes: [transactionHashes[transactionHashes.length - 1]]
         };
