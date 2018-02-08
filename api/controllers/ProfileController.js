@@ -48,9 +48,7 @@ module.exports = {
         values = _.pick(values, (value, key) => (req.user[key] !== value));
 
         if (_.isEmpty(values)) {
-          return res.badRequest({
-            message: 'Nothing was changed'
-          });
+          return res.ok(req.user);
         }
 
         return User.update({id: req.user.id}).set(values).exec((err, updated) => {
