@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global _ sails User EthereumService ValidationService TokensService CurrencyConverterService ErrorService MailerService MiscService */
+/* global _ sails User EthereumService ValidationService TokensService CurrencyConverterService ErrorService MailerService MiscService JWTokenService */
 
 const {provider, koraWallet, newUserMoney} = sails.config.ethereum;
 
@@ -173,8 +173,14 @@ module.exports = {
         }
 
         User.update({id: user.id}, { password, resetPasswordToken: '' })
-          .then(result => {
-            res.ok({ message: 'Password has been successfully restored' });
+          .then(records => {
+            let user = records[0];
+
+            return res.ok({
+              user: user,
+              // TODO: Add device id to payload
+              sessionToken: JWTokenService.issue({id: user.id})
+            });
           })
           .catch(err => res.negotiate(err));
       })
