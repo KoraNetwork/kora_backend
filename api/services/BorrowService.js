@@ -168,7 +168,7 @@ module.exports = {
           rawTransaction: rawApprove,
           tokenAddress: rawFundLoan ? toUser.ERC20Token : fromUser.ERC20Token
         })
-          .then(({_spender, _value}) => {
+          .then(({event: {_spender, _value}}) => {
             if (rawFundLoan) {
               if (
                 !(
@@ -200,7 +200,7 @@ module.exports = {
                 return TokensService.approveFromKora({
                   spender: koraLendAddress,
                   value: (fromValue >= fromBalance) ? toBalance : fromValue * toBalance / fromBalance,
-                  tokenAddress: fromUser.ERC20Token
+                  tokenAddress: toUser.ERC20Token
                 });
               }
             }
