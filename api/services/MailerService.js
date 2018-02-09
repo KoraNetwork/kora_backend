@@ -12,7 +12,7 @@ function sendEmail ({to, subject, html}) {
   return sgMail.send(msg);
 }
 
-function sendConfirmationEmail(user) {
+function sendConfirmationEmail (user) {
   return sendEmail({
     to: user.email,
     subject: 'Kora email confirmation instructions',
@@ -20,12 +20,12 @@ function sendConfirmationEmail(user) {
   });
 }
 
-function sendResetPwEmail(user) {
+function sendResetPwEmail (user) {
   return sendEmail({
     to: user.email,
     subject: 'You have requested password restoration at Kora',
-    html: `<p>Please, follow the <a href="${sails.config.HOST}/${user.resetPasswordToken}">link</a> to restore your password</p>`
-  })
+    html: `<p>Please, follow the <a href="${sails.config.HOST}/profile/restorePassword/${user.resetPasswordToken}">link</a> to restore your password</p>`
+  });
 }
 
 const mailer = {

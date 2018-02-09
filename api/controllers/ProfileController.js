@@ -135,7 +135,7 @@ module.exports = {
       });
   },
 
-  // POST /api/profile/forgotPassword
+  // POST /profile/forgotPassword
   forgotPassword: function (req, res) {
     const email = req.param('email');
 
@@ -157,7 +157,7 @@ module.exports = {
       .catch(err => res.negotiate(err));
   },
 
-  // PUT /api/profile/restorePassword
+  // PUT /profile/restorePassword
   restorePassword: function (req, res) {
     const resetPasswordToken = req.param('token');
     const password = req.param('newPassword');
