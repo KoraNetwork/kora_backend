@@ -39,7 +39,7 @@ module.exports = {
 
   indexes: [
     {
-      attributes: { from: 1, to: 1 },
+      attributes: { from: 1, to: 1, type: 1 },
       options: { unique: true }
     }
   ]
