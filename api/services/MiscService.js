@@ -11,6 +11,7 @@
  */
 
 const secureRandomString = require('secure-random-string');
+const networkInterfaces = require('os').networkInterfaces;
 
 function randomInteger ({min, max}) {
   var rand = min + Math.random() * (max + 1 - min);
@@ -59,5 +60,9 @@ module.exports = {
 
   generateRandomString: function (length = 10, alphanumeric = false) {
     return secureRandomString({length, alphanumeric});
-  }
+  },
+
+  getLocalExternalIp: () => [].concat.apply([], Object.values(networkInterfaces()))
+    .filter(details => details.family === 'IPv4' && !details.internal)
+    .pop().address
 };
