@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global User ParserService CurrencyConverterService */
+/* global User ParserService CurrencyConverterService Borrow */
 
 module.exports = {
   test: function (req, res) {
@@ -59,5 +59,33 @@ module.exports = {
 
       return res.ok(result);
     });
+  },
+
+  closeLoans: function (req, res) {
+    const {states, types} = Borrow.constants;
+    const now = new Date();
+
+    return Promise.all([
+      Borrow.find({
+        startDate: {'<=': now},
+        type: types.request,
+        state: [states.onGoing, states.agreed]
+      }, {
+        state: states.expired
+      }),
+      Borrow.find({
+        startDate: {'<=': now},
+        type: types.loan,
+        state: [states.onGoing, states.agreed]
+      }),
+      Borrow.find({
+        maturityDate: {'<': now},
+        type: types.inProgress,
+        state: states.onGoing
+      })
+    ])
+      .then(([expiredRequests, expiredLoans, overdueLoans]) => ({expiredRequests, expiredLoans, overdueLoans}))
+      .then(r => res.ok(r))
+      .catch(err => res.negotiate(err));
   }
 };
