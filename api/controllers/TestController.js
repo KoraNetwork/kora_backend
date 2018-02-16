@@ -61,7 +61,7 @@ module.exports = {
     });
   },
 
-  closeLoans: function (req, res) {
+  needCloseLoans: function (req, res) {
     const {states, types} = Borrow.constants;
     const now = new Date();
 
@@ -85,6 +85,22 @@ module.exports = {
       })
     ])
       .then(([expiredRequests, expiredLoans, overdueLoans]) => ({expiredRequests, expiredLoans, overdueLoans}))
+      .then(r => res.ok(r))
+      .catch(err => res.negotiate(err));
+  },
+
+  closedLoans: function (req, res) {
+    const {states} = Borrow.constants;
+
+    return Promise.all([
+      Borrow.find({
+        state: states.expired
+      }),
+      Borrow.find({
+        state: states.overdue
+      })
+    ])
+      .then(([expiredLoans, overdueLoans]) => ({expiredLoans, overdueLoans}))
       .then(r => res.ok(r))
       .catch(err => res.negotiate(err));
   }

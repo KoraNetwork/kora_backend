@@ -26,7 +26,7 @@ module.exports.bootstrap = function (cb) {
     //   sails.log.info(new Date().toISOString(), '- The answer to life, the universe, and everything!');
     // });
 
-    scheduler.scheduleJob('10 0 * * * *', JobsService.closeLoans);
+    scheduler.scheduleJob('20 0 * * * *', JobsService.closeLoans);
   }
 
   // It's very important to trigger this callback method when you are finished
