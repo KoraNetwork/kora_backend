@@ -27,17 +27,6 @@ module.exports.ethereum = {
   gas: 4300000,
   gasPrice: 2000000000,
 
-  /**
-   * humanStandardToken
-   */
-  HumanStandardToken: {
-    networks: {
-      4: {
-        address: '0xE57768e12C50C7D4134bB7a1Ca2917689719183C'
-      }
-    }
-  },
-
   koraTokenExponent: 2,
 
   koraTokenSymbol: 'KTN',

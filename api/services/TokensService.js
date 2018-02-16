@@ -5,7 +5,7 @@
 
 /* global sails EthereumService MiscService */
 
-const {provider, networkId, koraWallet, HumanStandardToken, gas, gasPrice, koraTokenExponent} = sails.config.ethereum;
+const {provider, koraWallet, gas, gasPrice, koraTokenExponent} = sails.config.ethereum;
 // const Web3 = require('web3');
 // const Web3Utils = require('web3-utils');
 
@@ -18,24 +18,8 @@ const accounts = new Accounts(provider);
 const Contract = require('web3-eth-contract');
 Contract.setProvider(provider);
 
-// const uportIdentity = require('uport-identity');
-// const {
-//   // TxRelay,
-//   // Proxy,
-//   IdentityManager
-// } = uportIdentity;
-
-// const identityManagerAddress = '0x692a70d2e424a56d2c6c27aa97d1a86395877b3a'; // Local
-// const identityManagerAddress = IdentityManager.networks[networkId].address; // Testnet
-// const identityManager = new Contract(IdentityManager.abi, identityManagerAddress);
-
-// const txRelayAddress = TxRelay.networks[networkId].address // Testnet
-// const txRelay = new Contract(TxRelay.abi, txRelayAddress)
-
 const fs = require('fs');
 const humanStandardTokenAbi = JSON.parse(fs.readFileSync('./build/contracts/HumanStandardToken.abi', 'utf8'));
-// const humanStandardTokenAddress = HumanStandardToken.networks[networkId].address;
-// const humanStandardToken = new Contract(humanStandardTokenAbi, humanStandardTokenAddress);
 
 module.exports = {
   balanceOf: function ({address, tokenAddress}, cb) {
