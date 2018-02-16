@@ -7,14 +7,11 @@
 
 /* global _ sails User EthereumService ValidationService TokensService CurrencyConverterService ErrorService MailerService MiscService JWTokenService */
 
-const {provider, koraWallet, newUserMoney} = sails.config.ethereum;
+const {newUserMoney} = sails.config.ethereum;
 
 const path = require('path');
 const fs = require('fs');
 const Web3Utils = require('web3-utils');
-
-const Eth = require('web3-eth');
-const eth = new Eth(provider);
 
 const updateAttrs = ['email', 'legalName', 'dateOfBirth', 'postalCode', 'address', 'agent', 'interestRate'];
 
@@ -299,7 +296,7 @@ module.exports = {
 
     res.setTimeout(0);
 
-    eth.getTransactionCount(koraWallet.address)
+    EthereumService.getKoraWalletTransactionCount()
       .then(nonce =>
         Promise.all([
           EthereumService.getBalance({address: user.owner}),
@@ -307,11 +304,10 @@ module.exports = {
         ])
           .then(([ethBalance, tokenBalance]) => {
             let promises = [];
-            --nonce;
 
             if (Web3Utils.toBN(ethBalance).isZero()) {
               promises.push(
-                EthereumService.sendEthFromKora({to: req.user.owner, eth: newUserMoney.ETH + '', nonce: ++nonce + ''})
+                EthereumService.sendEthFromKora({to: req.user.owner, eth: newUserMoney.ETH + '', nonce: nonce++ + ''})
               );
             }
 
@@ -333,7 +329,7 @@ module.exports = {
                     to: user.identity,
                     value,
                     tokenAddress: user.ERC20Token,
-                    nonce: ++nonce + ''
+                    nonce: nonce++ + ''
                   })
                 );
 

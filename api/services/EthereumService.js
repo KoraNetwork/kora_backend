@@ -238,5 +238,11 @@ module.exports = {
     }
 
     return promise;
+  },
+
+  getKoraWalletTransactionCount: function (cb) {
+    let promise = eth.getTransactionCount(koraWallet.address);
+
+    return MiscService.cbify(promise, cb);
   }
 };
