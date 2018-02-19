@@ -26,6 +26,19 @@ const metaIdentityManager = new Contract(MetaIdentityManager.abi, metaIdentityMa
 const txRelayAddress = TxRelay.networks[networkId].address; // Testnet
 const txRelay = new Contract(TxRelay.abi, txRelayAddress);
 
+const handleReceipt = (receipt, name) => {
+  sails.log.info(`Transaction ${name} receipt:\n`, receipt);
+
+  if (!Web3.utils.hexToNumber(receipt.status)) {
+    let err = new Error(`Transaction ${name} status fail`);
+    err.receipt = receipt;
+
+    return Promise.reject(err);
+  }
+
+  return receipt;
+};
+
 module.exports = {
   getBalance: function ({address}, cb) {
     let promise = eth.getBalance(address);
@@ -36,32 +49,38 @@ module.exports = {
   sendSignedTransaction: function ({rawTransaction, name = 'rawTransaction'}, cb) {
     sails.log.info(`Send signed ${name} raw transaction:\n`, rawTransaction);
 
+    let txHash;
     let promise = eth.sendSignedTransaction(rawTransaction)
       // .on('confirmation', function (confirmationNumber, receipt) {
       //   sails.log.info('rawCreateLoan confirmationNumber, receipt:\n', confirmationNumber, receipt);
       // })
-      .then(receipt => {
-        sails.log.info(`Transaction ${name} receipt:\n`, receipt);
-
-        if (!Web3.utils.hexToNumber(receipt.status)) {
-          let err = new Error(`Transaction ${name} status fail`);
-          err.receipt = receipt;
-
-          return Promise.reject(err);
-        }
-
-        return receipt;
-      })
+      .once('transactionHash', hash => (txHash = hash))
+      .then(receipt => handleReceipt(receipt, name))
       .catch(err => {
         sails.log.error(`Transaction ${name} send error:\n`, err);
+
+        if (err.message.includes('not mined within 50 blocks')) {
+          return new Promise((resolve, reject) => {
+            const handle = setInterval(() => {
+              eth.getTransactionReceipt(txHash)
+                .then((receipt) => {
+                  if (receipt != null && receipt.blockNumber > 0) {
+                    clearInterval(handle);
+                    resolve(handleReceipt(receipt, name));
+                  }
+                })
+                .catch(err => {
+                  sails.log.error(`Transaction ${name} get receipt error:\n`, err);
+                  // reject(err);
+                });
+            }, 500);
+          });
+        }
+
         return Promise.reject(err);
       });
 
-    if (cb && typeof cb === 'function') {
-      promise.then(cb.bind(null, null), cb);
-    }
-
-    return promise;
+    return MiscService.cbify(promise, cb);
   },
 
   sendSignedTransactionWithEvent: function ({rawTransaction, name, contract, event}, cb) {
