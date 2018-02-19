@@ -186,7 +186,8 @@ module.exports = {
     let { owner, recoveryKey } = req.allParams();
 
     if (req.user.identity) {
-      return res.badRequest({message: `Current user already has identity`});
+      // return res.badRequest({message: `Current user already has identity`});
+      return res.ok(req.user);
     }
 
     if (!owner && !ValidationService.ethereumAddress(owner)) {
