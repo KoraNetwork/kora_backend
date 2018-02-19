@@ -61,12 +61,13 @@ module.exports = {
 
         if (err.message.includes('not mined within 50 blocks')) {
           return new Promise((resolve, reject) => {
-            const handle = setInterval(() => {
+            setTimeout(function getTransactionReceipt () {
               eth.getTransactionReceipt(txHash)
                 .then((receipt) => {
                   if (receipt != null && receipt.blockNumber > 0) {
-                    clearInterval(handle);
                     resolve(handleReceipt(receipt, name));
+                  } else {
+                    setTimeout(getTransactionReceipt, 500);
                   }
                 })
                 .catch(err => {
