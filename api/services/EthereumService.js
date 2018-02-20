@@ -54,13 +54,21 @@ module.exports = {
       // .on('confirmation', function (confirmationNumber, receipt) {
       //   sails.log.info('rawCreateLoan confirmationNumber, receipt:\n', confirmationNumber, receipt);
       // })
-      .once('transactionHash', hash => (txHash = hash))
+      .once('transactionHash', hash => {
+        sails.log.debug('Event transactionHash:', hash);
+        txHash = hash;
+      })
+      .once('receipt', receipt => {
+        sails.log.debug('Event receipt:', receipt);
+      })
       .then(receipt => handleReceipt(receipt, name))
       .catch(err => {
         sails.log.error(`Transaction ${name} send error:\n`, err);
 
         if (err.message.includes('not mined within 50 blocks')) {
           return new Promise((resolve, reject) => {
+            let errorCount = 0;
+
             setTimeout(function getTransactionReceipt () {
               eth.getTransactionReceipt(txHash)
                 .then((receipt) => {
@@ -73,6 +81,9 @@ module.exports = {
                 .catch(err => {
                   sails.log.error(`Transaction ${name} get receipt error:\n`, err);
                   // reject(err);
+                  if (errorCount++ < 10) {
+                    setTimeout(getTransactionReceipt, 3000);
+                  }
                 });
             }, 500);
           });
