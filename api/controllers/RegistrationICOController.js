@@ -10,7 +10,6 @@
 const {accountSid, authToken, fromNumber} = sails.config.twilio;
 
 const Twilio = require('twilio');
-require('web3-eth-accounts');
 const client = new Twilio(accountSid, authToken);
 
 module.exports = {
@@ -98,6 +97,26 @@ module.exports = {
 
         return res.send({message: 'Verification code was confirmed throught Kora MVP'});
       });
+    });
+  },
+
+  isRegisteredUser: function (req, res) {
+    let userName = req.param('userName').toLowerCase();
+
+    if (!userName) {
+      return res.badRequest({message: 'Username must be set'});
+    }
+
+    User.findOne({userName}).exec((err, user) => {
+      if (err) {
+        return res.negotiate(err);
+      }
+
+      if (!user) {
+        return res.badRequest({message: 'User with such username not exists in Kora MVP'});
+      }
+
+      res.ok({message: 'User with such username registered in Kora MVP'});
     });
   }
 };
