@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global ValidationService UserValidationService ErrorService MiscService BorrowService CurrencyConvert */
+/* global ValidationService UserValidationService ErrorService MiscService BorrowService CurrencyConvert User */
 
 const _ = require('lodash');
 
@@ -173,16 +173,30 @@ module.exports = {
     return Promise.all([
       UserValidationService.isIdsNotEqual({ids: users, names}),
       UserValidationService.isUsersExists({users, names}),
-      CurrencyConvert.destroy({type: CurrencyConvert.constants.types.borrow, from, to, fromAmount, toAmount})
-        .then(records => {
-          if (!records.length) {
-            return Promise.reject(ErrorService.new({
-              status: 404,
-              message: 'Currency convertion for this request not found'
-            }));
+      User.find({id: [from, to]})
+        .then(users => {
+          if (users[0].currency === users[1].currency) {
+            if (fromAmount !== toAmount) {
+              return Promise.reject(ErrorService.new({
+                status: 400,
+                message: `Amounts must be equal`
+              }));
+            }
+
+            return true;
           }
 
-          return true;
+          CurrencyConvert.destroy({type: CurrencyConvert.constants.types.borrow, from, to, fromAmount, toAmount})
+            .then(records => {
+              if (!records.length) {
+                return Promise.reject(ErrorService.new({
+                  status: 404,
+                  message: 'Currency convertion for this borrow money not found'
+                }));
+              }
+
+              return true;
+            });
         })
     ])
       .then(() => cb())

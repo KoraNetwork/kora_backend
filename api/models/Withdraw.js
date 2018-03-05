@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ UserValidationService CurrencyConvert ErrorService */
+/* global _ UserValidationService CurrencyConvert ErrorService User */
 
 const states = {
   inProgress: 'inProgress',
@@ -79,16 +79,30 @@ module.exports = {
 
     values.state = states.inProgress;
 
-    return CurrencyConvert.destroy({type: CurrencyConvert.constants.types.withdraw, from, to, fromAmount, toAmount})
-      .then(records => {
-        if (!records.length) {
-          return Promise.reject(ErrorService.new({
-            status: 404,
-            message: 'Currency convertion for this withdraw not found'
-          }));
+    return User.find({id: [from, to]})
+      .then(users => {
+        if (users[0].currency === users[1].currency) {
+          if (fromAmount !== toAmount) {
+            return Promise.reject(ErrorService.new({
+              status: 400,
+              message: `Amounts must be equal`
+            }));
+          }
+
+          return true;
         }
 
-        return true;
+        return CurrencyConvert.destroy({type: CurrencyConvert.constants.types.withdraw, from, to, fromAmount, toAmount})
+          .then(records => {
+            if (!records.length) {
+              return Promise.reject(ErrorService.new({
+                status: 404,
+                message: 'Currency convertion for this withdraw not found'
+              }));
+            }
+
+            return true;
+          });
       })
       .then(() => cb())
       .catch(err => cb(err));
