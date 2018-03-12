@@ -45,8 +45,8 @@ module.exports = {
       Transactions.findPopulate({ where, limit, skip, sort, userId }),
       Transactions.count(where)
     ])
-    .then(([data, total]) => res.json({data, total}))
-    .catch(err => res.negotiate(err));
+      .then(([data, total]) => res.json({data, total}))
+      .catch(err => res.negotiate(err));
   },
 
   findOne: function (req, res) {

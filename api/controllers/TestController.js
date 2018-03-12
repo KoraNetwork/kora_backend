@@ -5,7 +5,7 @@
  * @help        :: See http://sailsjs.org/#!/documentation/concepts/Controllers
  */
 
-/* global User ParserService */
+/* global User ParserService CurrencyConverterService Borrow */
 
 module.exports = {
   test: function (req, res) {
@@ -47,5 +47,61 @@ module.exports = {
         });
       }
     });
+  },
+
+  convert: function (req, res) {
+    const q = req.param('q');
+
+    CurrencyConverterService.convert(q, (err, result) => {
+      if (err) {
+        return res.serverError(err);
+      }
+
+      return res.ok(result);
+    });
+  },
+
+  needCloseLoans: function (req, res) {
+    const {states, types} = Borrow.constants;
+    const now = new Date();
+
+    return Promise.all([
+      Borrow.find({
+        startDate: {'<=': now},
+        type: types.request,
+        state: [states.onGoing, states.agreed]
+      }, {
+        state: states.expired
+      }),
+      Borrow.find({
+        startDate: {'<=': now},
+        type: types.loan,
+        state: [states.onGoing, states.agreed]
+      }),
+      Borrow.find({
+        maturityDate: {'<': now},
+        type: types.inProgress,
+        state: states.onGoing
+      })
+    ])
+      .then(([expiredRequests, expiredLoans, overdueLoans]) => ({expiredRequests, expiredLoans, overdueLoans}))
+      .then(r => res.ok(r))
+      .catch(err => res.negotiate(err));
+  },
+
+  closedLoans: function (req, res) {
+    const {states} = Borrow.constants;
+
+    return Promise.all([
+      Borrow.find({
+        state: states.expired
+      }),
+      Borrow.find({
+        state: states.overdue
+      })
+    ])
+      .then(([expiredLoans, overdueLoans]) => ({expiredLoans, overdueLoans}))
+      .then(r => res.ok(r))
+      .catch(err => res.negotiate(err));
   }
 };

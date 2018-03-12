@@ -3,14 +3,20 @@
  * @type {Object}
  */
 
+const {infuraToken} = require('./local');
+
+const Web3 = require('web3');
+const web3 = new Web3(new Web3.providers.HttpProvider('https://rinkeby.infura.io/' + infuraToken));
+// const net = require('net');
+// const web3 = new Web3('/home/user/.rinkeby/geth.ipc', net);
+
 module.exports.ethereum = {
 
   /**
    * Ethereum provider
    * @type {String}
    */
-  // provider: 'http://localhost:8545',
-  // provider: 'ws://localhost:8546',
+  provider: web3.currentProvider,
 
   /**
    * Network id
@@ -19,18 +25,7 @@ module.exports.ethereum = {
   // networkId: 42, // Kovan testnet
 
   gas: 4300000,
-  gasPrice: 21000000000,
-
-  /**
-   * humanStandardToken
-   */
-  HumanStandardToken: {
-    networks: {
-      4: {
-        address: '0xE57768e12C50C7D4134bB7a1Ca2917689719183C'
-      }
-    }
-  },
+  gasPrice: 2000000000,
 
   koraTokenExponent: 2,
 
@@ -42,8 +37,13 @@ module.exports.ethereum = {
   KoraLend: {
     networks: {
       4: {
-        address: '0x75C5FF68527bD11C71604D5a5BBDF68ce0457987'
+        address: '0x52a6ea5a93a58f51f1761145b1a93538f64df292'
       }
     }
+  },
+
+  newUserMoney: {
+    ETH: 0.05,
+    eUSD: 1500
   }
 };

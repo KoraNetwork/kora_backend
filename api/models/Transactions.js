@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ sails ValidationService UserValidationService EthereumService ErrorService */
+/* global _ sails ValidationService UserValidationService TokensService ErrorService User CurrencyConvert */
 
 const types = {
   send: 'send',
@@ -77,65 +77,146 @@ module.exports = {
     { attributes: { to: 1, updatedAt: -1 } }
   ],
 
-  beforeValidate: function (values, cb) {
+  afterValidate: function (values, cb) {
     const { from, to } = values;
 
-    Promise.all([
-      UserValidationService.isFromToNotEqual({from, to}),
-      UserValidationService.isFromToExists({from, to})
-    ])
-      .then(() => cb())
-      .catch(err => cb(err));
+    if (from && to) {
+      return Promise.all([
+        UserValidationService.isFromToNotEqual({from, to}),
+        UserValidationService.isFromToExists({from, to})
+      ])
+        .then(() => cb())
+        .catch(err => cb(err));
+    }
+
+    return cb();
   },
 
   beforeCreate: function (values, cb) {
-    const {rawTransactions} = values;
+    const {rawTransaction, type, from, to, fromAmount, toAmount} = values;
 
-    if (
-      ~[types.send, types.request, types.deposit, types.withdraw].indexOf(values.type) &&
-      !(Array.isArray(rawTransactions) && rawTransactions.length && rawTransactions.every(tx => ValidationService.hex(tx)))
-    ) {
-      return cb(ErrorService.throw({
-        status: 400,
-        message: 'Parameter rawTransactions must be set and must be hex array with at least one element'
-      }));
-    }
+    if (~[types.send, types.request, types.deposit, types.withdraw].indexOf(type)) {
+      if (!(rawTransaction && ValidationService.hex(rawTransaction))) {
+        return cb(ErrorService.new({
+          status: 400,
+          message: 'Parameter rawTransaction must be set and must be hex'
+        }));
+      }
 
-    if (rawTransactions) {
-      this.rawTransactions = rawTransactions;
-      delete values.rawTransactions;
+      if (rawTransaction) {
+        this.rawTransaction = rawTransaction;
+        delete values.rawTransaction;
+      }
+
+      return User.find({id: [from, to]})
+        .then(users => {
+          if (users[0].currency === users[1].currency) {
+            if (fromAmount !== toAmount) {
+              return Promise.reject(ErrorService.new({
+                status: 400,
+                message: `Amounts must be equal`
+              }));
+            }
+
+            return true;
+          }
+
+          if (type === types.send) {
+            return CurrencyConvert.destroy({type, from, to, fromAmount, toAmount})
+              .then(records => {
+                if (!records.length) {
+                  return Promise.reject(ErrorService.new({
+                    status: 404,
+                    message: 'Currency convertion for this transaction not found'
+                  }));
+                }
+
+                return true;
+              });
+          }
+
+          return true;
+        })
+        .then(() => cb())
+        .catch(err => cb(err));
     }
 
     return cb();
   },
 
   afterCreate: function (record, cb) {
-    if (this.rawTransactions) {
-      const rawTransactions = this.rawTransactions;
-      delete this.rawTransactions;
+    if (this.rawTransaction) {
+      const rawTransaction = this.rawTransaction;
+      delete this.rawTransaction;
 
-      Promise.all(
-        rawTransactions.map(rawTransaction => EthereumService.sendSignedTransaction({
-          rawTransaction,
-          name: 'Token.transfer'
-        }))
-      )
-        .then(
-          receipts => {
-            record.state = states.success;
-            receipts.forEach(r => record.transactionHashes.push(r.transactionHash));
+      User.findOne({id: record.from})
+        .then(fromUser =>
+          TokensService.sendSignedTransfer({
+            rawTransaction,
+            tokenAddress: fromUser.ERC20Token
+          })
+            .then(
+              ({receipt, event}) => {
+                // record.state = states.success;
+                record.transactionHashes.push(receipt.transactionHash);
 
-            return true;
-          },
-          err => {
-            record.state = states.error;
+                return event;
+              }
+            )
+            .then(
+              ({_from, _to, _value}) => {
+                console.log('_from, _to, _value', _from, _to, _value);
+                if (fromUser.identity.toLowerCase() !== _from.toLowerCase()) {
+                  record.state = states.error;
 
-            if (err.receipt) {
-              record.transactionHashes.push(err.receipt.transactionHash);
-            }
+                  return false;
+                }
 
-            return false;
-          }
+                record.fromAmount = TokensService.convertValueToToken(_value);
+
+                return User.findOne({id: record.to})
+                  .then(toUser => {
+                    if (fromUser.currency === toUser.currency) {
+                      if (toUser.identity.toLowerCase() !== _to.toLowerCase()) {
+                        record.state = states.error;
+
+                        return false;
+                      }
+
+                      record.toAmount = record.fromAmount;
+
+                      record.state = states.success;
+
+                      return true;
+                    }
+
+                    if (_to.toLowerCase() !== sails.config.ethereum.koraWallet.address.toLowerCase()) {
+                      record.state = states.error;
+
+                      return false;
+                    }
+
+                    return TokensService.transferFromKora({
+                      to: toUser.identity,
+                      value: record.toAmount,
+                      tokenAddress: toUser.ERC20Token
+                    })
+                      .then(event => {
+                        record.state = states.success;
+
+                        return true;
+                      });
+                  });
+              },
+              err => {
+                record.state = states.error;
+
+                if (err.receipt) {
+                  record.transactionHashes.push(err.receipt.transactionHash);
+                }
+
+                return false;
+              })
         )
         .then(() => this.update({id: record.id}, record))
         .then(updated => {

@@ -21,7 +21,7 @@ module.exports = {
 
   WLError,
 
-  throw: function ({status = 500, message}) {
+  new: function ({status = 500, message}) {
     return new WLError({status, message});
   }
 };

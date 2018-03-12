@@ -3,7 +3,7 @@
  * @description :: Set of functions for work with Ethereum blockchain
  */
 
-/* global sails _ */
+/* global sails MiscService */
 
 const {provider, networkId, koraWallet, koraRecoveryKey, gas, gasPrice} = sails.config.ethereum;
 const Web3 = require('web3');
@@ -15,47 +15,84 @@ const Accounts = require('web3-eth-accounts');
 const accounts = new Accounts(provider);
 
 const uportIdentity = require('uport-identity');
-const {IdentityManager, TxRelay} = uportIdentity;
+const {MetaIdentityManager, TxRelay} = uportIdentity;
 const Contract = require('web3-eth-contract');
 Contract.setProvider(provider);
 
-// const identityManagerAddress = '0x692a70d2e424a56d2c6c27aa97d1a86395877b3a' // Local
-const identityManagerAddress = IdentityManager.networks[networkId].address; // Testnet
-const identityManager = new Contract(IdentityManager.abi, identityManagerAddress);
+// const metaIdentityManagerAddress = '0x692a70d2e424a56d2c6c27aa97d1a86395877b3a' // Local
+const metaIdentityManagerAddress = MetaIdentityManager.networks[networkId].address; // Testnet
+const metaIdentityManager = new Contract(MetaIdentityManager.abi, metaIdentityManagerAddress);
 
 const txRelayAddress = TxRelay.networks[networkId].address; // Testnet
 const txRelay = new Contract(TxRelay.abi, txRelayAddress);
 
+const handleReceipt = (receipt, name) => {
+  sails.log.info(`Transaction ${name} receipt:\n`, receipt);
+
+  if (!Web3.utils.hexToNumber(receipt.status)) {
+    let err = new Error(`Transaction ${name} status fail`);
+    err.receipt = receipt;
+
+    return Promise.reject(err);
+  }
+
+  return receipt;
+};
+
 module.exports = {
+  getBalance: function ({address}, cb) {
+    let promise = eth.getBalance(address);
+
+    return MiscService.cbify(promise, cb);
+  },
+
   sendSignedTransaction: function ({rawTransaction, name = 'rawTransaction'}, cb) {
     sails.log.info(`Send signed ${name} raw transaction:\n`, rawTransaction);
 
+    let txHash;
     let promise = eth.sendSignedTransaction(rawTransaction)
       // .on('confirmation', function (confirmationNumber, receipt) {
       //   sails.log.info('rawCreateLoan confirmationNumber, receipt:\n', confirmationNumber, receipt);
       // })
-      .then(receipt => {
-        sails.log.info(`Transaction ${name} receipt:\n`, receipt);
-
-        if (!Web3.utils.hexToNumber(receipt.status)) {
-          let err = new Error(`Transaction ${name} status fail`);
-          err.receipt = receipt;
-
-          return Promise.reject(err);
-        }
-
-        return receipt;
+      .once('transactionHash', hash => {
+        sails.log.debug('Event transactionHash:', hash);
+        txHash = hash;
       })
+      .once('receipt', receipt => {
+        sails.log.debug('Event receipt:', receipt);
+      })
+      .then(receipt => handleReceipt(receipt, name))
       .catch(err => {
         sails.log.error(`Transaction ${name} send error:\n`, err);
+
+        if (err.message.includes('not mined within 50 blocks')) {
+          return new Promise((resolve, reject) => {
+            let errorCount = 0;
+
+            setTimeout(function getTransactionReceipt () {
+              eth.getTransactionReceipt(txHash)
+                .then((receipt) => {
+                  if (receipt != null && receipt.blockNumber > 0) {
+                    resolve(handleReceipt(receipt, name));
+                  } else {
+                    setTimeout(getTransactionReceipt, 500);
+                  }
+                })
+                .catch(err => {
+                  sails.log.error(`Transaction ${name} get receipt error:\n`, err);
+                  // reject(err);
+                  if (errorCount++ < 10) {
+                    setTimeout(getTransactionReceipt, 3000);
+                  }
+                });
+            }, 500);
+          });
+        }
+
         return Promise.reject(err);
       });
 
-    if (cb && typeof cb === 'function') {
-      promise.then(cb.bind(null, null), cb);
-    }
-
-    return promise;
+    return MiscService.cbify(promise, cb);
   },
 
   sendSignedTransactionWithEvent: function ({rawTransaction, name, contract, event}, cb) {
@@ -114,72 +151,58 @@ module.exports = {
     return accounts.decrypt(keystore, password);
   },
 
-  createIdentity: function ({ account }, done) {
-    const createIdentity = identityManager.methods.createIdentity(account.address, koraRecoveryKey.address);
+  createIdentity: function ({ owner, recoveryKey = koraRecoveryKey.address }, cb) {
+    const createIdentity = metaIdentityManager.methods.createIdentity(owner, recoveryKey);
     const encodedCreateIdentity = createIdentity.encodeABI();
 
-    let filter = {
-      creator: koraWallet.address,
-      owner: account.address,
-      recoveryKey: koraRecoveryKey.address
-    };
-
     let tx = {
-      to: identityManagerAddress,
+      to: metaIdentityManagerAddress,
       data: encodedCreateIdentity,
       gas,
       gasPrice
     };
 
     sails.log.info('Sign createIdentity transaction:\n', tx);
-    accounts.signTransaction(tx, koraWallet.privateKey)
+    let promise = accounts.signTransaction(tx, koraWallet.privateKey)
       .then(signedTx => {
         sails.log.info('Send signed createIdentity transaction:\n', signedTx);
-        return eth.sendSignedTransaction(signedTx.rawTransaction);
-      })
-      .then(receipt => {
-        sails.log.info('Transaction createIdentity receipt:\n', receipt);
-
-        return identityManager.getPastEvents('IdentityCreated', {
-          filter,
-          fromBlock: receipt.blockNumber
+        return this.sendSignedTransactionWithEvent({
+          rawTransaction: signedTx.rawTransaction,
+          name: 'MetaIdentityManager.createIdentity',
+          contract: metaIdentityManager,
+          event: 'IdentityCreated'
         });
       })
-      .then(events => {
-        sails.log.info('IdentityCreated events:\n', events);
-
-        let event = _.find(events, {returnValues: filter});
-
-        if (!event) {
-          return Promise.reject(new Error(`Method getPastEvents didn't return desired IdentityCreated event`));
-        }
-
-        return done(null, event.returnValues);
+      .then(({receipt, events}) => {
+        // sails.log.info('Transaction createIdentity success:\n', {receipt, events});
+        return events[0].returnValues;
       })
       .catch(err => {
-        sails.log.error(err);
-        return done(err);
+        sails.log.error(`Transaction createIdentity error:\n`, err);
+        return Promise.reject(err);
       });
+
+    return MiscService.cbify(promise, cb);
   },
 
-  createIdentityTxRelay: function ({ account }, done) {
-    const createIdentity = identityManager.methods.createIdentity(account.address, koraRecoveryKey.address);
+  createIdentityTxRelay: function ({ account }, cb) {
+    const createIdentity = metaIdentityManager.methods.createIdentity(account.address, koraRecoveryKey.address);
     const encodedCreateIdentity = createIdentity.encodeABI();
 
-    identityManager.once('IdentityCreated', (err, event) => {
+    metaIdentityManager.once('IdentityCreated', (err, event) => {
       if (err) {
         sails.log.error(err);
-        return done(err);
+        return cb(err);
       }
 
       sails.log.info('IdentityCreated once event:\n', event);
-      return done(null, event);
+      return cb(null, event);
     });
 
     createIdentity.estimateGas()
       .then(estimatedGas => {
         let tx = {
-          to: identityManagerAddress,
+          to: metaIdentityManagerAddress,
           data: encodedCreateIdentity,
           gas: estimatedGas
         };
@@ -189,7 +212,7 @@ module.exports = {
       })
       .then(signedTx => {
         const {v, r, s, rawTransaction} = signedTx;
-        const relayMetaTx = txRelay.methods.relayMetaTx(v, r, s, identityManagerAddress, rawTransaction);
+        const relayMetaTx = txRelay.methods.relayMetaTx(v, r, s, metaIdentityManagerAddress, rawTransaction);
         const encodedRelayMetaTX = relayMetaTx.encodeABI();
 
         return new Promise((resolve, reject) => {
@@ -213,5 +236,44 @@ module.exports = {
       })
       .then(receipt => sails.log.info('Transaction relayMetaTx receipt:\n', receipt))
       .catch(err => sails.log.error(err));
+  },
+
+  sendEthFromKora: function ({to, eth = '0.1', nonce}, cb) {
+    const name = 'sendEthFromKora';
+    let tx = {
+      to,
+      value: Web3.utils.toWei(eth, 'ether'),
+      gas,
+      gasPrice,
+      nonce
+    };
+
+    sails.log.info(`Sign ${name} transaction:\n`, tx);
+
+    let promise = accounts.signTransaction(tx, koraWallet.privateKey)
+      .then(signedTx => {
+        sails.log.info(`Send signed ${name} transaction:\n`, signedTx);
+
+        return this.sendSignedTransaction({
+          rawTransaction: signedTx.rawTransaction,
+          name
+        });
+      })
+      .catch(err => {
+        sails.log.error(`Transaction createIdentity error:\n`, err);
+        return Promise.reject(err);
+      });
+
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
+
+  getKoraWalletTransactionCount: function (cb) {
+    let promise = eth.getTransactionCount(koraWallet.address);
+
+    return MiscService.cbify(promise, cb);
   }
 };

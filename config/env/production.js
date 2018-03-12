@@ -10,10 +10,6 @@
  *
  */
 
-const net = require('net');
-const Web3 = require('web3');
-const web3 = new Web3('/home/ubuntu/.rinkeby/geth.ipc', net);
-
 module.exports = {
 
   /***************************************************************************
@@ -70,10 +66,6 @@ module.exports = {
 
   requestlogger: {
     inProduction: true
-  },
-
-  ethereum: {
-    provider: web3.currentProvider
   }
 
 };

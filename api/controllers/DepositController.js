@@ -40,8 +40,8 @@ module.exports = {
       Deposit.findPopulate({ where, limit, skip, sort, userId }),
       Deposit.count(where)
     ])
-    .then(([data, total]) => res.json({data, total}))
-    .catch(err => res.negotiate(err));
+      .then(([data, total]) => res.json({data, total}))
+      .catch(err => res.negotiate(err));
   },
 
   findOne: function (req, res) {
@@ -110,7 +110,7 @@ module.exports = {
           toAmount: fromAmount,
           interestRate,
           additionalNote,
-          rawTransactions: allParams.rawTransactions
+          rawTransaction: allParams.rawTransaction
         });
       })
       .then(transaction => {
@@ -141,21 +141,21 @@ function findValidRecord ({id, userId}) {
   return Deposit.findOne({id})
     .then(request => {
       if (!request) {
-        return Promise.reject(ErrorService.throw({
+        return Promise.reject(ErrorService.new({
           status: 404,
           message: 'Current deposit not found'
         }));
       }
 
       if (request.to !== userId) {
-        return Promise.reject(ErrorService.throw({
+        return Promise.reject(ErrorService.new({
           status: 400,
           message: `Current user must be in 'to' attribute of deposit`
         }));
       }
 
       if (request.state === rejected) {
-        return Promise.reject(ErrorService.throw({
+        return Promise.reject(ErrorService.new({
           status: 400,
           message: 'Current deposit already rejected'
         }));

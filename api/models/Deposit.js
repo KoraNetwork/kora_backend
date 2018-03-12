@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ UserValidationService */
+/* global _ UserValidationService CurrencyConvert ErrorService User */
 
 const states = {
   inProgress: 'inProgress',
@@ -58,16 +58,52 @@ module.exports = {
     { attributes: { to: 1, updatedAt: -1 } }
   ],
 
-  beforeCreate: function (values, cb) {
+  afterValidate: function (values, cb) {
     const { from, to } = values;
+
+    if (from && to) {
+      return Promise.all([
+        UserValidationService.isFromToNotEqual({from, to}),
+        UserValidationService.isFromToExists({from, to}),
+        UserValidationService.isAgent({id: to, name: 'To'})
+      ])
+        .then(() => cb())
+        .catch(err => cb(err));
+    }
+
+    return cb();
+  },
+
+  beforeCreate: function (values, cb) {
+    const {from, to, fromAmount, toAmount} = values;
 
     values.state = states.inProgress;
 
-    Promise.all([
-      UserValidationService.isFromToNotEqual({from, to}),
-      UserValidationService.isFromToExists({from, to}),
-      UserValidationService.isAgent({id: to, name: 'To'})
-    ])
+    return User.find({id: [from, to]})
+      .then(users => {
+        if (users[0].currency === users[1].currency) {
+          if (fromAmount !== toAmount) {
+            return Promise.reject(ErrorService.new({
+              status: 400,
+              message: `Amounts must be equal`
+            }));
+          }
+
+          return true;
+        }
+
+        return CurrencyConvert.destroy({type: CurrencyConvert.constants.types.deposit, from, to, fromAmount, toAmount})
+          .then(records => {
+            if (!records.length) {
+              return Promise.reject(ErrorService.new({
+                status: 404,
+                message: 'Currency convertion for this deposit not found'
+              }));
+            }
+
+            return true;
+          });
+      })
       .then(() => cb())
       .catch(err => cb(err));
   },

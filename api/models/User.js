@@ -5,7 +5,7 @@
  * @docs        :: http://sailsjs.org/documentation/concepts/models-and-orm/models
  */
 
-/* global _ sails EthereumService ValidationService CountriesService ErrorService */
+/* global _ sails EthereumService ValidationService CountriesService ErrorService MailerService MiscService */
 
 const bcrypt = require('bcrypt');
 
@@ -33,11 +33,15 @@ module.exports = {
 
     email: { type: 'string', email: true },
 
+    emailVerificationToken: { type: 'string' },
+
+    emailVerified: { type: 'boolean', defaultsTo: false },
+
     legalName: { type: 'string' },
 
     dateOfBirth: { type: 'string' }, // datetime: true
 
-    currency: { type: 'string', in: CountriesService.list.map(el => el.currency) },
+    currency: { type: 'string', in: CountriesService.currenciesList.map(el => el.currency) },
 
     countryCode: { type: 'string', in: CountriesService.list.map(el => el.countryCode) },
 
@@ -67,6 +71,8 @@ module.exports = {
 
     encryptedPassword: { type: 'string' },
 
+    resetPasswordToken: { type: 'string', defaultsTo: '' },
+
     interestRate: { type: 'float', min: 0 },
 
     toJSON: function () {
@@ -76,6 +82,8 @@ module.exports = {
       delete obj.userNameOrigin;
       delete obj.encryptedPassword;
       delete obj.keystore;
+      delete obj.resetPasswordToken;
+      delete obj.emailVerificationToken;
 
       if (obj.countryCode) {
         obj.flag = CountriesService.flagImg(obj.countryCode);
@@ -125,8 +133,49 @@ module.exports = {
       values.email = values.email.toLowerCase();
     }
 
+    if (values.creator) {
+      values.creator = values.creator.toLowerCase();
+    }
+
+    if (values.owner) {
+      values.owner = values.owner.toLowerCase();
+    }
+
+    if (values.identity) {
+      values.identity = values.identity.toLowerCase();
+    }
+
+    if (values.recoveryKey) {
+      values.recoveryKey = values.recoveryKey.toLowerCase();
+    }
+
     if (values.role === roles.agent && typeof values.interestRate === 'undefined') {
       values.interestRate = 5;
+    }
+
+    if (values.password) {
+      if (!ValidationService.password(values.password)) {
+        return cb(ErrorService.new({
+          status: 400,
+          message: 'Password must be at least 8 characters, have at least 1 uppercase English letter, 1 lowercase English letter and 1 number'
+        }));
+      }
+
+      return bcrypt.genSalt(10, function (err, salt) {
+        if (err) {
+          return cb(err);
+        }
+
+        bcrypt.hash(values.password, salt, function (err, hash) {
+          if (err) {
+            return cb(err);
+          }
+
+          values.encryptedPassword = hash;
+
+          return cb();
+        });
+      });
     }
 
     return cb();
@@ -142,14 +191,16 @@ module.exports = {
         // Password for development purposes
         password = 'qwer1234';
       } else {
-        return cb(ErrorService.throw({status: 400, message: 'Password must be set'}));
+        return cb(ErrorService.new({status: 400, message: 'Password must be set'}));
       }
     }
+
+    values.emailVerificationToken = MiscService.generateRandomString(50);
 
     if (values.role === roles.featurePhone) {
       const {account, keystore} = EthereumService.createAccount({password});
 
-      EthereumService.createIdentity({account}, (err, { identity, creator, owner, recoveryKey }) => {
+      EthereumService.createIdentity({owner: account.address}, (err, { identity, creator, owner, recoveryKey }) => {
         if (err) {
           return cb(err);
         }
@@ -175,6 +226,22 @@ module.exports = {
         });
       });
     }
+  },
+
+  afterCreate: function (values, cb) {
+    MailerService.sendConfirmationEmail(values);
+
+    return cb();
+  },
+
+  beforeUpdate: function (valuesToUpdate, cb) {
+    if (valuesToUpdate.email) {
+      valuesToUpdate.emailVerified = false;
+      valuesToUpdate.emailVerificationToken = MiscService.generateRandomString(50);
+      MailerService.sendConfirmationEmail(valuesToUpdate);
+    }
+
+    return cb();
   },
 
   comparePassword: function (password, user, cb) {

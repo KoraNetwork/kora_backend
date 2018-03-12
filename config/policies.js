@@ -48,20 +48,27 @@ module.exports.policies = {
   // feed : ['isNiceToAnimals', 'hasRabbitFood']
   // }
 
-  '*': ['isAuthorized'],
+  '*': ['isAuthorized', 'isEmailVerified'],
 
   VerificationCodeController: {
     '*': true
   },
 
   UserController: {
-    '*': ['isAuthorized', 'isMyProfile'],
+    '*': ['isAuthorized', 'isMyProfile', 'isEmailVerified'],
     create: true,
     destroy: false,
     update: false,
     // TODO: Change this after register will be done
     find: true,
     findOne: true
+  },
+
+  ProfileController: {
+    '*': 'isAuthorized',
+    confirmEmail: true,
+    forgotPassword: true,
+    restorePassword: true
   },
 
   AuthController: {
@@ -99,11 +106,17 @@ module.exports.policies = {
   },
 
   TransactionsController: {
+    find: ['isAuthorized'],
     destroy: false
   },
 
   TokensController: {
     '*': false,
     balanceOf: true
+  },
+
+  CurrencyConvertController: {
+    '*': false,
+    create: ['isAuthorized']
   }
 };

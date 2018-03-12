@@ -9,6 +9,10 @@
  * @param  {Number} max Max vaue
  * @return {Number}     Random integer
  */
+
+const secureRandomString = require('secure-random-string');
+const networkInterfaces = require('os').networkInterfaces;
+
 function randomInteger ({min, max}) {
   var rand = min + Math.random() * (max + 1 - min);
   rand = Math.floor(rand);
@@ -16,6 +20,14 @@ function randomInteger ({min, max}) {
 }
 
 module.exports = {
+
+  cbify: function (promise, cb) {
+    if (cb && typeof cb === 'function') {
+      promise.then(cb.bind(null, null), cb);
+    }
+
+    return promise;
+  },
 
   /**
    * randomInteger function export
@@ -44,5 +56,13 @@ module.exports = {
 
   calcTotalAmount: function (amount, interestRate) {
     return Math.floor(amount * (100 + interestRate)) / 100;
-  }
+  },
+
+  generateRandomString: function (length = 10, alphanumeric = false) {
+    return secureRandomString({length, alphanumeric});
+  },
+
+  getLocalExternalIp: () => [].concat.apply([], Object.values(networkInterfaces()))
+    .filter(details => details.family === 'IPv4' && !details.internal)
+    .pop().address
 };

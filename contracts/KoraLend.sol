@@ -2,6 +2,7 @@ pragma solidity ^0.4.15;
 
 import "./Token.sol";
 
+
 contract KoraLend {
 
     enum States { Created, Agreed, Expired, Funded, PaidBack, Overdue }
@@ -42,12 +43,12 @@ contract KoraLend {
         require(lender != msg.sender);
 
         for (uint i = 0; i < guarantors.length; i++) {
-          require(guarantors[i] != address(0));
-          require(guarantors[i] != lender);
+            require(guarantors[i] != address(0));
+            require(guarantors[i] != lender);
 
-          for (uint j = 0; j < i; j++) {
-              require(guarantors[i] != guarantors[j]);
-          }
+            for (uint j = 0; j < i; j++) {
+                require(guarantors[i] != guarantors[j]);
+            }
         }
 
         _;
@@ -258,6 +259,10 @@ contract KoraLend {
     function getNumBorrowerLoans(address borrower) public view returns (uint returned, uint notReturned) {
         returned = borrowerLoans[borrower][true].length;
         notReturned = borrowerLoans[borrower][false].length;
+    }
+
+    function getLoanGuarantors(uint loanId) public view returns (address[] guarantors) {
+        return loans[loanId].guarantors;
     }
 
     function isLoanAgreed(uint loanId) internal view returns (bool agreed) {

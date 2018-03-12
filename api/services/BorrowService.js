@@ -3,7 +3,10 @@
  * @description :: Sends raw transactions for Borrow
  */
 
-/* global sails Borrow LendService EthereumService Transactions */
+/* global sails Borrow LendService Transactions User TokensService */
+
+const {networkId, KoraLend} = sails.config.ethereum;
+const koraLendAddress = KoraLend.networks[networkId].address;
 
 module.exports = {
   sendRawCreateLoan: function ({rawCreateLoan, record}) {
@@ -11,8 +14,63 @@ module.exports = {
 
     LendService.sendRawCreateLoan({rawCreateLoan})
       .then(({receipt, event}) => {
+        const loanId = event.returnValues.loanId;
+
         record.transactionHashes.push(receipt.transactionHash);
-        record.loanId = event.returnValues.loanId;
+        record.loanId = loanId;
+
+        return Promise.all([
+          Borrow.findOnePopulate({id: record.id}),
+          LendService.getLoan({loanId}),
+          LendService.getLoanGuarantors({loanId})
+        ]);
+      })
+      .then(([populatedRecord, loan, guarantors]) => {
+        if (loan.borrower.toLowerCase() !== populatedRecord.from.identity.toLowerCase()) {
+          return Promise.reject(new Error(`Borrower address does not match`));
+        }
+
+        if (loan.lender.toLowerCase() !== populatedRecord.to.identity.toLowerCase()) {
+          return Promise.reject(new Error(`Lender address does not match`));
+        }
+
+        let lowerCasedGuarantors = guarantors.map(g => g.toLowerCase());
+
+        if (populatedRecord.guarantor1 && lowerCasedGuarantors.indexOf(populatedRecord.guarantor1.identity.toLowerCase()) === -1) {
+          return Promise.reject(new Error(`Guarantor1 address does not match`));
+        }
+
+        if (populatedRecord.guarantor2 && lowerCasedGuarantors.indexOf(populatedRecord.guarantor2.identity.toLowerCase()) === -1) {
+          return Promise.reject(new Error(`Guarantor2 address does not match`));
+        }
+
+        if (populatedRecord.guarantor3 && lowerCasedGuarantors.indexOf(populatedRecord.guarantor3.identity.toLowerCase()) === -1) {
+          return Promise.reject(new Error(`Guarantor3 address does not match`));
+        }
+
+        if (TokensService.convertValueToToken(loan.borrowerAmount) !== populatedRecord.fromAmount) {
+          return Promise.reject(new Error(`Borrower amount does not match`));
+        }
+
+        if (TokensService.convertValueToToken(loan.lenderAmount) !== populatedRecord.toAmount) {
+          return Promise.reject(new Error(`Lender amount does not match`));
+        }
+
+        if (TokensService.convertValueToToken(loan.interestRate) !== populatedRecord.interestRate) {
+          return Promise.reject(new Error(`Interest rate does not match`));
+        }
+
+        if (loan.startDate * 1 !== Math.floor(Date.parse(populatedRecord.startDate) / 1000)) {
+          return Promise.reject(new Error(`Start date does not match`));
+        }
+
+        if (loan.maturityDate * 1 !== Math.floor(Date.parse(populatedRecord.maturityDate) / 1000)) {
+          return Promise.reject(new Error(`Maturity date does not match`));
+        }
+
+        return Promise.resolve();
+      })
+      .then(() => {
         record.state = states.onGoing;
         ['to', 'guarantor1', 'guarantor2', 'guarantor3'].filter(k => record[k])
           .forEach(k => (record[k + 'Agree'] = null));
@@ -24,6 +82,11 @@ module.exports = {
 
         if (err.receipt) {
           record.transactionHashes.push(err.receipt.transactionHash);
+        }
+
+        if (err.message) {
+          // TODO: Maybe add push with error message here
+          sails.log.error(err.message);
         }
 
         return Borrow.update({id: record.id}, record);
@@ -93,15 +156,57 @@ module.exports = {
       .catch(err => sails.log.error('Borrow money after KoraLend.agreeLoan tx save error:\n', err));
   },
 
-  sendRawLoanTransfer: function ({rawApproves, rawFundLoan, rawPayBackLoan, record}) {
+  sendRawLoanTransfer: function ({rawApprove, rawFundLoan, rawPayBackLoan, record}) {
     const {states, types} = Borrow.constants;
 
-    Promise.all(
-      rawApproves.map(rawApprove =>
-        EthereumService.sendSignedTransaction({rawTransaction: rawApprove, name: 'humanStandardToken.approve'})
+    Promise.all([
+      User.findOne({id: record.from}),
+      User.findOne({id: record.to})
+    ])
+      .then(([fromUser, toUser]) =>
+        TokensService.sendSignedApprove({
+          rawTransaction: rawApprove,
+          tokenAddress: rawFundLoan ? toUser.ERC20Token : fromUser.ERC20Token
+        })
+          .then(({event: {_spender, _value}}) => {
+            if (rawFundLoan) {
+              if (
+                !(
+                  _spender.toLowerCase() === koraLendAddress.toLowerCase() &&
+                  TokensService.convertValueToToken(_value) >= record.toAmount
+                )
+              ) {
+                return Promise.reject(new Error(`Transaction 'rawApprove' not valid`));
+              }
+
+              if (fromUser.currency !== toUser.currency) {
+                return TokensService.approveFromKora({
+                  spender: koraLendAddress,
+                  value: record.fromAmount,
+                  tokenAddress: fromUser.ERC20Token
+                });
+              }
+            }
+
+            if (rawPayBackLoan) {
+              const fromValue = TokensService.convertValueToToken(_value);
+              const {fromBalance, toBalance} = record;
+
+              if (!(_spender.toLowerCase() === koraLendAddress.toLowerCase() && fromValue > 0)) {
+                return Promise.reject(new Error(`Transaction 'rawApprove' not valid`));
+              }
+
+              if (fromUser.currency !== toUser.currency) {
+                return TokensService.approveFromKora({
+                  spender: koraLendAddress,
+                  value: (fromValue >= fromBalance) ? toBalance : fromValue * toBalance / fromBalance,
+                  tokenAddress: toUser.ERC20Token
+                });
+              }
+            }
+          })
       )
-    )
-      .then(receipts => {
+      .then(() => {
         if (rawFundLoan) {
           return LendService.sendRawFundLoan({rawFundLoan});
         }
@@ -114,13 +219,13 @@ module.exports = {
         ({receipt, event}) => {
           record.transactionHashes.push(receipt.transactionHash);
           record.state = states.onGoing;
-          record.fromBalance = event.returnValues.borrowerBalance / 100;
-          record.toBalance = event.returnValues.lenderBalance / 100;
+          record.fromBalance = TokensService.convertValueToToken(event.returnValues.borrowerBalance);
+          record.toBalance = TokensService.convertValueToToken(event.returnValues.lenderBalance);
 
           return {
             state: Transactions.constants.states.success,
-            fromValue: event.returnValues.borrowerValue / 100,
-            toValue: event.returnValues.lenderValue / 100
+            fromValue: TokensService.convertValueToToken(event.returnValues.borrowerValue),
+            toValue: TokensService.convertValueToToken(event.returnValues.lenderValue)
           };
         },
         err => {
@@ -138,16 +243,17 @@ module.exports = {
           return {
             state: Transactions.constants.states.error,
             fromValue: 0,
-            toValue: 0
+            toValue: 0,
+            message: err.message || 'Something went wrong'
           };
         }
       )
-      .then(({state, fromValue, toValue}) => {
+      .then(({state, fromValue, toValue, message}) => {
         let {from, to, fromAmount, toAmount, fromBalance, additionalNote, loanId, transactionHashes} = record;
 
         let tx = {
           state,
-          additionalNote,
+          additionalNote: message || additionalNote,
           loanId,
           transactionHashes: [transactionHashes[transactionHashes.length - 1]]
         };
@@ -174,7 +280,7 @@ module.exports = {
 
         return Transactions.create(tx)
           .then(() => {
-            if (fromBalance === 0) {
+            if (rawPayBackLoan && fromBalance === 0) {
               return Borrow.destroy({id: record.id});
             }
 
