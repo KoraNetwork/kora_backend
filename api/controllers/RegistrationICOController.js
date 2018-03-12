@@ -30,7 +30,7 @@ module.exports = {
       }
 
       if (!user) {
-        return res.badRequest({message: 'User with such username not exists in Kora MVP'});
+        return res.badRequest({message: 'User with such username doesn\'t exist in Kora MVP'});
       }
 
       let code = MiscService.randomInteger4().toString();
@@ -113,7 +113,7 @@ module.exports = {
       }
 
       if (!user) {
-        return res.badRequest({message: 'User with such username not exists in Kora MVP'});
+        return res.badRequest({message: 'User with such username doesn\'t exist in Kora MVP'});
       }
 
       res.ok({message: 'User with such username registered in Kora MVP'});
