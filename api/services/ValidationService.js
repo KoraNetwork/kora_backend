@@ -4,6 +4,7 @@
  */
 
 const Web3Utils = require('web3-utils');
+const validator = require('validator');
 
 module.exports = {
   phoneNumber: value => /^[1-9]\d{7,12}$/i.test(value),
@@ -12,5 +13,7 @@ module.exports = {
 
   password: value => /^(?=.*\d)(?=.*[a-zA-Z]).{8,}$/.test(value),
 
-  hex: value => Web3Utils.isHex(value)
+  hex: value => Web3Utils.isHex(value),
+
+  email: value => validator.isEmail(value + '')
 };

@@ -136,20 +136,23 @@ module.exports = {
   forgotPassword: function (req, res) {
     const email = req.param('email');
 
+    if (!ValidationService.email(email)) {
+      return res.badRequest({message: 'Provide valid email'});
+    }
+
     User.findOne({email})
       .then(user => {
         if (!user) {
-          return ErrorService.new({message: 'No user with such email found', status: 404});
+          return Promise.resolve();
         }
 
-        User.update({id: user.id}, {resetPasswordToken: MiscService.generateRandomString(50)})
+        return User.update({id: user.id}, {resetPasswordToken: MiscService.generateRandomString(50)})
           .then(updatedUsers => {
             MailerService.sendResetPwEmail(updatedUsers[0]);
-          })
-          .then(() => {
-            res.ok({ message: 'Forgot password request has been successfully sent' });
-          })
-          .catch(err => res.negotiate(err));
+          });
+      })
+      .then(() => {
+        res.ok({ message: 'Forgot password request has been successfully sent to registered email.' });
       })
       .catch(err => res.negotiate(err));
   },
@@ -159,7 +162,9 @@ module.exports = {
     const resetPasswordToken = req.param('token');
     const password = req.param('newPassword');
 
-    if (!password) res.badRequest({ message: 'No password provided' });
+    if (!password) {
+      return res.badRequest({ message: 'No password provided' });
+    }
 
     User.findOne({resetPasswordToken})
       .then(user => {
