@@ -1,0 +1,14 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "1352721059.network.kora.kora",
+        "paths": [
+          "/profile/confirmEmail/*",
+          "/profile/restorePassword/*"
+        ]
+      }
+    ]
+  }
+}
