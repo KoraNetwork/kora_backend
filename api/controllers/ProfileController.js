@@ -234,10 +234,14 @@ module.exports = {
 
       sails.log.info('balance', balance);
       if (!Web3Utils.toBN(balance).isZero()) {
-        return res.badRequest({message: `User owner address already has ethers`});
+        return res.ok({message: `User owner address already has ethers`});
       }
 
       EthereumService.sendEthFromKora({to: req.user.owner, eth: newUserMoney.ETH + ''})
+        .then(result =>
+          User.update({id: req.user.id}, {isKoraEthSent: true})
+            .then(() => result)
+        )
         .then(result => res.ok(result))
         .catch(err => res.negotiate(err));
     });
@@ -262,7 +266,7 @@ module.exports = {
 
       sails.log.info('balance', balance);
       if (!Web3Utils.toBN(balance).isZero()) {
-        return res.badRequest({message: `User identity address already has eFiats`});
+        return res.ok({message: `User identity address already has eFiats`});
       }
 
       let promise;
@@ -284,6 +288,10 @@ module.exports = {
             tokenAddress: user.ERC20Token
           })
         )
+        .then(result =>
+          User.update({id: user.id}, {isKoraEFiatsSent: true})
+            .then(() => result)
+        )
         .then(result => res.ok(result))
         .catch(err => res.negotiate(err));
     });
@@ -292,7 +300,7 @@ module.exports = {
   sendMoneyFromKora: function (req, res) {
     const user = req.user;
 
-    if (!req.user.owner) {
+    if (!user.owner) {
       return res.badRequest({message: `Current user do not has owner`});
     }
 
@@ -343,13 +351,16 @@ module.exports = {
             }
 
             if (!promises.length) {
-              return Promise.reject(ErrorService.new({
-                status: 400,
+              return Promise.resolve({
                 message: 'User ethereum and eFiats balances are not empty'
-              }));
+              });
             }
 
-            return Promise.all(promises);
+            return Promise.all(promises)
+              .then(result =>
+                User.update({id: user.id}, {isKoraEthSent: true, isKoraEFiatsSent: true})
+                  .then(() => result)
+              );
           })
       )
       .then(result => res.ok(result))

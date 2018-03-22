@@ -75,6 +75,10 @@ module.exports = {
 
     interestRate: { type: 'float', min: 0 },
 
+    isKoraEthSent: { type: 'boolean', defaultsTo: false },
+
+    isKoraEFiatsSent: { type: 'boolean', defaultsTo: false },
+
     toJSON: function () {
       var obj = this.toObject();
 
@@ -93,6 +97,8 @@ module.exports = {
         obj.currencyName = CountriesService.currenciesCollection[obj.currency].currencyName;
         obj.currencyNameFull = CountriesService.currenciesCollection[obj.currency].currencyNameFull;
       }
+
+      obj.isKoraMoneySent = !!(obj.isKoraEthSent && obj.isKoraEFiatsSent);
 
       obj.agent = obj.role === roles.agent;
 
