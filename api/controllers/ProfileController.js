@@ -234,7 +234,9 @@ module.exports = {
 
       sails.log.info('balance', balance);
       if (!Web3Utils.toBN(balance).isZero()) {
-        return res.ok({message: `User owner address already has ethers`});
+        return User.update({id: req.user.id}, {isKoraEthSent: true})
+          .then(() => res.ok({message: `User owner address already has ethers`}))
+          .catch(err => res.negotiate(err));
       }
 
       EthereumService.sendEthFromKora({to: req.user.owner, eth: newUserMoney.ETH + ''})
@@ -266,7 +268,9 @@ module.exports = {
 
       sails.log.info('balance', balance);
       if (!Web3Utils.toBN(balance).isZero()) {
-        return res.ok({message: `User identity address already has eFiats`});
+        return User.update({id: user.id}, {isKoraEFiatsSent: true})
+          .then(() => res.ok({message: `User identity address already has eFiats`}))
+          .catch(err => res.negotiate(err));
       }
 
       let promise;
@@ -356,12 +360,12 @@ module.exports = {
               });
             }
 
-            return Promise.all(promises)
-              .then(result =>
-                User.update({id: user.id}, {isKoraEthSent: true, isKoraEFiatsSent: true})
-                  .then(() => result)
-              );
+            return Promise.all(promises);
           })
+      )
+      .then(result =>
+        User.update({id: user.id}, {isKoraEthSent: true, isKoraEFiatsSent: true})
+          .then(() => result)
       )
       .then(result => res.ok(result))
       .catch(err => res.negotiate(err));
