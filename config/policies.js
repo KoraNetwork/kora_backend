@@ -107,6 +107,7 @@ module.exports.policies = {
 
   TransactionsController: {
     find: ['isAuthorized'],
+    findOne: ['isAuthorized'],
     destroy: false
   },
 
@@ -117,6 +118,6 @@ module.exports.policies = {
 
   CurrencyConvertController: {
     '*': false,
-    create: ['isAuthorized']
+    create: ['isAuthorized', 'isEmailVerified']
   }
 };
