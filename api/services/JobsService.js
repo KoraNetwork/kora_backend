@@ -79,6 +79,11 @@ function mapLoansForClose ({records, state, event, nonce}) {
             record.transactionHashes.push(err.receipt.transactionHash);
           }
 
+          // NOTE; Review this some time
+          if (record.transactionHashes.length > 20) {
+            record.state = state;
+          }
+
           return update(record);
         }
       );
