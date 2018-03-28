@@ -42,6 +42,10 @@ module.exports = {
           values.interestRate = parseFloat(values.interestRate, 10);
         }
 
+        if (values.email) {
+          values.email = values.email.toLowerCase();
+        }
+
         values = _.pick(values, (value, key) => (req.user[key] !== value));
 
         if (_.isEmpty(values)) {
