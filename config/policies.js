@@ -60,8 +60,8 @@ module.exports.policies = {
     destroy: false,
     update: false,
     // TODO: Change this after register will be done
-    find: true,
-    findOne: true
+    find: false,
+    findOne: false
   },
 
   ProfileController: {
