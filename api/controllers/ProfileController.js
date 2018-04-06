@@ -95,8 +95,9 @@ module.exports = {
 
           let oldAvatar = user.avatar;
 
-          user.avatar = path.join('/images', 'avatars', path.basename(uploadedFiles[0].fd));
-          user.save(err => {
+          let avatar = path.join('/images', 'avatars', path.basename(uploadedFiles[0].fd));
+
+          return User.update({id: req.user.id}).set({avatar}).exec((err, updated) => {
             if (err) {
               return res.negotiate(err);
             }
@@ -107,11 +108,11 @@ module.exports = {
                   sails.log.error(err);
                 }
 
-                return res.json(user);
+                return res.json(updated[0]);
               });
             }
 
-            return res.json(user);
+            return res.json(updated[0]);
           });
         });
       }
