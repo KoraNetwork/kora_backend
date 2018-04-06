@@ -65,7 +65,7 @@ module.exports = {
       return Promise.all([
         UserValidationService.isFromToNotEqual({from, to}),
         UserValidationService.isFromToExists({from, to}),
-        UserValidationService.isAgent({id: to, name: 'To'})
+        UserValidationService.isAgent({id: from, name: 'From'})
       ])
         .then(() => cb())
         .catch(err => cb(err));
