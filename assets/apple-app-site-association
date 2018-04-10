@@ -3,7 +3,7 @@
     "apps": [],
     "details": [
       {
-        "appID": "1352721059.network.kora.kora",
+        "appID": "5QJ8Y532G6.network.kora.kora",
         "paths": [
           "/profile/confirmEmail/*",
           "/profile/restorePassword/*"
